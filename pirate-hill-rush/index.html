@@ -159,13 +159,6 @@
   <button class="back" id="shopBack"></button>
 </div>
 
-<div id="match" class="screen hidden">
-  <div class="spinner"></div>
-  <h2 id="matchTitle"></h2>
-  <div class="count" id="matchCount">1/5</div>
-  <div class="plist" id="plist"></div>
-</div>
-
 <div id="result" class="screen hidden">
   <h2 id="rTitle"></h2>
   <div class="sub" id="rSub"></div>
@@ -183,10 +176,10 @@
   const STRINGS = {
     en: { play: 'SET SAIL', boss: 'ADMIRAL', stage: 'ISLAND', shop: 'SHOP', back: 'BACK', hint: 'Defeat admirals to unlock more hats', cars: 'Vehicles', hats: 'Hats', upgrades: 'Upgrades', islands: 'Islands',
           finding: 'Finding pirates...', you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: 'PUNCH', crash: 'CRASH!', outMeat: 'OUT OF MEAT!',
-          backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'YOU ARE #1!', bossIn2: 'THE ADMIRAL ATTACKS!',
+          backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'ISLAND CLEARED!', bossIn2: 'THE ADMIRAL ATTACKS!',
           won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
           passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tilt with the stick',
-          ctlHintPc: 'Hold D to drive · W / S to tilt', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT',
+          ctlHintPc: 'Hold D to drive · W / S to tilt', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distance', flipsL: 'Flips', foesHint: 'PUNCH THEM OR RUN THEM OVER!',
           speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Meat', richer: 'richer coins',
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
           u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Meat tank', u_tank_d: 'Carry more meat',
@@ -194,10 +187,10 @@
           isl_grass: 'Gentle hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills at night', isl_sky: 'Low gravity!' },
     es: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ISLA', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota almirantes para desbloquear sombreros', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras', islands: 'Islas',
           finding: 'Buscando piratas...', you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: 'GOLPE', crash: '¡CHOQUE!', outMeat: '¡SIN CARNE!',
-          backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ERES EL #1!', bossIn2: '¡ATACA EL ALMIRANTE!',
+          backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ISLA SUPERADA!', bossIn2: '¡ATACA EL ALMIRANTE!',
           won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
           passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · inclina con la palanca',
-          ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL',
+          ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL', kos: 'KOs', dist: 'Distancia', flipsL: 'Mortales', foesHint: '¡GOLPÉALOS O ATROPÉLLALOS!',
           speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Carne', richer: 'monedas más valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
           u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque de carne', u_tank_d: 'Lleva más carne',
@@ -205,10 +198,10 @@
           isl_grass: 'Colinas suaves', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!' },
     pt: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ILHA', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote almirantes para desbloquear chapéus', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias', islands: 'Ilhas',
           finding: 'Procurando piratas...', you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: 'SOCO', crash: 'BATEU!', outMeat: 'SEM CARNE!',
-          backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'VOCÊ É O #1!', bossIn2: 'O ALMIRANTE ATACA!',
+          backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'ILHA CONCLUÍDA!', bossIn2: 'O ALMIRANTE ATACA!',
           won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
           passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · incline com a alavanca',
-          ctlHintPc: 'Segure D para andar · W / S para inclinar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT',
+          ctlHintPc: 'Segure D para andar · W / S para inclinar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distância', flipsL: 'Mortais', foesHint: 'SOQUE OU ATROPELE!',
           speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Carne', richer: 'moedas mais valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
           u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque de carne', u_tank_d: 'Leva mais carne',
@@ -246,9 +239,6 @@
     { id: 'marine',  name: 'Marine Cap',  boss: 4, cost: 6000 },
     { id: 'crown',   name: 'Crown',       boss: 6, cost: 12000 },
   ];
-  const NAMES = ['Redbeard', 'Kraken', 'SaltyPete', 'Barnacle', 'Mako', 'Coral', 'Jinx', 'Rumble', 'Gully', 'Anchor', 'Bilge', 'Stormy', 'Marlin', 'Pegleg', 'Tide',
-                 'Squid', 'Nova', 'Rayo', 'Chispa', 'Turbo', 'Mango', 'Pixel', 'Sushi', 'Moka', 'Zed', 'Luna', 'Orion', 'Pepe', 'Tito22', 'Ghost', 'Waffle', 'Frost', 'Dante'];
-  const BOT_AVATARS = ['', '', '🦜', '⚓', '🐙', '🦈', '🍖', '⚔️', '🗺️', '💰', '🦀', '🏴‍☠️'];
   const THEMES = [
     { sky: ['#3fa9f5', '#c9ecff'], sea: '#1e8fd6', far: '#4f9f8f', mid: '#3f8a4a', grass: '#5cc64c', grass2: '#3e9a36', dirt: '#b8743c', dirt2: '#8a5229', sun: '#fff6b0' },
     { sky: ['#ff7e5f', '#feb47b'], sea: '#c85c72', far: '#7a3f62', mid: '#5b3a52', grass: '#78c04a', grass2: '#4c8f32', dirt: '#a8653a', dirt2: '#734225', sun: '#ffe08a' },
@@ -292,7 +282,6 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-  const randName = (used) => { let n; do { n = NAMES[(Math.random() * NAMES.length) | 0]; } while (used.has(n)); used.add(n); return n; };
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
   // ---------- Canvas ----------
@@ -421,10 +410,9 @@
   }
 
   // ---------- Game state ----------
-  const BOTS = 4;
-  let phase = 'menu'; // menu | match | play | bossIntro | boss | win | result
-  let me = null, bots = [], ship = null, feed = [], popups = [], parts = [], pickups = [], balls = [];
-  let introT = 0, winT = 0, shake = 0, time = 0, lastT = 0, paused = false, audioOn = true, elapsed = 0, lastRank = 10, feedT = 3, rallyOn = false;
+  let phase = 'menu'; // menu | play | bossIntro | boss | win | result
+  let me = null, foes = [], shots = [], ship = null, feed = [], popups = [], parts = [], pickups = [], balls = [];
+  let introT = 0, winT = 0, shake = 0, time = 0, lastT = 0, paused = false, audioOn = true, elapsed = 0, nextFoeX = 2, kos = 0, combo = 0, comboT = 0;
   let camX = 0, camY = 0, camK = 0.38, ppm = 30, demo = null;
   const input = { gas: false, brake: false, joyX: 0, joyY: 0, kGas: false, kBrake: false, kBack: false, kFwd: false };
 
@@ -450,56 +438,121 @@
     for (let x = 230; x < TER_LEN - 50; x += 270) pickups.push({ x: x + 9, y: hAt(x + 9) + 2.2, type: 'fruit' });
   }
 
-  function newRace(names) {
+  function newRace() {
     const stage = save.bosses + 1;
     FINISH = Math.min(800 + stage * 40, 1100);
     genTerrain(stage);
     genPickups();
     const st = carStats();
     me = { name: T.you, isMe: true, car: newCar(6), meat: st.tank, coins: 0, flips: 0, crashT: 0, upT: 0, sideT: 0, progX: 6, noProgT: 0, best: 6, boost: 0,
-           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, cp: 6 };
-    bots = names.map((name, i) => ({
-      name, avatar: BOT_AVATARS[(Math.random() * BOT_AVATARS.length) | 0], x: 6 - (i + 1) * 0.01, v: 0,
-      pace: rnd(0.88, 1.08) * (i < 2 ? 1.08 : 1), bias: i, carId: CARS[(i + 1 + (Math.random() * 3 | 0)) % CARS.length].id, hatId: HATS[(Math.random() * HATS.length) | 0].id,
-    }));
-    elapsed = 0; feed = []; popups = []; parts = []; balls = []; ship = null; shake = 0; lastRank = 10; feedT = 3; rallyOn = false; goSfx = false;
+           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, punchTgt: null, cp: 6, hintShown: false };
+    foes = []; shots = []; nextFoeX = 25; kos = 0; combo = 0; comboT = 0;
+    elapsed = 0; feed = []; popups = []; parts = []; balls = []; ship = null; shake = 0; goSfx = false;
     camX = me.car.x; camY = me.car.y; camK = 0.38;
   }
 
-  const everyone = () => [me, ...bots];
-  const posOf = (p) => p.isMe ? me.car.x : p.x;
-  const shownPos = (p) => phase !== 'play' && p.final != null ? p.final : posOf(p);
-  function ranking() {
-    const locked = phase !== 'play' && phase !== 'match';
-    return everyone().slice().sort((a, b) => (locked ? (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0) : 0) || shownPos(b) - shownPos(a));
+  // ---------- Enemies: unlimited marines along the road ----------
+  // Run them over or punch them. They can only slow you down or cost meat, never end the run.
+  const FOES = {
+    grunt:  { hp: 1, ram: 3,  coins: 25,  w: 0.6, h: 1.8, from: 0 },
+    gull:   { hp: 1, ram: 99, coins: 50,  w: 0.8, h: 0.6, from: 90 },
+    brute:  { hp: 2, ram: 7,  coins: 75,  w: 0.9, h: 2.4, from: 140 },
+    cannon: { hp: 2, ram: 6,  coins: 100, w: 1.1, h: 1.3, from: 220 },
+  };
+  const FOE_WEIGHT = { grunt: 5, gull: 1.6, brute: 1.4, cannon: 1.4 };
+  const PUNCH_CD = 0.6, PUNCH_REACH = 9.5;
+  function spawnFoe() {
+    const c = me.car, x = c.x + (W * (1 - camK)) / ppm + rnd(4, 14);
+    if (x > FINISH - 15) return; // keep the finish line clear
+    const opts = Object.keys(FOES).filter(k => me.best >= FOES[k].from);
+    let r = Math.random() * opts.reduce((a, k) => a + FOE_WEIGHT[k], 0), type = opts[0];
+    for (const k of opts) { r -= FOE_WEIGHT[k]; if (r <= 0) { type = k; break; } }
+    const f = { type, x, y: hAt(x), hp: FOES[type].hp, t: rnd(0, 6), fireT: rnd(0.8, 2), dead: false, vx: 0, vy: 0, spin: 0, a: 0, flash: 0, bumpT: 0 };
+    if (type === 'gull') f.y = hAt(x) + rnd(5, 6.5);
+    foes.push(f);
   }
-  const leading = () => me.car.x > Math.max(...bots.map(b => b.x));
-
-  // Bots may lead early, then are held behind you so you always cross the line first.
-  function botCap(b) {
-    const k = me.best / FINISH;
-    let cap = k < 0.3 ? me.best + 45 + b.bias * 6 : k < 0.65 ? me.best + 12 - b.bias * 4 : me.best - 6 - b.bias * 9;
-    return Math.min(cap, FINISH - 18 - b.bias * 10);
+  function koFoe(f, power) {
+    f.dead = true; f.deadT = f.t; f.vx = power; f.vy = rnd(6, 10); f.spin = rnd(-12, -6);
+    kos++; combo = comboT > 0 ? combo + 1 : 1; comboT = 2.2;
+    const v = FOES[f.type].coins * Math.min(combo, 3);
+    me.coins += v;
+    popup(combo > 1 ? `KO x${combo} +${fmt(v)}` : `KO! +${v}`, '#ffd23f');
+    sfx.ko(combo); shake = Math.max(shake, 5); buzz(12);
+    for (let i = 0; i < 10; i++) parts.push({ x: f.x, y: f.y + FOES[f.type].h * 0.6, vx: rnd(-4, 4), vy: rnd(1, 7), t: 0, life: rnd(0.4, 0.8), c: i % 2 ? '#ffd23f' : '#fff', r: rnd(0.08, 0.18) });
   }
-  function updateBots(dt) {
-    const top = Math.max(Math.min(16 + save.bosses * 0.4, 19), carStats().top * 1.08);
-    for (const b of bots) {
-      const s = slopeAt(b.x + 2);
-      let vt = top * b.pace * (1 - 0.35 * clamp(s, 0, 1)) * (elapsed < 2 ? elapsed / 2 : 1);
-      if (phase !== 'play') vt = top * 0.7;
-      const cap = phase === 'play' ? botCap(b) : FINISH - 2 - b.bias * 3;
-      if (b.x < me.car.x - 60) vt *= 1.4;
-      if (b.x > cap - 6) vt *= clamp((cap - b.x) / 6, 0, 1);
-      b.v += (vt - b.v) * Math.min(1, dt * 1.5);
-      b.x = Math.max(b.x, Math.min(b.x + Math.max(0, b.v) * dt, cap));
+  function hitFoe(f) {
+    f.hp--; f.flash = 0.2;
+    if (f.hp <= 0) koFoe(f, 9);
+    else { f.x += 1; sfx.bossHit(false); popup('💥', '#ff8a2b'); }
+  }
+  function playerHit(meat) {
+    if (me.crashT > 0) return;
+    me.meat = Math.max(0, me.meat - meat); me.car.vx *= 0.75;
+    popup(`💥 -${meat} 🍖`, '#ff5d73'); shake = 8; buzz(25); sfx.thud();
+  }
+  function updateFoes(dt) {
+    const c = me.car;
+    if (phase === 'play') {
+      if (me.best >= nextFoeX && foes.filter(f => !f.dead).length < 8) { nextFoeX = me.best + rnd(18, 34) / (1 + me.best / 1500 + save.bosses * 0.05); spawnFoe(); }
     }
-    if (phase !== 'play') return;
-    feedT -= dt;
-    if (feedT <= 0) {
-      feedT = rnd(4, 8);
-      const b = bots[(Math.random() * bots.length) | 0];
-      pushFeed(`${b.avatar ? b.avatar + ' ' : ''}${b.name} ${Math.random() < 0.5 ? T.didFlip : T.bigAir}`, false);
+    comboT -= dt;
+    for (const f of foes) {
+      f.t += dt; f.flash = Math.max(0, f.flash - dt);
+      if (f.dead) { f.vy -= 18 * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.a += f.spin * dt; continue; }
+      const dx = f.x - c.x, def = FOES[f.type];
+      if (!me.hintShown && dx < 14) { me.hintShown = true; popup('👊 ' + T.foesHint, '#ff8a2b'); }
+      if (f.type === 'grunt' || f.type === 'brute') { f.x -= (f.type === 'grunt' ? 1.3 : 0.8) * dt; f.y = hAt(f.x); }
+      else if (f.type === 'gull') { f.x -= 3 * dt; f.y += (hAt(f.x) + 5.5 + Math.sin(f.t * 2) * 0.6 - f.y) * Math.min(1, dt * 2); }
+      if (f.type === 'grunt' && dx > 5 && dx < 20 && (f.fireT -= dt) <= 0) { // rifle shot aimed at you
+        f.fireT = rnd(2.2, 3.6);
+        const sx = f.x - 0.8, sy = f.y + 1.1, ex = c.x - sx, ey = c.y + 0.3 - sy, d = Math.hypot(ex, ey) || 1;
+        shots.push({ x: sx, y: sy, vx: ex / d * 13, vy: ey / d * 13, t: 0, kind: 'bullet' }); sfx.shot();
+      }
+      if (f.type === 'gull' && f.fireT < 50 && dx > -1 && dx < 5) { f.fireT = 99; shots.push({ x: f.x, y: f.y - 0.3, vx: -3, vy: 0, t: 0, kind: 'bomb' }); }
+      if (f.type === 'cannon' && dx > 7 && dx < 28 && (f.fireT -= dt) <= 0) {
+        f.fireT = rnd(3, 4.5);
+        const tx = c.x + Math.max(0, c.vx) * 1.1;
+        balls.push({ x0: f.x - 1, y0: f.y + 1, x1: tx, y1: hAt(tx) + 0.6, t: 0, dur: 1.1 }); sfx.cannon();
+      }
+      // driving into them: fast enough knocks them flying, too slow bounces you back
+      if (f.type !== 'gull' && me.crashT <= 0 && Math.abs(dx) < 1.4 + def.w && Math.abs(f.y + def.h / 2 - c.y) < 2) {
+        if (c.vx > def.ram) { koFoe(f, c.vx * 0.7 + 4); c.vx *= 0.93; }
+        else if (f.t > f.bumpT) { f.bumpT = f.t + 0.8; c.vx = Math.min(c.vx, -2); shake = 6; sfx.thud(); if (--f.hp <= 0) koFoe(f, 6); else { f.flash = 0.2; f.x += 2; } }
+      }
     }
+    foes = foes.filter(f => f.x > c.x - 25 && !(f.dead && f.t - f.deadT > 2.5));
+  }
+  function updateShots(dt) {
+    const c = me.car;
+    for (const b of shots) {
+      b.t += dt;
+      if (b.kind === 'bomb') b.vy -= 14 * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (Math.hypot(b.x - c.x, b.y - (c.y + 0.4)) < 1.3) { b.done = true; playerHit(b.kind === 'bomb' ? 8 : 4); }
+      else if (b.y < hAt(b.x) || b.t > 3) {
+        b.done = true;
+        if (b.kind === 'bomb') { sfx.boom(); for (let i = 0; i < 10; i++) parts.push({ x: b.x, y: hAt(b.x), vx: rnd(-4, 4), vy: rnd(2, 6), t: 0, life: 0.6, c: i % 3 ? 'rgba(150,110,70,.9)' : '#ff8a2b', r: rnd(0.1, 0.25) }); }
+      }
+    }
+    shots = shots.filter(b => !b.done);
+  }
+  // Nearest enemy (or the boss ship) the stretchy arm can reach; null means a forward swing.
+  function punchTarget() {
+    const c = me.car;
+    if (ship && phase === 'boss' && c.x - ship.x < 16) return { ship: true };
+    let best = null, bd = PUNCH_REACH;
+    for (const f of foes) {
+      if (f.dead || f.x < c.x - 2) continue;
+      const d = Math.hypot(f.x - c.x, f.y + FOES[f.type].h * 0.6 - c.y - 0.6);
+      if (d < bd) { bd = d; best = f; }
+    }
+    return best ? { foe: best } : null;
+  }
+  function punchPoint(tg) {
+    const c = me.car;
+    if (tg && tg.ship && ship) return { x: ship.x + 3, y: ship.y + 3 };
+    if (tg && tg.foe) return { x: tg.foe.x, y: tg.foe.y + FOES[tg.foe.type].h * 0.6 };
+    return { x: c.x + Math.cos(c.a) * 4.5, y: c.y + 0.6 + Math.sin(c.a) * 4.5 };
   }
 
   function crash() {
@@ -529,7 +582,6 @@
     const empty = me.meat <= 0;
     let power = empty ? 0.7 : 1;
     if (me.boost > 0) { me.boost -= dt; power *= 1.35; }
-    if (rallyOn) power *= 1.12;
     inp.power = power;
     me.mercy = Math.max(0, me.mercy - dt / 15);
     inp.mercy = me.mercy * 1.2;
@@ -582,7 +634,11 @@
     if (me.punchCD > 0) me.punchCD -= dt;
     if (me.punchT >= 0) {
       const prev = me.punchT; me.punchT += dt;
-      if (prev < 0.16 && me.punchT >= 0.16 && ship && me.car.x - ship.x < 16) hitShip(7, false); // the arm only reaches a ship on screen
+      if (prev < 0.16 && me.punchT >= 0.16) {
+        const tg = me.punchTgt;
+        if (tg && tg.ship && ship && me.car.x - ship.x < 16) hitShip(7, false); // the arm only reaches a ship on screen
+        else if (tg && tg.foe && !tg.foe.dead) hitFoe(tg.foe);
+      }
       if (me.punchT > 0.34) me.punchT = -1;
     }
   }
@@ -595,7 +651,7 @@
   // ---------- Boss: the Admiral's warship chases you ----------
   function startBossIntro() {
     phase = 'bossIntro'; introT = 2.6;
-    for (const p of everyone()) p.final = Math.round(Math.min(posOf(p), FINISH));
+    foes = foes.filter(f => f.dead); shots = [];
     popup('🏁 ' + T.finish, '#7cff8a');
     sfx.bossIntro();
   }
@@ -606,8 +662,9 @@
     popup('👊 ' + T.punchHint, '#ff8a2b');
   }
   function doPunch() {
-    if (phase !== 'boss' || !ship || me.punchCD > 0 || me.punchT >= 0 || me.crashT > 0) return;
-    me.punchT = 0; me.punchCD = 0.9; sfx.whoosh();
+    if ((phase !== 'play' && phase !== 'boss') || !me || me.punchCD > 0 || me.punchT >= 0 || me.crashT > 0) return;
+    me.punchTgt = punchTarget();
+    me.punchT = 0; me.punchCD = PUNCH_CD; sfx.whoosh();
   }
   function hitShip(dmg, big) {
     if (!ship || ship.hp <= 0) return;
@@ -645,7 +702,7 @@
       if (b.t >= b.dur && !b.done) {
         b.done = true;
         const c = me.car;
-        if (Math.abs(b.x1 - c.x) < 2.2 && me.crashT <= 0 && phase === 'boss') { c.vx *= 0.6; popup('💣 ' + T.cannon, '#ff5d73'); shake = 10; buzz(30); }
+        if (Math.abs(b.x1 - c.x) < 2.2 && me.crashT <= 0 && (phase === 'boss' || phase === 'play')) { c.vx *= 0.6; me.meat = Math.max(0, me.meat - 6); popup('💣 ' + T.cannon, '#ff5d73'); shake = 10; buzz(30); }
         sfx.boom();
         for (let i = 0; i < 12; i++) parts.push({ x: b.x1, y: b.y1, vx: rnd(-4, 4), vy: rnd(2, 7), t: 0, life: rnd(0.4, 0.8), c: i % 3 ? 'rgba(150,110,70,.9)' : '#ff8a2b', r: rnd(0.12, 0.3) });
       }
@@ -680,17 +737,9 @@
     if (racing && me) {
       if (phase === 'play') elapsed += dt;
       updatePlayer(dt);
-      updateBots(dt);
+      updateFoes(dt);
+      updateShots(dt);
       if (phase === 'play') {
-        const rank = ranking().indexOf(me) + 1;
-        if (rank < lastRank && elapsed > 1) {
-          const passed = ranking()[rank];
-          if (passed) pushFeed(`${T.passed} ${passed.name}!`, true);
-          if (rank === 1) sfx.first();
-        }
-        lastRank = rank;
-        if (!rallyOn && me.best / FINISH > 0.6 && !leading()) { rallyOn = true; popup('💨 ' + T.rally, '#7cdcff'); }
-        if (rallyOn && leading()) rallyOn = false;
         if (me.car.x >= FINISH) startBossIntro();
       } else if (phase === 'bossIntro') { introT -= dt; if (introT <= 0) spawnBoss(); }
       else if (phase === 'boss') updateShip(dt);
@@ -940,10 +989,6 @@
     drawCar(ctx, carId, hatId, wr, o);
     ctx.restore();
   }
-  function ghostPose(x) {
-    const yl = hAt(x - AX), yr = hAt(x + AX), a = Math.atan2(yr - yl, 2 * AX);
-    return { y: (yl + yr) / 2 + (AY + WR) / Math.cos(a) - 0.06 + Math.abs(Math.sin(time * 9 + x)) * 0.04, a };
-  }
   function nameTag(sx, sy, text, mine) {
     const sz = clamp(W / 34, 10, 14);
     ctx.font = `800 ${sz}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -952,20 +997,51 @@
     ctx.fillStyle = mine ? 'rgba(54,196,107,.95)' : 'rgba(15,20,40,.6)'; rr(sx - tw / 2, sy - sz * 0.8, tw, sz * 1.6, 7); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.fillText(text, sx, sy);
   }
-  function drawBots() {
-    const xl = camX - (W * camK) / ppm, xr = camX + (W * (1 - camK)) / ppm;
-    for (const b of bots) {
-      const label = `${b.avatar ? b.avatar + ' ' : ''}${b.name}`;
-      if (b.x > xl - 2 && b.x < xr + 2) {
-        const p = ghostPose(b.x);
-        drawWorldCar(b.x, p.y, p.a, b.carId, b.hatId, -b.x / WR, 0.45);
-        nameTag(sxOf(b.x), syOf(p.y + 2), label, false);
-      } else if (phase === 'play') { // off-screen arrow with the gap
-        const ahead = b.x > xr, d = Math.round(Math.abs(b.x - me.car.x));
-        const sx = ahead ? W - 52 : 52, sy = H * 0.3 + b.bias * 26;
-        nameTag(sx, sy, `${ahead ? '' : '◀ '}${b.name} ${ahead ? '+' : '-'}${d}m${ahead ? ' ▶' : ''}`, false);
+  // Generic marines (white uniform, blue collar and cap), all facing left toward you. Local meters, y up, origin at their feet.
+  function drawFoe(f) {
+    ctx.save(); ctx.translate(sxOf(f.x), syOf(f.y)); ctx.scale(ppm, -ppm);
+    if (f.dead) { ctx.translate(0, 0.9); ctx.rotate(f.a); ctx.translate(0, -0.9); ctx.globalAlpha = clamp(2.5 - (f.t - f.deadT), 0, 1); }
+    const g = ctx, out = '#1c2438', fl = f.flash > 0;
+    g.lineJoin = 'round'; g.lineCap = 'round'; g.lineWidth = 0.07; g.strokeStyle = out;
+    const ell = (x, y, rx, ry, fill) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fillStyle = fill; g.fill(); g.stroke(); };
+    const box = (x, y, w, h, fill) => { g.beginPath(); g.rect(x, y, w, h); g.fillStyle = fill; g.fill(); g.stroke(); };
+    if (f.type === 'grunt' || f.type === 'brute') {
+      const sw = f.dead ? 0.3 : Math.sin(f.t * 8) * 0.25;
+      if (f.type === 'brute') g.scale(1.35, 1.35);
+      g.lineWidth = 0.18; g.strokeStyle = '#1d3f80';
+      g.beginPath(); g.moveTo(0, 0.75); g.lineTo(-0.15 + sw, 0); g.moveTo(0, 0.75); g.lineTo(0.15 - sw, 0); g.stroke();
+      g.lineWidth = 0.07; g.strokeStyle = out;
+      box(-0.28, 0.7, 0.56, 0.62, fl ? '#ffd23f' : '#f4f6fa');
+      g.fillStyle = '#2c5aa0'; g.beginPath(); g.moveTo(-0.28, 1.32); g.lineTo(0.28, 1.32); g.lineTo(0, 1.12); g.fill();
+      ell(0, 1.56, 0.26, 0.26, '#f0b98a');
+      g.fillStyle = out; g.beginPath(); g.arc(-0.1, 1.58, 0.045, 0, 7); g.fill();
+      g.lineWidth = 0.05; g.beginPath(); g.moveTo(-0.22, 1.7); g.lineTo(-0.02, 1.64); g.stroke(); g.lineWidth = 0.07;
+      g.beginPath(); g.ellipse(0, 1.74, 0.28, 0.15, 0, 0, Math.PI); g.fillStyle = '#f4f6fa'; g.fill(); g.stroke();
+      g.fillStyle = '#2c5aa0'; g.fillRect(-0.28, 1.71, 0.56, 0.07);
+      if (f.type === 'grunt') {
+        g.strokeStyle = '#5a3a1f'; g.lineWidth = 0.09; g.beginPath(); g.moveTo(0.15, 0.98); g.lineTo(-0.5, 1.08); g.stroke();
+        g.strokeStyle = '#2a2a33'; g.lineWidth = 0.06; g.beginPath(); g.moveTo(-0.45, 1.08); g.lineTo(-0.85, 1.12); g.stroke();
+      } else {
+        ell(-0.42, 0.95, 0.2, 0.5, fl ? '#ffd23f' : '#a8642f');
+        g.fillStyle = '#5a5a66'; g.beginPath(); g.arc(-0.48, 0.95, 0.07, 0, 7); g.fill();
       }
+    } else if (f.type === 'gull') {
+      const flap = Math.sin(f.t * 10);
+      if (f.fireT < 50) ell(0.05, -0.3, 0.14, 0.14, '#1b1b22');
+      ell(0, 0, 0.45, 0.2, fl ? '#ffd23f' : '#fff');
+      ell(-0.42, 0.12, 0.16, 0.14, '#fff');
+      g.fillStyle = '#ffb02e'; g.beginPath(); g.moveTo(-0.55, 0.13); g.lineTo(-0.82, 0.08); g.lineTo(-0.55, 0.05); g.fill();
+      g.fillStyle = out; g.beginPath(); g.arc(-0.46, 0.16, 0.035, 0, 7); g.fill();
+      g.beginPath(); g.moveTo(-0.1, 0.05); g.lineTo(0.2, 0.1 + flap * 0.6); g.lineTo(0.38, 0.05); g.closePath(); g.fillStyle = '#e8eef5'; g.fill(); g.stroke();
+      g.fillStyle = '#2c5aa0'; g.fillRect(-0.56, 0.25, 0.26, 0.06);
+    } else if (f.type === 'cannon') {
+      g.save(); g.translate(-0.1, 0.75); g.rotate(-0.25); box(-1.1, -0.2, 1.4, 0.4, fl ? '#ffd23f' : '#2a2a33'); g.restore();
+      box(-0.6, 0.2, 1.2, 0.45, '#8a5a2b');
+      ell(-0.35, 0.2, 0.22, 0.22, '#5a3a1f'); ell(0.4, 0.2, 0.22, 0.22, '#5a3a1f');
+      g.fillStyle = '#6b4a2a'; g.fillRect(0.5, 0.6, 0.06, 1.1);
+      g.fillStyle = '#2c5aa0'; g.fillRect(0.56, 1.35, 0.45, 0.3);
     }
+    ctx.restore();
   }
 
   function drawShip() {
@@ -1025,12 +1101,17 @@
         ctx.fillStyle = '#1b1b22'; ctx.beginPath(); ctx.arc(sxOf(x), syOf(y), ppm * 0.32, 0, 7); ctx.fill();
         ctx.fillStyle = '#ff8a2b'; ctx.beginPath(); ctx.arc(sxOf(x) - ppm * 0.35, syOf(y) + ppm * 0.1, ppm * 0.14, 0, 7); ctx.fill();
       }
-      drawBots();
+      for (const f of foes) drawFoe(f);
+      for (const b of shots) { ctx.fillStyle = b.kind === 'bomb' ? '#1b1b22' : '#ffd23f'; ctx.beginPath(); ctx.arc(sxOf(b.x), syOf(b.y), ppm * (b.kind === 'bomb' ? 0.2 : 0.1), 0, 7); ctx.fill(); }
       const c = me.car;
+      if ((phase === 'play' || phase === 'boss') && me.punchCD <= 0 && me.punchT < 0 && me.crashT <= 0) { // target ring on what the punch would hit
+        const tg = punchTarget();
+        if (tg && tg.foe) { const q = punchPoint(tg); ctx.strokeStyle = 'rgba(255,138,43,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sxOf(q.x), syOf(q.y), ppm * (0.7 + Math.sin(time * 8) * 0.08), 0, 7); ctx.stroke(); }
+      }
       let o = null;
-      if (me.punchT >= 0 && ship) {
-        const ang = Math.atan2(ship.y + 3 - (c.y + 0.6), ship.x + 3 - c.x) - c.a;
-        const reach = Math.hypot(ship.x + 3 - c.x, ship.y + 3 - c.y);
+      if (me.punchT >= 0) {
+        const q = punchPoint(me.punchTgt);
+        const ang = Math.atan2(q.y - (c.y + 0.6), q.x - c.x) - c.a, reach = Math.hypot(q.x - c.x, q.y - c.y - 0.6);
         o = { punch: Math.sin(Math.PI * clamp(me.punchT / 0.34, 0, 1)) * reach, punchA: ang };
       }
       drawWorldCar(c.x, c.y, c.a, me.carId, me.hatId, c.wr, me.crashT > 0 && me.crashT < 0.5 ? me.crashT * 2 : 1, o);
@@ -1049,11 +1130,10 @@
     const x0 = 16, x1 = W - 16, h = 10 * sc;
     ctx.fillStyle = 'rgba(15,20,40,.6)'; rr(x0 - 4, y - 4, x1 - x0 + 8, h + 8, 9); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,.15)'; rr(x0, y, x1 - x0, h, 5); ctx.fill();
-    const kx = (p) => x0 + (x1 - x0 - 14) * clamp(shownPos(p) / FINISH, 0, 1);
-    ctx.fillStyle = '#36c46b'; rr(x0, y, Math.max(h, kx(me) - x0 + 6), h, 5); ctx.fill();
+    const mx = x0 + (x1 - x0 - 14) * clamp(me.car.x / FINISH, 0, 1);
+    ctx.fillStyle = '#36c46b'; rr(x0, y, Math.max(h, mx - x0 + 6), h, 5); ctx.fill();
     ctx.font = `${12 * sc}px system-ui`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('🏁', x1 + 2, y + h / 2);
-    for (const b of bots) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(kx(b) + 6, y + h / 2, 5 * sc, 0, 7); ctx.fill(); ctx.strokeStyle = '#1b1530'; ctx.lineWidth = 2; ctx.stroke(); }
-    ctx.fillStyle = '#36c46b'; ctx.beginPath(); ctx.arc(kx(me) + 6, y + h / 2, 8 * sc, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#36c46b'; ctx.beginPath(); ctx.arc(mx + 6, y + h / 2, 8 * sc, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
     return y + h + 8;
   }
 
@@ -1064,10 +1144,8 @@
     let y = 18;
     if (!bossMode) {
       y = drawTrack(18, sc) + 6;
-      const rank = ranking().indexOf(me) + 1;
-      ctx.fillStyle = rank === 1 ? '#ffc531' : 'rgba(15,20,40,.75)'; rr(12, y, 70 * sc, 36 * sc, 12); ctx.fill();
-      txt(`#${rank}`, 12 + 26 * sc, y + 19 * sc, 22 * sc, rank === 1 ? '#3a1c06' : '#fff', 'center');
-      txt('/5', 12 + 52 * sc, y + 21 * sc, 12 * sc, rank === 1 ? '#3a1c06' : 'rgba(255,255,255,.7)', 'center', 800);
+      ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(12, y, 80 * sc, 34 * sc, 12); ctx.fill();
+      txt(`💀 ${kos}`, 12 + 40 * sc, y + 18 * sc, 18 * sc, '#fff', 'center');
       const left = Math.max(0, Math.round(FINISH - me.car.x));
       if (phase === 'play') txt(`${left} ${T.toGo}`, W / 2, y + 18 * sc, 13 * sc, '#fff', 'center', 800);
     } else if (ship) {
@@ -1103,7 +1181,6 @@
     }
     ctx.globalAlpha = 1;
     if (phase === 'play') {
-      txt(`● ${38 + Math.round(Math.sin(time * 0.7) * 6 + Math.sin(time * 2.3) * 3)} ms`, W / 2, isPc ? H - 62 : H - 12, 11, 'rgba(255,255,255,.55)', 'center', 700);
       if (elapsed < 1.6) banner(T.go, '#36c46b', H * 0.3);
       if (!goSfx) { goSfx = true; sfx.go(); }
       else if (elapsed < 5 && me.car.x < 20) banner(isPc ? T.ctlHintPc : T.ctlHint, '#fff', H * 0.4, Math.min(W * 0.05, 22));
@@ -1134,10 +1211,10 @@
   function syncControls() {
     const on = me && (phase === 'play' || phase === 'bossIntro' || phase === 'boss' || phase === 'win');
     $('ctl').classList.toggle('hidden', !on);
-    const showPunch = on && phase === 'boss';
+    const showPunch = on && (phase === 'play' || phase === 'boss');
     $('punch').classList.toggle('hidden', !showPunch);
     if (showPunch) {
-      const p = Math.round(360 * (1 - clamp(me.punchCD / 0.9, 0, 1)));
+      const p = Math.round(360 * (1 - clamp(me.punchCD / PUNCH_CD, 0, 1)));
       if (p !== lastPunchP) { lastPunchP = p; $('punch').style.setProperty('--p', p + 'deg'); }
     }
     const ks = $('knob').style;
@@ -1168,7 +1245,7 @@
   function releaseAll() { input.gas = input.brake = input.kGas = input.kBrake = input.kBack = input.kFwd = false; input.joyX = input.joyY = 0; }
 
   // ---------- Screens ----------
-  const screens = ['menu', 'shop', 'match', 'result'];
+  const screens = ['menu', 'shop', 'result'];
   function show(id) { screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
 
   function renderMenu() {
@@ -1271,31 +1348,9 @@
     g.beginPath(); for (let x = 0; x <= w; x += 4) x ? g.lineTo(x, y(x)) : g.moveTo(x, y(x)); g.lineWidth = 8; g.strokeStyle = th.grass; g.stroke();
   }
 
-  function startMatchmaking() {
+  function startRace() {
     unlockAudio();
-    phase = 'match'; show('match');
-    $('matchTitle').textContent = T.finding;
-    const list = $('plist'); list.innerHTML = '';
-    const used = new Set(), names = [];
-    const add = (name, isMe) => {
-      const row = document.createElement('div'); row.className = 'prow' + (isMe ? ' me' : '');
-      row.innerHTML = `<span></span><span class="ping">${isMe ? '' : (20 + Math.random() * 90 | 0) + ' ms'}</span>`;
-      row.firstChild.textContent = name;
-      list.appendChild(row);
-      $('matchCount').textContent = `${list.children.length}/${BOTS + 1}`;
-    };
-    add(`🏴‍☠️ ${T.you}`, true);
-    let n = 0;
-    const tick = () => {
-      if (phase !== 'match') return;
-      if (n < BOTS) { const name = randName(used); names.push(name); add(name, false); n++; sfx.tick(n); setTimeout(tick, rnd(90, 220)); }
-      else setTimeout(() => startRace(names), 300);
-    };
-    setTimeout(tick, 250);
-  }
-
-  function startRace(names) {
-    newRace(names);
+    newRace();
     releaseAll();
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space must punch, not re-press a menu button
     show(null);
@@ -1311,14 +1366,13 @@
     save.coins += reward;
     persist();
     $('rTitle').textContent = T.won;
-    $('rSub').textContent = `${T.boss} #${stage} · ${T.rank}`;
+    $('rSub').textContent = `🏝️ ${island().name} · ${T.boss} #${stage}`;
     const board = $('rBoard'); board.innerHTML = '';
-    ranking().forEach((p, i) => {
-      const row = document.createElement('div'); row.className = 'brow' + (p.isMe ? ' me' : '');
-      row.innerHTML = `<span></span><span>${p.final ?? Math.round(posOf(p))} m</span>`;
-      row.firstChild.textContent = `${i === 0 ? '👑' : '#' + (i + 1)}  ${p.avatar ? p.avatar + ' ' : ''}${p.name}`;
+    for (const [k, v] of [['📏 ' + T.dist, `${FINISH} m`], ['💀 ' + T.kos, kos], ['🤸 ' + T.flipsL, me.flips]]) {
+      const row = document.createElement('div'); row.className = 'brow';
+      row.innerHTML = '<span></span><span></span>'; row.firstChild.textContent = k; row.lastChild.textContent = v;
       board.appendChild(row);
-    });
+    }
     $('rCoins').textContent = '+' + fmt(reward);
     const news = HATS.filter(x => x.boss === stage).map(x => x.name);
     $('rUnlock').classList.toggle('hidden', !news.length);
@@ -1329,7 +1383,7 @@
   }
 
   function toMenu() {
-    phase = 'menu'; me = null; ship = null; bots = []; parts = []; popups = []; balls = [];
+    phase = 'menu'; me = null; ship = null; foes = []; shots = []; parts = []; popups = []; balls = [];
     FINISH = 900; genTerrain(save.bosses + 1);
     demo = newCar(8); camX = demo.x; camY = demo.y;
     show('menu'); renderMenu();
@@ -1413,6 +1467,9 @@
     crash() { for (let i = 0; i < 3; i++) { osc(rnd(70, 95), 0.18, 0.25, { delay: i * 0.08, to: 50 }); hiss(0.1, 0.18, { filter: 'lowpass', f: 700, delay: i * 0.08 }); } },
     tick(n) { hiss(0.05, 0.03, { f: 1200 + n * 40, q: 5 }); },
     low() { osc(880, 0.035, 0.12, { type: 'triangle' }); },
+    ko(n) { osc(140, 0.18, 0.15, { to: 70 }); hiss(0.1, 0.1, { filter: 'lowpass', f: 900 }); osc(PENTA[Math.min(3 + n, PENTA.length - 1)], 0.06, 0.5, { delay: 0.04, send: 0.5 }); },
+    shot() { hiss(0.04, 0.06, { f: 2500, q: 2, pan: 0.4 }); },
+    thud() { osc(90, 0.2, 0.18, { to: 50 }); hiss(0.08, 0.1, { filter: 'lowpass', f: 600 }); },
     ui() { osc(420, 0.07, 0.09, { to: 560 }); hiss(0.025, 0.03, { f: 1600, q: 3 }); },
     buy() { [0, 2, 4].forEach((k, i) => osc(PENTA[k + 2], 0.06, 0.6, { delay: i * 0.07, send: 0.5 })); },
     first() { osc(523.25, 0.06, 0.9, { send: 0.6 }); osc(783.99, 0.04, 0.9, { delay: 0.08, send: 0.6 }); },
@@ -1468,7 +1525,7 @@
     $('keys').innerHTML = `<span class="key"><b>A</b>${T.brake}</span><span class="key"><b>D</b>${T.gas}</span><span class="key"><b>W</b><b>S</b>${T.tilt}</span>`;
 
     if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
-    $('playBtn').onclick = startMatchmaking;
+    $('playBtn').onclick = startRace;
     $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'upgrades'; show('shop'); renderShop(); };
     $('shopBack').onclick = () => { show('menu'); renderMenu(); };
     $('contBtn').onclick = toMenu;
