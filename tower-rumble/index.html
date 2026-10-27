@@ -905,14 +905,25 @@
     const o = auraOutline(P, tb, yTop, sc), rgb = AURA_RGB[kind], k = 0.5 + lvl * 0.2;
     const tint = (a) => kind === 'rainbow' ? `hsla(${(time * 90) % 360},100%,60%,${a})` : `rgba(${rgb},${a})`;
     ctx.save();
+    const n = 10 + lvl * 6;
+    const spots = [];
+    for (let i = 0; i < n; i++) {
+      const u = 0.06 + 0.88 * hash(i * 3.1 + 1), v = 0.06 + 0.88 * hash(i * 7.3 + 2);
+      const [x, y] = P(tb.x + u * tb.w, yTop, tb.z + v * tb.d);
+      spots.push({ x, y, nx: 0, ny: -1, fade: 1, i });
+    }
+    spots.sort((a, b) => a.y - b.y);
+    // glow over the whole top face
+    ctx.fillStyle = tint(0.28 * k); ctx.shadowColor = tint(0.8); ctx.shadowBlur = 8 + lvl * 3;
+    ctx.beginPath(); o.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
     // rim: soft colored glow + bright core
     strokeOutline(o, (f) => tint(0.75 * f * k), 3 + lvl, 10 + lvl * 4);
     strokeOutline(o, (f) => `rgba(255,255,255,${0.9 * f})`, 1.2, 0);
 
-    const n = 10 + lvl * 6;
     if (kind === 'fire') {
-      for (let i = 0; i < n; i++) { // flames grow out of the rim and lean upward
-        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+      for (const q of spots) { // flames rising from the whole top face
+        const i = q.i;
         const fl = sc * (1.3 + lvl * 0.6) * (0.55 + 0.45 * Math.sin(time * 10 + i * 2.1)) * q.fade;
         let dx = q.nx * 0.5, dy = q.ny * 0.5 - 1; const dl = Math.hypot(dx, dy); dx /= dl; dy /= dl;
         const sway = Math.sin(time * 7 + i) * 0.35, w = sc * (0.35 + lvl * 0.06);
@@ -948,8 +959,8 @@
         ctx.fillStyle = `rgba(230,245,255,${a})`; ctx.beginPath(); ctx.arc(q.x, q.y, 1.5 + lvl * 0.5 * a, 0, 7); ctx.fill();
       }
     } else if (kind === 'frost') {
-      for (let i = 0; i < n; i++) { // ice spikes pointing out of the rim
-        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+      for (const q of spots) { // ice spikes growing up out of the top face
+        const i = q.i;
         const len = sc * (0.6 + lvl * 0.3) * (0.6 + 0.4 * hash(i)) * q.fade, w = sc * 0.3;
         ctx.fillStyle = `rgba(215,245,255,${0.9 * q.fade})`; ctx.strokeStyle = tint(0.8); ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(q.x + q.ny * w, q.y - q.nx * w); ctx.lineTo(q.x + q.nx * len, q.y + q.ny * len); ctx.lineTo(q.x - q.ny * w, q.y + q.nx * w);
@@ -959,7 +970,7 @@
         ctx.fillStyle = `rgba(255,255,255,${tw * q.fade})`; ctx.fillRect(q.x + q.nx * sc * 1.5 - 1, q.y + q.ny * sc * 1.5 - 3, 2, 6); ctx.fillRect(q.x + q.nx * sc * 1.5 - 3, q.y + q.ny * sc * 1.5 - 1, 6, 2); }
     } else if (kind === 'toxic') {
       for (let i = 0; i < 4 + lvl * 3; i++) { // bubbles popping off the rim
-        const u = (time * (0.6 + hash(i) * 0.5) + hash(i + 11)) % 1, q = o.at(hash(i + 3));
+        const u = (time * (0.6 + hash(i) * 0.5) + hash(i + 11)) % 1, q = spots[i % spots.length];
         const r = sc * (0.25 + hash(i + 5) * (0.3 + lvl * 0.1)), d = u * sc * (1.5 + lvl * 0.4);
         ctx.strokeStyle = `rgba(140,255,100,${(1 - u) * q.fade})`; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(q.x + q.nx * d, q.y + q.ny * d - u * sc * 2, r, 0, 7); ctx.stroke();
@@ -969,8 +980,8 @@
         ctx.fillStyle = tint(0.9 * (1 - u)); ctx.beginPath(); ctx.ellipse(q.x, q.y + u * sc * 4, sc * 0.3, sc * 0.55, 0, 0, 7); ctx.fill();
       }
     } else if (kind === 'holy' || kind === 'rainbow') {
-      for (let i = 0; i < n; i++) { // short light rays radiating out of the rim
-        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+      for (const q of spots) { // light rays shooting up from the top face
+        const i = q.i;
         const len = sc * (0.8 + lvl * 0.4) * (0.6 + 0.4 * Math.sin(time * 4 + i * 1.3)) * q.fade;
         ctx.strokeStyle = kind === 'holy' ? `rgba(255,215,90,${0.85 * q.fade})` : `hsla(${(i * 25 + time * 120) % 360},100%,60%,${0.9 * q.fade})`;
         ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath();
