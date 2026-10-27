@@ -71,6 +71,7 @@
 
   /* Result */
   #result { background: rgba(20,16,44,.9); color: #fff; justify-content: center; gap: 14px; text-align: center; }
+  #result.lost h2 { color: #ff5d73; -webkit-text-stroke-color: #5a0d1a; }
   #result h2 { margin: 0; font-size: clamp(30px, 9vw, 46px); font-weight: 900; color: var(--gold); -webkit-text-stroke: 2px #7a4a00; paint-order: stroke fill; }
   #result .sub { font-weight: 800; opacity: .85; }
   .board { width: min(340px, 90vw); display: flex; flex-direction: column; gap: 5px; }
@@ -79,6 +80,7 @@
   .reward { display: flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 900; }
   .reward .coin { width: 34px; height: 34px; }
   .unlock { background: var(--accent); border-radius: 12px; padding: 8px 14px; font-weight: 800; }
+  .menuBtn { background: transparent; color: #fff; opacity: .8; font-weight: 800; padding: 8px; text-decoration: underline; }
   .cont { background: var(--green); color: #fff; font-weight: 900; font-size: 20px; padding: 14px 40px; border-radius: 16px; box-shadow: 0 5px 0 #22924c; }
 </style>
 </head>
@@ -124,6 +126,7 @@
   <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
   <div class="unlock hidden" id="rUnlock"></div>
   <button class="cont" id="contBtn"></button>
+  <button class="menuBtn hidden" id="menuBtn"></button>
 </div>
 
 <script>
@@ -135,57 +138,83 @@
     en: { play: 'PLAY', boss: 'BOSS', stage: 'STAGE', shop: 'SHOP', back: 'BACK', hint: 'Defeat bosses to unlock more', blocks: 'Blocks', worlds: 'Worlds', avatars: 'Avatars', upgrades: 'Upgrades',
           finding: 'Finding players...', you: 'You', perfect: 'PERFECT!', miss: 'MISS!', floors: 'floors', shieldLost: 'SHIELD -1', fell: 'COLLAPSE!', go: 'GO!',
           bossIn: 'YOU ARE #1!', bossIn2: 'BOSS INCOMING', won: 'BOSS DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'EQUIP', equipped: 'EQUIPPED',
-          beat: 'Beat boss #', free: 'FREE', max: 'MAX', rush: 'RUSH!', smash: 'SMASH!', blocked: 'BLOCKED!', passed: 'You passed', missed: 'missed!', tapHint: 'TAP TO DROP', overtime: 'OVERTIME', rally: 'RALLY',
+          beat: 'Beat boss #', free: 'FREE', max: 'MAX', rush: 'RUSH!', smash: 'SMASH!', blocked: 'BLOCKED!', passed: 'You passed', missed: 'missed!', tapHint: 'TAP TO DROP', lost: 'DEFEAT', finished: 'You finished', bossWon: 'The boss held on', retry: 'TRY AGAIN', menu: 'Menu', timeUp: "TIME'S UP!",
           u_perfect: 'Perfect zone', u_perfect_d: 'Wider perfect window', u_slow: 'Slow motion', u_slow_d: 'Blocks move slower', u_start: 'Head start', u_start_d: '+2 floors at start',
-          u_power: 'Boss damage', u_power_d: '+25% damage to boss', u_shield: 'Extra shield', u_shield_d: '+1 shield per round', none: 'None' },
+          u_power: 'Boss damage', u_power_d: '+25% damage to boss', u_shield: 'Extra shield', u_shield_d: '+1 shield per round', none: 'None', u_time: 'Boss timer', u_time_d: '+2 s to beat the boss', u_coins: 'Coin boost', u_coins_d: '+10% coins per round', },
     es: { play: 'JUGAR', boss: 'JEFE', stage: 'NIVEL', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota jefes para desbloquear más', blocks: 'Bloques', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Mejoras',
           finding: 'Buscando jugadores...', you: 'Tú', perfect: '¡PERFECTO!', miss: '¡FALLASTE!', floors: 'pisos', shieldLost: 'ESCUDO -1', fell: '¡DERRUMBE!', go: '¡YA!',
           bossIn: '¡ERES EL #1!', bossIn2: 'LLEGA EL JEFE', won: '¡JEFE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EN USO',
-          beat: 'Vence al jefe #', free: 'GRATIS', max: 'MÁX', rush: '¡PRISA!', smash: '¡GOLPE!', blocked: '¡BLOQUEADO!', passed: 'Pasaste a', missed: '¡falló!', tapHint: 'TOCA PARA SOLTAR', overtime: 'TIEMPO EXTRA', rally: 'REMONTADA',
+          beat: 'Vence al jefe #', free: 'GRATIS', max: 'MÁX', rush: '¡PRISA!', smash: '¡GOLPE!', blocked: '¡BLOQUEADO!', passed: 'Pasaste a', missed: '¡falló!', tapHint: 'TOCA PARA SOLTAR', lost: 'DERROTA', finished: 'Terminaste', bossWon: 'El jefe resistió', retry: 'REINTENTAR', menu: 'Menú', timeUp: '¡SE ACABÓ EL TIEMPO!',
           u_perfect: 'Zona perfecta', u_perfect_d: 'Perfecto más fácil', u_slow: 'Cámara lenta', u_slow_d: 'Bloques más lentos', u_start: 'Ventaja', u_start_d: '+2 pisos al inicio',
-          u_power: 'Daño al jefe', u_power_d: '+25% de daño al jefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Ninguno' },
+          u_power: 'Daño al jefe', u_power_d: '+25% de daño al jefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Ninguno', u_time: 'Tiempo jefe', u_time_d: '+2 s para vencer al jefe', u_coins: 'Más monedas', u_coins_d: '+10% de monedas por partida', },
     pt: { play: 'JOGAR', boss: 'CHEFE', stage: 'FASE', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote chefes para desbloquear mais', blocks: 'Blocos', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Melhorias',
           finding: 'Procurando jogadores...', you: 'Você', perfect: 'PERFEITO!', miss: 'ERROU!', floors: 'andares', shieldLost: 'ESCUDO -1', fell: 'DESABOU!', go: 'JÁ!',
           bossIn: 'VOCÊ É O #1!', bossIn2: 'CHEFE CHEGANDO', won: 'CHEFE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EM USO',
-          beat: 'Vença o chefe #', free: 'GRÁTIS', max: 'MÁX', rush: 'PRESSA!', smash: 'PANCADA!', blocked: 'BLOQUEADO!', passed: 'Você passou', missed: 'errou!', tapHint: 'TOQUE PARA SOLTAR', overtime: 'PRORROGAÇÃO', rally: 'VIRADA',
+          beat: 'Vença o chefe #', free: 'GRÁTIS', max: 'MÁX', rush: 'PRESSA!', smash: 'PANCADA!', blocked: 'BLOQUEADO!', passed: 'Você passou', missed: 'errou!', tapHint: 'TOQUE PARA SOLTAR', lost: 'DERROTA', finished: 'Você terminou', bossWon: 'O chefe resistiu', retry: 'TENTAR DE NOVO', menu: 'Menu', timeUp: 'ACABOU O TEMPO!',
           u_perfect: 'Zona perfeita', u_perfect_d: 'Perfeito mais fácil', u_slow: 'Câmera lenta', u_slow_d: 'Blocos mais lentos', u_start: 'Vantagem', u_start_d: '+2 andares no início',
-          u_power: 'Dano ao chefe', u_power_d: '+25% de dano ao chefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Nenhum' },
+          u_power: 'Dano ao chefe', u_power_d: '+25% de dano ao chefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Nenhum', u_time: 'Tempo chefe', u_time_d: '+2 s para vencer o chefe', u_coins: 'Mais moedas', u_coins_d: '+10% de moedas por partida', },
   };
   let T = STRINGS.en;
 
   // ---------- Content ----------
   // Block skins: color for floor i as {h,s,l}.
   const BLOCKS = [
-    { id: 'classic', name: 'Classic', boss: 0, cost: 0,    c: (i) => ({ h: 200 + i * 7, s: 62, l: 56 }) },
-    { id: 'neon',    name: 'Neon',    boss: 1, cost: 150,  c: (i) => ({ h: i * 45, s: 100, l: 55 }) },
-    { id: 'wood',    name: 'Wood',    boss: 2, cost: 300,  c: (i) => ({ h: 28, s: 45, l: i % 2 ? 42 : 50 }) },
-    { id: 'candy',   name: 'Candy',   boss: 3, cost: 450,  c: (i) => i % 2 ? { h: 330, s: 85, l: 70 } : { h: 0, s: 0, l: 92 } },
-    { id: 'gold',    name: 'Gold',    boss: 4, cost: 700,  c: (i) => ({ h: 45, s: 92, l: i % 3 ? 50 : 60 }) },
-    { id: 'crystal', name: 'Crystal', boss: 5, cost: 1000, c: (i) => ({ h: 185 + (i % 4) * 6, s: 75, l: 72 }) },
-    { id: 'lava',    name: 'Lava',    boss: 6, cost: 1400, c: (i) => i % 2 ? { h: 12, s: 95, l: 48 } : { h: 38, s: 98, l: 55 } },
-    { id: 'rainbow', name: 'Rainbow', boss: 8, cost: 2000, c: (i) => ({ h: i * 25 + time * 60, s: 85, l: 58 }) },
+    { id: 'classic',  name: 'Classic',  boss: 0,  cost: 0,     c: (i) => ({ h: 200 + i * 7, s: 62, l: 56 }) },
+    { id: 'neon',     name: 'Neon',     boss: 0,  cost: 150,   c: (i) => ({ h: i * 45, s: 100, l: 55 }) },
+    { id: 'wood',     name: 'Wood',     boss: 1,  cost: 250,   c: (i) => ({ h: 28, s: 45, l: i % 2 ? 42 : 50 }) },
+    { id: 'candy',    name: 'Candy',    boss: 1,  cost: 400,   c: (i) => i % 2 ? { h: 330, s: 85, l: 70 } : { h: 0, s: 0, l: 92 } },
+    { id: 'mint',     name: 'Mint',     boss: 2,  cost: 650,   c: (i) => ({ h: 150, s: 55, l: i % 2 ? 62 : 70 }) },
+    { id: 'ocean',    name: 'Ocean',    boss: 2,  cost: 1000,  c: (i) => ({ h: 200 + (i % 3) * 8, s: 80, l: 45 }) },
+    { id: 'gold',     name: 'Gold',     boss: 3,  cost: 1500,  c: (i) => ({ h: 45, s: 92, l: i % 3 ? 50 : 60 }) },
+    { id: 'ice',      name: 'Ice',      boss: 4,  cost: 2300,  c: (i) => ({ h: 195, s: 60, l: i % 2 ? 82 : 74 }) },
+    { id: 'toxic',    name: 'Toxic',    boss: 5,  cost: 3500,  c: (i) => ({ h: 95, s: 90, l: i % 2 ? 45 : 55 }) },
+    { id: 'crystal',  name: 'Crystal',  boss: 6,  cost: 5200,  c: (i) => ({ h: 185 + (i % 4) * 6, s: 75, l: 72 }) },
+    { id: 'sunset',   name: 'Sunset',   boss: 7,  cost: 8000,  c: (i) => ({ h: 340 + (i % 6) * 10, s: 85, l: 58 }) },
+    { id: 'lava',     name: 'Lava',     boss: 8,  cost: 12000, c: (i) => i % 2 ? { h: 12, s: 95, l: 48 } : { h: 38, s: 98, l: 55 } },
+    { id: 'marble',   name: 'Marble',   boss: 9,  cost: 18000, c: (i) => i % 3 ? { h: 0, s: 0, l: 88 } : { h: 220, s: 10, l: 60 } },
+    { id: 'galaxy',   name: 'Galaxy',   boss: 10, cost: 27000, c: (i) => ({ h: 260 + Math.sin(i) * 25, s: 70, l: 35 + (i % 3) * 8 }) },
+    { id: 'obsidian', name: 'Obsidian', boss: 12, cost: 40000, c: (i) => ({ h: 270, s: 30, l: i % 2 ? 16 : 24 }) },
+    { id: 'diamond',  name: 'Diamond',  boss: 14, cost: 60000, c: (i) => ({ h: 180 + (i * 13) % 60, s: 90, l: 78 }) },
+    { id: 'rainbow',  name: 'Rainbow',  boss: 16, cost: 90000, c: (i) => ({ h: i * 25 + time * 60, s: 85, l: 58 }) },
   ];
   const WORLDS = [
-    { id: 'classic', name: 'Twilight', boss: 0, cost: 0 },
-    { id: 'city',    name: 'City',     boss: 1, cost: 250 },
-    { id: 'beach',   name: 'Beach',    boss: 3, cost: 600 },
-    { id: 'space',   name: 'Space',    boss: 5, cost: 1100 },
-    { id: 'volcano', name: 'Volcano',  boss: 7, cost: 1800 },
+    { id: 'classic', name: 'Twilight', boss: 0,  cost: 0 },
+    { id: 'city',    name: 'City',     boss: 0,  cost: 300 },
+    { id: 'beach',   name: 'Beach',    boss: 1,  cost: 700 },
+    { id: 'snow',    name: 'Snow',     boss: 2,  cost: 1300 },
+    { id: 'desert',  name: 'Desert',   boss: 3,  cost: 2200 },
+    { id: 'forest',  name: 'Forest',   boss: 4,  cost: 3500 },
+    { id: 'space',   name: 'Space',    boss: 6,  cost: 5500 },
+    { id: 'synth',   name: 'Synthwave',boss: 8,  cost: 8500 },
+    { id: 'volcano', name: 'Volcano',  boss: 10, cost: 13000 },
   ];
   const AVATARS = [
-    { id: 'none',  e: '',   boss: 0, cost: 0 },
-    { id: 'cat',   e: '🐱', boss: 1, cost: 100 },
-    { id: 'fox',   e: '🦊', boss: 2, cost: 200 },
-    { id: 'robot', e: '🤖', boss: 3, cost: 350 },
-    { id: 'alien', e: '👽', boss: 4, cost: 500 },
-    { id: 'dragon',e: '🐲', boss: 6, cost: 900 },
-    { id: 'crown', e: '👑', boss: 8, cost: 1500 },
+    { id: 'none',    e: '',   boss: 0,  cost: 0 },
+    { id: 'cat',     e: '🐱', boss: 0,  cost: 100 },
+    { id: 'dog',     e: '🐶', boss: 0,  cost: 180 },
+    { id: 'frog',    e: '🐸', boss: 1,  cost: 300 },
+    { id: 'panda',   e: '🐼', boss: 1,  cost: 450 },
+    { id: 'fox',     e: '🦊', boss: 2,  cost: 650 },
+    { id: 'monkey',  e: '🐵', boss: 2,  cost: 900 },
+    { id: 'robot',   e: '🤖', boss: 3,  cost: 1300 },
+    { id: 'alien',   e: '👽', boss: 4,  cost: 1800 },
+    { id: 'ghost',   e: '👻', boss: 5,  cost: 2500 },
+    { id: 'unicorn', e: '🦄', boss: 6,  cost: 3500 },
+    { id: 'tiger',   e: '🐯', boss: 7,  cost: 5000 },
+    { id: 'octopus', e: '🐙', boss: 8,  cost: 7000 },
+    { id: 'dragon',  e: '🐲', boss: 10, cost: 10000 },
+    { id: 'trex',    e: '🦖', boss: 12, cost: 14000 },
+    { id: 'skull',   e: '💀', boss: 14, cost: 20000 },
+    { id: 'crown',   e: '👑', boss: 16, cost: 30000 },
   ];
+  // Each level costs ~1.85x the previous one.
   const UPGRADES = [
     { id: 'perfect', icon: '🎯', base: 60,  max: 8 },
     { id: 'slow',    icon: '🐢', base: 70,  max: 8 },
     { id: 'start',   icon: '🏗️', base: 80,  max: 10 },
     { id: 'power',   icon: '💥', base: 90,  max: 10 },
+    { id: 'time',    icon: '⏱️', base: 150, max: 5 },
+    { id: 'coins',   icon: '💰', base: 120, max: 10 },
     { id: 'shield',  icon: '🛡️', base: 250, max: 3 },
   ];
   const NAMES = ['Bobko', 'EvRidiki', 'Missk', 'ChopperArtro', 'Pool', 'Blitzstrike', 'Teslaa', 'Junky', 'Magic', 'Sung', 'NoobMaster', 'Kirito', 'Luna', 'Zed', 'Pixel', 'Moka',
@@ -194,7 +223,7 @@
 
   // ---------- Save (Bridge storage) ----------
   let save = { coins: 0, bosses: 0, owned: { blocks: ['classic'], worlds: ['classic'], avatars: ['none'] },
-               eq: { blocks: 'classic', worlds: 'classic', avatars: 'none' }, up: { perfect: 0, slow: 0, start: 0, power: 0, shield: 0 }, seen: 3 };
+               eq: { blocks: 'classic', worlds: 'classic', avatars: 'none' }, up: { perfect: 0, slow: 0, start: 0, power: 0, shield: 0, time: 0, coins: 0 }, seen: 7 };
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
   function persist() { if (B) B.storage.set(['tower_rumble'], [JSON.stringify(save)]).catch(() => {}); }
@@ -212,7 +241,7 @@
   }
   const CATS = { blocks: BLOCKS, worlds: WORLDS, avatars: AVATARS };
   const byId = (cat, id) => CATS[cat].find(x => x.id === id) || CATS[cat][0];
-  const upCost = (u) => Math.round(u.base * Math.pow(1.6, save.up[u.id]));
+  const upCost = (u) => Math.round(u.base * Math.pow(1.85, save.up[u.id]) / 10) * 10;
   const myAvatar = () => byId('avatars', save.eq.avatars).e;
   const unlockedCount = () => Object.values(CATS).reduce((n, list) => n + list.filter(x => save.bosses >= x.boss).length, 0);
 
@@ -229,7 +258,7 @@
   }
 
   // ---------- Towers ----------
-  const SIZE = 10, BH = 2, BASE = 20, RANGE = 11, ROUND = 30, BOTS = 4;
+  const SIZE = 10, BH = 2, BASE = 20, RANGE = 11, ROUND = 30, BOSS_TIME = 20, BOTS = 4;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -280,6 +309,8 @@
   const speedMul = () => 1 - save.up.slow * 0.045;
   const maxShields = () => 3 + save.up.shield;
   const bossDmgMul = () => 1 + save.up.power * 0.25;
+  const coinMul = () => 1 + save.up.coins * 0.1;
+  const bossTime = () => BOSS_TIME + save.up.time * 2;
   const skinFn = () => byId('blocks', save.eq.blocks).c;
 
   function newRace(names) {
@@ -287,10 +318,10 @@
     bots = names.map((name, i) => {
       const skins = BLOCKS.slice(0, 7);
       const b = { name, avatar: BOT_AVATARS[(Math.random() * BOT_AVATARS.length) | 0], tower: makeTower(skins[(i + 1) % skins.length].c, 0),
-                  rate: rnd(0.75, 1.25) * (i < 2 ? 1.15 : 1), perfectP: rnd(0.15, 0.4), missP: rnd(0.03, 0.08), next: rnd(0.3, 1.2), streak: 0, bias: i % 4 };
+                  rate: rnd(0.65, 1.05) * (i < 2 ? 1.12 : 1), perfectP: rnd(0.15, 0.4), missP: rnd(0.03, 0.08), next: rnd(0.3, 1.2), streak: 0, bias: i % 4 };
       return b;
     });
-    elapsed = 0; goSfx = false; overtime = false; feed = []; popups = []; parts = []; boss = null; shake = 0; rushT = 0; lastRank = 10;
+    elapsed = 0; goSfx = false; raceWon = false; shots = []; effects = []; feed = []; popups = []; parts = []; boss = null; shake = 0; rushT = 0; lastRank = 10;
     spawnCur();
     opp = null; pickOpponent();
   }
@@ -307,7 +338,7 @@
   const shownFloors = (p) => phase !== 'play' && p.final != null ? p.final : floorsOf(p.tower);
   function ranking() {
     // Once the race is over you stay #1, even if the boss knocks floors off.
-    const locked = phase !== 'play' && phase !== 'match';
+    const locked = raceWon;
     return everyone().slice().sort((a, b) => (locked ? (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0) : 0)
       || floorsOf(b.tower) - floorsOf(a.tower) || (b.isMe ? 1 : 0) - (a.isMe ? 1 : 0));
   }
@@ -323,16 +354,15 @@
   function botCap(b) {
     const pf = floorsOf(me.tower), k = elapsed / ROUND;
     if (k < 0.45) return pf + 5 + b.bias;
-    if (k < 0.75) return pf + 1;
-    return pf - 1 - b.bias;
+    if (k < 0.75) return pf + 3;
+    return pf + 1 + (b.bias % 2);
   }
 
   function updateBots(dt) {
-    if (elapsed >= ROUND) return; // overtime: the clock is out, only you can still build
     for (const b of bots) {
       b.next -= dt;
       if (b.next > 0) continue;
-      b.next = (1 / b.rate) * rnd(0.7, 1.3);
+      b.next = (1 / (b.rate * (elapsed / ROUND > 0.6 ? 0.75 : 1))) * rnd(0.7, 1.3);
       const f = floorsOf(b.tower), cap = botCap(b);
       if (f >= cap) continue;
       if (Math.random() < b.missP && f > 3) { dropFloors(b.tower, 1); if (Math.random() < 0.4) pushFeed(`${b.name} ${T.missed}`, false); continue; }
@@ -368,14 +398,41 @@
       sfx.chop(); buzz(8);
     }
     t.blocks.push(nb);
-    if (phase === 'play' && (overtime || elapsed / ROUND > 0.6) && !leading()) {
-      const extra = overtime ? 2 : 1;
-      for (let i = 0; i < extra; i++) t.blocks.push({ ...nb, off: (i + 1) * 4 });
-      popup(`${T.rally} +${extra}`, '#7cff8a');
-    }
     me.axis = me.axis === 'x' ? 'z' : 'x';
-    if (phase === 'boss') hitBoss(perfect);
+    const hue = t.skin(floorsOf(t) - 1).h;
+    if (phase === 'boss') {
+      const combo = me.combo;
+      fire(() => { if (phase === 'boss') { hitBoss(perfect, combo); impact(anchors.foe, perfect ? '#ffd23f' : '#ff8ce0', perfect ? 1 : 0.6); } }, hue);
+    } else if (phase === 'play' && perfect && opp && floorsOf(opp.tower) > 0) {
+      const victim = opp, n = me.combo >= 5 ? 2 : 1;
+      fire(() => {
+        const k = Math.min(n, floorsOf(victim.tower));
+        if (!k) return;
+        dropFloors(victim.tower, k);
+        for (const d of victim.tower.debris.slice(-k)) d.vy = rnd(12, 22);
+        victim.jolt = 1;
+        impact(anchors.foe, '#ffd23f', 0.8);
+        popup(`💥 -${k}`, '#ff8ce0', 'opp');
+        pushFeed(`💥 ${victim.name} -${k}`, true);
+        sfx.bossHit(true); buzz(15);
+      }, hue);
+    }
     spawnCur();
+  }
+
+  // A thrown block flies in an arc from your tower top to the opponent's, then runs onHit.
+  function fire(onHit, hue) {
+    shots.push({ x0: anchors.me[0], y0: anchors.me[1], t: 0, dur: 0.36, onHit, hue });
+    sfx.throw();
+  }
+  function impact(pt, color, size) {
+    const [x, y] = pt;
+    effects.push({ kind: 'ring', x, y, r: 70 * size, t: 0, dur: 0.45, c: color });
+    for (let i = 0; i < 16 * size; i++) {
+      const a = rnd(0, Math.PI * 2), v = rnd(120, 380) * size;
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 160, t: 0, life: rnd(0.4, 0.8), c: Math.random() < 0.5 ? color : '#ffffff', r: rnd(2, 5) });
+    }
+    shake = Math.max(shake, 5 * size);
   }
 
   function miss() {
@@ -388,9 +445,8 @@
       popup(`${T.shieldLost}  -1`, '#5ad1ff');
       sfx.shield(); buzz(30);
     } else {
-      const n = overtime ? 1 : 3;
-      dropFloors(t, n);
-      popup(`${T.fell}  -${n}`, '#ff5d73');
+      dropFloors(t, 3);
+      popup(`${T.fell}  -3`, '#ff5d73');
       sfx.collapse(); buzz([30, 40, 30]);
     }
     shake = 10;
@@ -406,7 +462,7 @@
 
   // ---------- Boss ----------
   function startBossIntro() {
-    phase = 'bossIntro'; introT = 2.6;
+    phase = 'bossIntro'; introT = 2.6; raceWon = true;
     for (const p of everyone()) p.final = floorsOf(p.tower); // race standings, frozen for the strip and results
     sfx.bossIntro();
   }
@@ -416,12 +472,13 @@
     const floors = floorsOf(me.tower) + 10 + stage * 2;
     const tw = makeTower((i) => i % 2 ? { h: 350, s: 70, l: 22 } : { h: 352, s: 80, l: 45 }, floors);
     tw.cam = 0; // rises from the ground
-    boss = { name: `${T.boss} Lv${stage * 5 + 10}`, tower: tw, hp: 18 + stage * 6, hpMax: 18 + stage * 6, floors0: floors, eyes: 0 };
+    boss = { name: `${T.boss} Lv${stage * 5 + 10}`, tower: tw, hp: 14 + stage * 4, hpMax: 14 + stage * 4, floors0: floors, timeLeft: bossTime(), hurt: 0, jolt: 0, lunge: 0, wind: false, roar: 1.4 };
     phase = 'boss'; attackT = 4; rushT = 0;
   }
 
-  function hitBoss(perfect) {
-    const dmg = (perfect ? 2 : 1) * (1 + Math.min(me.combo, 8) * 0.15) * bossDmgMul();
+  function hitBoss(perfect, combo) {
+    const dmg = (perfect ? 2 : 1) * (1 + Math.min(combo, 8) * 0.15) * bossDmgMul();
+    boss.hurt = 0.3; boss.jolt = 1;
     boss.hp = Math.max(0, boss.hp - dmg);
     const target = Math.ceil(boss.floors0 * boss.hp / boss.hpMax);
     const n = floorsOf(boss.tower) - target;
@@ -435,10 +492,12 @@
   function bossAttack() {
     if (Math.random() < 0.55) {
       rushT = 3;
+      effects.push({ kind: 'zap', x0: anchors.foe[0], y0: anchors.foe[1], x1: anchors.me[0], y1: anchors.me[1], t: 0, dur: 0.5 });
       popup('⚡ ' + T.rush, '#ffd23f');
       sfx.rush();
     } else {
       shake = 14;
+      impact(anchors.me, '#ff5d73', 1.2);
       if (me.shields > 0) { me.shields--; popup('💥 ' + T.smash + ' ' + T.blocked, '#5ad1ff'); }
       else { dropFloors(me.tower, 1); popup('💥 ' + T.smash + ' -1', '#ff5d73'); spawnCur(); }
       sfx.smash(); buzz(40);
@@ -447,12 +506,20 @@
 
   function bossDefeated() {
     phase = 'win'; winT = 2.4; cur = null;
+    impact(anchors.foe, '#ffd23f', 2);
     dropFloors(boss.tower, floorsOf(boss.tower));
     for (const b of boss.tower.debris) b.vy = rnd(4, 18);
     for (let i = 0; i < 40; i++) parts.push({ x: W * 0.72, y: H * 0.5, vx: rnd(-300, 300), vy: rnd(-500, -100), t: 0, life: rnd(0.8, 1.6), c: Math.random() < 0.6 ? '#ffc531' : '#e8364f', r: rnd(4, 9) });
     shake = 18;
     sfx.bossDown(); buzz([20, 30, 20, 30, 60]);
     send('level_completed');
+  }
+
+  function lose(why) {
+    phase = 'lose'; loseT = 2; loseWhy = why; cur = null;
+    shake = 12;
+    sfx.collapse(); buzz([40, 60, 40]);
+    send('level_failed');
   }
 
   // ---------- Feedback ----------
@@ -492,18 +559,33 @@
       lastRank = rank;
       if (elapsed >= ROUND) {
         if (leading()) startBossIntro();
-        else if (!overtime) { overtime = true; popup(T.overtime, '#ffd23f'); }
+        else lose('race');
       }
     } else if (phase === 'bossIntro') {
       introT -= dt; if (introT <= 0) spawnBoss();
     } else if (phase === 'boss') {
-      attackT -= dt; rushT -= dt;
-      if (attackT <= 0) { attackT = rnd(4.5, 6.5); bossAttack(); }
+      attackT -= dt; rushT -= dt; boss.timeLeft -= dt;
+      if (!boss.wind && attackT <= 0.8) { boss.wind = true; sfx.windup(); }
+      if (attackT <= 0) { attackT = rnd(4.5, 6.5); boss.wind = false; boss.lunge = 1; bossAttack(); }
+      if (boss.hp / boss.hpMax < 0.3 && Math.random() < dt * 4) // sweating when low
+        parts.push({ x: anchors.foe[0] + rnd(-30, 30), y: anchors.foe[1], vx: rnd(-40, 40), vy: -rnd(60, 140), t: 0, life: 0.7, c: '#9fe3ff', r: 3 });
+      if (boss.timeLeft <= 0) lose('boss');
     } else if (phase === 'win') {
       winT -= dt; if (winT <= 0) showResult();
+    } else if (phase === 'lose') {
+      loseT -= dt; if (loseT <= 0) showLoss();
     }
     if (me) { updateTower(me.tower, dt); for (const b of bots) updateTower(b.tower, dt); }
-    if (boss) updateTower(boss.tower, dt);
+    if (boss) {
+      updateTower(boss.tower, dt);
+      boss.hurt -= dt; boss.jolt *= Math.exp(-dt * 10); boss.lunge = Math.max(0, boss.lunge - dt * 3);
+      if (boss.roar > 0) { boss.roar -= dt; shake = Math.max(shake, 5); }
+    }
+    for (const b of bots) if (b.jolt) b.jolt *= Math.exp(-dt * 8);
+    for (const s of shots) { s.t += dt; if (s.t >= s.dur && !s.done) { s.done = true; s.onHit(); } }
+    shots = shots.filter(s => !s.done);
+    for (const e of effects) e.t += dt;
+    effects = effects.filter(e => e.t < e.dur);
     if (demo) { updateTower(demo, dt); demoT -= dt; if (demoT <= 0) { demoT = 0.9; if (floorsOf(demo) > 40) dropFloors(demo, 30); else botPlace({ tower: demo, perfectP: 0.5, streak: 0, name: '' }); } }
     for (const p of popups) p.t += dt;
     popups = popups.filter(p => p.t < 1.1);
@@ -513,7 +595,9 @@
     parts = parts.filter(p => p.t < p.life);
     shake = Math.max(0, shake - dt * 40);
   }
-  let demoT = 0, goSfx = false, overtime = false;
+  let demoT = 0, goSfx = false, raceWon = false, loseT = 0, loseWhy = '';
+  let shots = [], effects = [];
+  const anchors = { me: [0, 0], foe: [0, 0] }; // screen-space tower tops, refreshed every frame
 
   // ---------- Rendering ----------
   const hsl = (c, dl, a) => `hsla(${((c.h % 360) + 360) % 360},${c.s}%,${clamp(c.l + dl, 0, 100)}%,${a ?? 1})`;
@@ -590,6 +674,49 @@
       }
       ctx.fillStyle = '#ff8c42'; ctx.beginPath(); ctx.arc(W * 0.2, H * 0.2 + scroll * 0.1, Math.min(W, H) * 0.07, 0, 7); ctx.fill();
       ctx.strokeStyle = 'rgba(255,220,180,.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(W * 0.2, H * 0.2 + scroll * 0.1, Math.min(W, H) * 0.12, Math.min(W, H) * 0.03, -0.3, 0, 7); ctx.stroke();
+    } else if (w === 'snow') {
+      g.addColorStop(0, '#8ccaf5'); g.addColorStop(1, '#eaf6ff');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (const [col, base, k] of [['#c9dcef', 0.62, 0.3], ['#ffffff', 0.72, 0.5]]) {
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+        for (let x = 0; x <= W + 80; x += 80) ctx.lineTo(x, H * base + scroll * k - Math.abs(Math.sin(x * 0.013 + base * 9)) * H * 0.14);
+        ctx.lineTo(W, H); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      for (let i = 0; i < 60; i++) { const x = (i * 137 + Math.sin(time + i) * 20) % W, y = (time * (30 + (i % 5) * 8) + i * 61) % H; ctx.fillRect(x, y, 3, 3); }
+    } else if (w === 'desert') {
+      g.addColorStop(0, '#ff9f5a'); g.addColorStop(1, '#ffe0a1');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#fff1b8'; ctx.beginPath(); ctx.arc(W * 0.25, H * 0.25 + scroll * 0.1, Math.min(W, H) * 0.11, 0, 7); ctx.fill();
+      for (const [col, base, k] of [['#e8a25a', 0.7, 0.35], ['#d98a3e', 0.8, 0.55]]) {
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+        for (let x = 0; x <= W + 40; x += 40) ctx.lineTo(x, H * base + scroll * k + Math.sin(x * 0.008 + base * 5) * H * 0.04);
+        ctx.lineTo(W, H); ctx.fill();
+      }
+    } else if (w === 'forest') {
+      g.addColorStop(0, '#79cff7'); g.addColorStop(1, '#cdeedb');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (const [col, base, size, k] of [['#3f8f5a', 0.66, 70, 0.3], ['#24633d', 0.78, 95, 0.55]]) {
+        ctx.fillStyle = col;
+        for (let x = -20; x < W + size; x += size * 0.7) {
+          const y = H * base + scroll * k + Math.sin(x * 3.1) * 12;
+          ctx.beginPath(); ctx.moveTo(x, y - size * 1.4); ctx.lineTo(x + size * 0.5, y); ctx.lineTo(x - size * 0.5, y); ctx.fill();
+          ctx.fillRect(x - size * 0.5, y, size, H);
+        }
+      }
+    } else if (w === 'synth') {
+      g.addColorStop(0, '#12002b'); g.addColorStop(0.6, '#3b0066'); g.addColorStop(1, '#ff3d8b');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const sy = H * 0.55 + scroll * 0.15, sr = Math.min(W, H) * 0.2;
+      const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr); sg.addColorStop(0, '#ffe76a'); sg.addColorStop(1, '#ff3d8b');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(W / 2, sy, sr, 0, 7); ctx.fill();
+      ctx.fillStyle = '#3b0066';
+      for (let k = 0; k < 6; k++) ctx.fillRect(W / 2 - sr, sy + k * sr * 0.16, sr * 2, sr * 0.04 + k * 2);
+      const hz = H * 0.72 + scroll * 0.3;
+      ctx.fillStyle = '#12002b'; ctx.fillRect(0, hz, W, H);
+      ctx.strokeStyle = 'rgba(0,240,255,.7)'; ctx.lineWidth = 2;
+      for (let k = -10; k <= 10; k++) { ctx.beginPath(); ctx.moveTo(W / 2 + k * 20, hz); ctx.lineTo(W / 2 + k * W * 0.25, H); ctx.stroke(); }
+      for (let k = 0; k < 8; k++) { const y = hz + Math.pow(k / 8, 2) * (H - hz) + ((time * 20) % 10); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
     } else if (w === 'volcano') {
       g.addColorStop(0, '#1a0505'); g.addColorStop(0.7, '#5a0f0a'); g.addColorStop(1, '#c43a0c');
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -635,16 +762,24 @@
     if (phase === 'menu' || phase === 'match' || phase === 'result' && !me) {
       if (demo) drawTower(demo, W / 2, H * 0.68, S * 0.75);
     } else if (me) {
-      const bossMode = phase === 'boss' || phase === 'win' || phase === 'bossIntro';
+      const bossMode = phase === 'boss' || phase === 'win' || phase === 'bossIntro' || (phase === 'lose' && boss);
       const mx = W / 2, sc = S * 0.85, my = H * 0.62, ly = H * 0.44;
-      const fx = W * (bossMode ? 0.88 : 0.9), fs = S * (bossMode ? 0.75 : 0.55), lx = Math.min(fx, W - 48);
+      const fx = W * (bossMode ? 0.8 : 0.9), fs = S * (bossMode ? 0.7 : 0.55), lx = Math.min(fx, W - 48);
       const foe = bossMode ? boss : opp;
       if (foe) {
-        const P = drawTower(foe.tower, fx, bossMode ? H * 0.58 : my, fs);
-        if (bossMode) drawBossEyes(P, fs);
+        let ox = fx, oy = bossMode ? H * 0.58 : my;
+        if (bossMode) { // breathing, recoil, lunges and wind-up tremble
+          ox += -boss.lunge * W * 0.12 + boss.jolt * 12 + (boss.wind ? rnd(-3, 3) : 0);
+          oy += Math.sin(time * (boss.hp / boss.hpMax < 0.3 ? 5 : 2.2)) * 4 + (boss.wind ? rnd(-2, 2) : 0);
+        } else if (foe.jolt) ox += foe.jolt * 10;
+        const P = drawTower(foe.tower, ox, oy, fs);
+        anchors.foe = P(0, floorsOf(foe.tower) * BH, 0);
+        if (bossMode) drawBossFace(P, fs);
         else label(lx, ly, foe.name, foe.avatar, floorsOf(foe.tower), false);
       }
-      drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
+      const PM = drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
+      anchors.me = PM(0, floorsOf(me.tower) * BH + BH, 0);
+      drawShotsAndEffects();
       label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
       if (phase === 'play' || phase === 'bossIntro') { // VS badge between the two towers
         const vx = (mx + lx) / 2, vy = ly - 6, r = clamp(W * 0.045, 15, 22);
@@ -659,13 +794,85 @@
     if (me && phase !== 'result') drawHud();
   }
 
-  function drawBossEyes(P, bs) {
-    if (floorsOf(boss.tower) <= 0) return;
-    const y = (floorsOf(boss.tower) - 1) * BH + BH * 0.5;
-    for (const zx of [2.5, 7.5]) {
-      const [ex, ey] = P(-5 + zx, y, 5);
-      ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(ex, ey, bs * 0.9, 0, 7); ctx.fill();
-      ctx.fillStyle = '#c4161c'; ctx.beginPath(); ctx.arc(ex, ey + bs * 0.15, bs * 0.45, 0, 7); ctx.fill();
+  function drawBossFace(P, bs) {
+    const f = floorsOf(boss.tower);
+    if (f <= 0) return;
+    const b = boss, top = f * BH, low = b.hp / b.hpMax < 0.3, hurt = b.hurt > 0;
+    const blink = !b.wind && !hurt && (time % 3.1) < 0.12;
+    const er = bs * (b.wind ? 1.2 : 0.95);
+    for (const ex of [-2.5, 2.5]) {
+      const [x, y] = P(ex, top - BH * 1.4, 5);
+      ctx.save(); ctx.translate(x, y - er * (b.wind ? 1.9 : 1.5)); ctx.rotate(0.5 + (ex < 0 ? 0.45 : -0.45));
+      ctx.fillStyle = '#12040c'; ctx.fillRect(-er * 1.1, -er * 0.22, er * 2.2, er * 0.44); ctx.restore();
+      if (hurt) { // X eyes
+        ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = bs * 0.45; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(x - er * 0.7, y - er * 0.7); ctx.lineTo(x + er * 0.7, y + er * 0.7);
+        ctx.moveTo(x + er * 0.7, y - er * 0.7); ctx.lineTo(x - er * 0.7, y + er * 0.7); ctx.stroke();
+        continue;
+      }
+      if (blink) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(x - er, y - bs * 0.15, er * 2, bs * 0.3); continue; }
+      ctx.fillStyle = b.wind ? '#fff6c0' : '#ffd23f';
+      ctx.beginPath(); ctx.ellipse(x, y, er, er * (low ? 0.7 : 1), 0, 0, 7); ctx.fill();
+      // pupils watch your tower (to the left)
+      ctx.fillStyle = '#c4161c'; ctx.beginPath(); ctx.arc(x - er * 0.35, y + er * 0.15, er * (b.wind ? 0.32 : 0.5), 0, 7); ctx.fill();
+    }
+    // mouth: chatters while idle, gapes when roaring, winding up or hurt
+    const [mx, my] = P(0, top - BH * 3.2, 5);
+    const open = b.roar > 0 || b.wind ? 1 : hurt ? 0.8 : 0.3 + 0.12 * Math.sin(time * 6);
+    const mw = bs * 3.4, mh = Math.max(bs * 0.4, bs * 1.8 * open);
+    ctx.save(); ctx.translate(mx, my); ctx.rotate(0.5);
+    ctx.fillStyle = '#12040c'; rr(-mw / 2, -mh / 2, mw, mh, bs * 0.5); ctx.fill();
+    ctx.fillStyle = '#fff';
+    for (let k = 0; k < 4; k++) {
+      const tx = -mw / 2 + mw * (k + 0.5) / 4;
+      ctx.beginPath(); ctx.moveTo(tx - bs * 0.35, -mh / 2); ctx.lineTo(tx, -mh / 2 + bs * 0.55); ctx.lineTo(tx + bs * 0.35, -mh / 2); ctx.fill();
+    }
+    ctx.restore();
+    // horns
+    for (const s of [-1, 1]) {
+      const [hx, hy] = P(s * 3.5, top, -1);
+      ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#12040c'; ctx.lineWidth = bs * 0.3;
+      ctx.beginPath(); ctx.moveTo(hx - bs * 1.2, hy);
+      ctx.quadraticCurveTo(hx + s * bs * 1.2, hy - bs * 4.5, hx + s * bs * 2.6, hy - bs * 5);
+      ctx.quadraticCurveTo(hx + s * bs * 0.6, hy - bs * 2, hx + bs * 1.2, hy); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    if (b.wind) { // attack warning
+      const [wx, wy] = P(0, top + BH * 5, 0);
+      banner('!', '#ffd23f', wy + Math.sin(time * 30) * 2, bs * 6, wx);
+    }
+  }
+
+  function drawShotsAndEffects() {
+    for (const e of effects) {
+      const k = e.t / e.dur;
+      ctx.globalAlpha = 1 - k;
+      if (e.kind === 'ring') {
+        ctx.strokeStyle = e.c; ctx.lineWidth = 7 * (1 - k) + 1;
+        ctx.beginPath(); ctx.ellipse(e.x, e.y, e.r * (0.2 + k), e.r * (0.2 + k) * 0.5, 0, 0, 7); ctx.stroke();
+      } else if (e.kind === 'zap') {
+        for (const [col, w] of [['#ffd23f', 7], ['#ffffff', 3]]) {
+          ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round';
+          ctx.beginPath(); ctx.moveTo(e.x0, e.y0);
+          for (let i = 1; i < 8; i++) ctx.lineTo(lerp(e.x0, e.x1, i / 8) + rnd(-14, 14), lerp(e.y0, e.y1, i / 8) + rnd(-14, 14));
+          ctx.lineTo(e.x1, e.y1); ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    for (const s of shots) {
+      const pos = (k) => [lerp(s.x0, anchors.foe[0], k), lerp(s.y0, anchors.foe[1], k) - Math.sin(Math.PI * k) * H * 0.14];
+      const k = Math.min(1, s.t / s.dur);
+      for (let i = 5; i >= 1; i--) { // trail
+        const [tx, ty] = pos(Math.max(0, k - i * 0.05));
+        ctx.globalAlpha = 0.12 * (6 - i); ctx.fillStyle = `hsl(${s.hue},90%,70%)`;
+        ctx.beginPath(); ctx.arc(tx, ty, 7 - i, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const [x, y] = pos(k), r = 9;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(s.t * 14);
+      ctx.fillStyle = `hsl(${s.hue},80%,58%)`; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.rect(-r, -r, r * 2, r * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -693,18 +900,13 @@
   function drawHud() {
     ctx.textBaseline = 'middle';
     const sc = clamp(Math.min(W, H) / 420, 0.8, 1.3);
-    const bossMode = phase === 'boss' || phase === 'win';
+    const bossMode = phase === 'boss' || phase === 'win' || (phase === 'lose' && !!boss);
     const pf = floorsOf(me.tower);
 
     if (phase === 'play') {
       const left = Math.max(0, ROUND - elapsed);
-      if (overtime) {
-        ctx.fillStyle = '#ffc531'; rr(12, 12, 130 * sc, 32 * sc, 16 * sc); ctx.fill();
-        txt(T.overtime, 12 + 65 * sc, 12 + 16 * sc, 14 * sc, '#24204a', 'center');
-      } else {
-        ctx.fillStyle = left < 10 ? '#e8364f' : 'rgba(20,16,44,.8)'; rr(12, 12, 80 * sc, 32 * sc, 16 * sc); ctx.fill();
-        txt(`0:${String(Math.ceil(left)).padStart(2, '0')}`, 12 + 40 * sc, 12 + 16 * sc, 17 * sc, '#fff', 'center');
-      }
+      ctx.fillStyle = left < 10 ? '#e8364f' : 'rgba(20,16,44,.8)'; rr(12, 12, 80 * sc, 32 * sc, 16 * sc); ctx.fill();
+      txt(`0:${String(Math.ceil(left)).padStart(2, '0')}`, 12 + 40 * sc, 12 + 16 * sc, 17 * sc, '#fff', 'center');
       const stripEnd = drawStrip(52 * sc, sc, false);
       // feed
       let fy = stripEnd + 8;
@@ -739,11 +941,12 @@
       ctx.strokeText(`👑 ${boss.name}`, W / 2, by + 4); txt(`👑 ${boss.name}`, W / 2, by + 4, 15 * sc, '#fff', 'center');
       ctx.fillStyle = '#1b1530'; rr(bx, by + 16, bw, 18 * sc, 9); ctx.fill();
       ctx.fillStyle = '#e8364f'; rr(bx + 3, by + 19, Math.max(0, (bw - 6) * boss.hp / boss.hpMax), 18 * sc - 6, 6); ctx.fill();
-      txt(`${Math.ceil(boss.hp)} / ${boss.hpMax}`, W / 2, by + 16 + 9 * sc, 11 * sc, '#fff', 'center');
+      txt(`${Math.ceil(boss.hp)} / ${boss.hpMax}   ⏱ ${Math.max(0, Math.ceil(boss.timeLeft))}s`, W / 2, by + 16 + 9 * sc, 11 * sc, boss.timeLeft < 6 ? '#ffd23f' : '#fff', 'center');
       drawStrip(by + 26 + 18 * sc, sc * 0.8, true);
       if (rushT > 0) txt('⚡', W / 2, H * 0.76, 26 * sc, '#ffd23f', 'center');
     }
     if (phase === 'win') banner(T.won, '#ffc531', H * 0.35);
+    if (phase === 'lose') banner(T.timeUp, '#ff5d73', H * 0.35, Math.min(W * 0.085, 48));
     // popups
     for (const p of popups) {
       ctx.globalAlpha = Math.min(1, 1.6 - p.t * 1.4);
@@ -887,7 +1090,7 @@
     phase = 'result';
     save.bosses++;
     const stage = save.bosses, pf = floorsOf(me.tower);
-    const reward = pf + me.perfects + 50 + stage * 30;
+    const reward = Math.round((pf + me.perfects + 50 + stage * 30) * coinMul());
     save.coins += reward;
     persist();
     $('rTitle').textContent = T.won;
@@ -903,13 +1106,41 @@
     const news = [...BLOCKS.filter(x => x.boss === stage).map(x => x.name), ...WORLDS.filter(x => x.boss === stage).map(x => x.name), ...AVATARS.filter(x => x.boss === stage).map(x => x.e)];
     $('rUnlock').classList.toggle('hidden', !news.length);
     $('rUnlock').textContent = '🔓 ' + T.unlocked + news.join(', ');
+    $('result').classList.remove('lost');
     $('contBtn').textContent = T.cont;
+    $('contBtn').onclick = toMenu;
+    $('menuBtn').classList.add('hidden');
     show('result');
     setTimeout(() => sfx.coins(), 250);
   }
 
+  function showLoss() {
+    phase = 'result';
+    const r = ranking(), rank = r.indexOf(me) + 1;
+    const reward = Math.round((floorsOf(me.tower) + me.perfects) * coinMul()); // consolation, no boss progress
+    save.coins += reward;
+    persist();
+    $('result').classList.add('lost');
+    $('rTitle').textContent = T.lost;
+    $('rSub').textContent = loseWhy === 'boss' ? T.bossWon : `${T.finished} #${rank} / ${r.length}`;
+    const board = $('rBoard'); board.innerHTML = '';
+    r.forEach((p, i) => {
+      const row = document.createElement('div'); row.className = 'brow' + (p.isMe ? ' me' : '');
+      row.innerHTML = `<span></span><span>${shownFloors(p)}</span>`;
+      row.firstChild.textContent = `${i === 0 ? '👑' : '#' + (i + 1)}  ${p.avatar ? p.avatar + ' ' : ''}${p.name}`;
+      board.appendChild(row);
+    });
+    $('rCoins').textContent = '+' + reward;
+    $('rUnlock').classList.add('hidden');
+    $('contBtn').textContent = T.retry;
+    $('contBtn').onclick = startMatchmaking;
+    $('menuBtn').textContent = T.menu;
+    $('menuBtn').classList.remove('hidden');
+    show('result');
+  }
+
   function toMenu() {
-    phase = 'menu'; me = null; boss = null; bots = []; cur = null; parts = []; popups = [];
+    phase = 'menu'; me = null; boss = null; bots = []; cur = null; parts = []; popups = []; shots = []; effects = [];
     show('menu'); renderMenu();
   }
 
@@ -999,6 +1230,8 @@
       hiss(0.1, 0.12, { filter: 'lowpass', f: 900, pan: 0.3 });
       if (perfect) osc(659.25, 0.04, 0.5, { send: 0.6, pan: 0.3 });
     },
+    throw() { hiss(0.06, 0.2, { f: 500, to: 1500, q: 1.2, attack: 0.04 }); },
+    windup() { osc(60, 0.13, 0.8, { to: 115, attack: 0.3 }); hiss(0.06, 0.8, { filter: 'lowpass', f: 300, to: 800, attack: 0.3 }); },
     rush() { hiss(0.07, 0.5, { f: 300, to: 1200, q: 1.5, attack: 0.2 }); },
     smash() { osc(65, 0.25, 0.4, { to: 40 }); hiss(0.12, 0.3, { filter: 'lowpass', f: 400 }); },
     bossDown() {
@@ -1033,6 +1266,7 @@
     $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'blocks'; show('shop'); renderShop(); };
     $('shopBack').onclick = () => { show('menu'); renderMenu(); };
     $('contBtn').onclick = toMenu;
+    $('menuBtn').onclick = toMenu;
 
     demo = makeTower(skinFn(), 12);
     toMenu();
