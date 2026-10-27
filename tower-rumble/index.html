@@ -795,7 +795,9 @@
       }
       const PM = drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
       anchors.me = PM(0, floorsOf(me.tower) * BH + BH, 0);
-      drawAura(save.eq.auras, auraLv(save.eq.auras), PM, topOf(me.tower), floorsOf(me.tower) * BH, sc);
+      // The aura rides on the floating block you're about to drop; with no block in play it sits on the top floor.
+      const movingNow = cur && (phase === 'play' || phase === 'boss');
+      drawAura(save.eq.auras, auraLv(save.eq.auras), PM, movingNow ? cur : topOf(me.tower), floorsOf(me.tower) * BH + (movingNow ? BH : 0), sc);
       drawShotsAndEffects();
       label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
       if (phase === 'play' || phase === 'bossIntro') { // VS badge between the two towers
