@@ -49,6 +49,8 @@
 <script>
   // Add a new game here when it lands in the repo (newest first).
   const GAMES = [
+    { dir: 'exotic-pet-spa', name: 'Exotic Pet Spa', status: 'wip', label: 'In progress',
+      desc: 'Pet grooming ASMR: pluck, scrub, blow dry and brush each client, then see the before and after. Five pets, each with a grooming stage of its own, from a cat to an axolotl and an octopus.' },
     { dir: 'horde-hero', name: 'Horde Hero', status: 'wip', label: 'In progress',
       desc: 'Roguelike auto-battler: dodge hordes with the joystick while your weapons fight on their own. Die, buy weapons and upgrades, and come back stronger to beat the boss.' },
     { dir: 'pirate-hill-rush', name: 'Pirate Hill Rush', status: 'wip', label: 'In progress',
@@ -57,7 +59,7 @@
       desc: 'Stack blocks 1v1 against simulated players in a 30-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
   // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
-  const BUILD = 'f879483';
+  const BUILD = 'ab59583';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');

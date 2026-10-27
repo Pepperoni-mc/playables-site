@@ -138,19 +138,25 @@
   // ---------- Localization ----------
   const STRINGS = {
     en: { play: 'START', tag: 'RELAXING PET GROOMING', back: 'Menu', next: 'NEXT CLIENT',
-          knots: 'Pop the tangles!', gills: 'Comb the gills!', wash: 'Scrub the dirt away!', dry: 'Hold to blow dry!', brush: 'Brush the fur!',
+          knots: 'Pop the tangles!', gills: 'Comb the gills!', leaves: 'Pluck the leaves, gently!',
+          sand: 'Sweep the sand out of the ears!', suckers: 'Hold on each sucker!',
+          wash: 'Scrub the dirt away!', dry: 'Hold to blow dry!', brush: 'Brush the fur!',
           step: 'Step', of: 'of', nice: 'NICE!', clean: 'SO CLEAN!', fluffy: 'FLUFFY!', shiny: 'SHINY!',
           before: 'BEFORE', after: 'AFTER', locked: 'Locked', need: 'Not enough coins', bought: 'Unlocked!',
           perfect: 'PERFECT SPA!', good: 'LOVELY!', ok: 'ALL DONE!', wrong: 'Wrong tool for this!',
           t_hand: 'Hands', t_comb: 'Comb', t_sponge: 'Sponge', t_dryer: 'Dryer', t_brush: 'Brush' },
     es: { play: 'EMPEZAR', tag: 'SPA RELAJANTE DE MASCOTAS', back: 'Menú', next: 'SIGUIENTE CLIENTE',
-          knots: '¡Revienta los nudos!', gills: '¡Peina las branquias!', wash: '¡Quita toda la suciedad!', dry: '¡Mantén para secar!', brush: '¡Cepilla el pelo!',
+          knots: '¡Revienta los nudos!', gills: '¡Peina las branquias!', leaves: '¡Quita las hojas, con cuidado!',
+          sand: '¡Saca la arena de las orejas!', suckers: '¡Mantén en cada ventosa!',
+          wash: '¡Quita toda la suciedad!', dry: '¡Mantén para secar!', brush: '¡Cepilla el pelo!',
           step: 'Paso', of: 'de', nice: '¡BIEN!', clean: '¡LIMPIECITO!', fluffy: '¡ESPONJOSO!', shiny: '¡BRILLANTE!',
           before: 'ANTES', after: 'DESPUÉS', locked: 'Bloqueada', need: 'Te faltan monedas', bought: '¡Desbloqueada!',
           perfect: '¡SPA PERFECTO!', good: '¡PRECIOSA!', ok: '¡LISTA!', wrong: '¡Esa no sirve para esto!',
           t_hand: 'Manos', t_comb: 'Peine', t_sponge: 'Esponja', t_dryer: 'Secador', t_brush: 'Cepillo' },
     pt: { play: 'COMEÇAR', tag: 'SPA RELAXANTE DE BICHINHOS', back: 'Menu', next: 'PRÓXIMO CLIENTE',
-          knots: 'Estoure os nós!', gills: 'Penteie as brânquias!', wash: 'Tire toda a sujeira!', dry: 'Segure para secar!', brush: 'Escove o pelo!',
+          knots: 'Estoure os nós!', gills: 'Penteie as brânquias!', leaves: 'Tire as folhas, com cuidado!',
+          sand: 'Tire a areia das orelhas!', suckers: 'Segure em cada ventosa!',
+          wash: 'Tire toda a sujeira!', dry: 'Segure para secar!', brush: 'Escove o pelo!',
           step: 'Passo', of: 'de', nice: 'BOA!', clean: 'LIMPINHO!', fluffy: 'FOFINHO!', shiny: 'BRILHANDO!',
           before: 'ANTES', after: 'DEPOIS', locked: 'Bloqueado', need: 'Moedas insuficientes', bought: 'Desbloqueado!',
           perfect: 'SPA PERFEITO!', good: 'LINDO!', ok: 'PRONTO!', wrong: 'Essa não serve pra isso!',
@@ -168,31 +174,79 @@
   // One tool per stage. The player may hold any of them, but only the matching
   // one makes progress; the wrong one gets a head shake, never a penalty.
   const TOOLS = [
-    { id: 'hand',   stage: 'knots',  label: 't_hand' },
-    { id: 'comb',   stage: 'gills',  label: 't_comb' },
-    { id: 'sponge', stage: 'wash',   label: 't_sponge' },
-    { id: 'dryer',  stage: 'dry',    label: 't_dryer' },
-    { id: 'brush',  stage: 'brush',  label: 't_brush' },
+    { id: 'hand',   label: 't_hand' },
+    { id: 'comb',   label: 't_comb' },
+    { id: 'sponge', label: 't_sponge' },
+    { id: 'dryer',  label: 't_dryer' },
+    { id: 'brush',  label: 't_brush' },
   ];
-  const toolForStage = (s) => (TOOLS.find(t => t.stage === s) || TOOLS[0]).id;
+  // Several pet stages share a tool; what differs is the gesture, not the object.
+  const STAGE_TOOL = {
+    knots: 'hand', leaves: 'hand',
+    gills: 'comb', sand: 'comb',
+    suckers: 'sponge', wash: 'sponge',
+    dry: 'dryer', brush: 'brush',
+  };
+  const toolForStage = (s) => STAGE_TOOL[s] || 'hand';
 
   // ---------- Pets ----------
   // Shapes live in a -1..1 local space; `parts` is the silhouette used to scatter dirt and fur.
   // Every pet owns one exclusive stage, which is the whole point of the roster.
+  // `spots()` builds the pet's own-stage targets. Every entry carries `done` (0..1),
+  // so one progress rule covers every pet while the gesture stays per-stage.
   const PETS = [
     {
       id: 'cat', name: 'Mochi', cost: 0, own: 'knots',
       fur: '#c9c2d8', fur2: '#efeaf7', shade: '#a79cbd', skin: '#f6c9d4', dirt: '#8a6a4a', dirt2: '#6b4f36',
       parts: [ { k: 'e', x: 0, y: .36, rx: .64, ry: .46 }, { k: 'c', x: 0, y: -.38, r: .46 } ],
-      knots: [ [-.30, .22], [.32, .30], [-.10, .55], [.14, -.02], [-.42, -.08], [.44, -.02] ],
-      extras: drawCatExtras,
+      spots: () => [[-.30, .22], [.32, .30], [-.10, .55], [.14, -.02], [-.42, -.08], [.44, -.02]]
+        .map(([x, y]) => ({ x, y, done: 0, pop: 0 })),
+      extras: drawCatExtras, spotArt: drawCatSpots,
     },
     {
       id: 'axolotl', name: 'Pepita', cost: 200, own: 'gills',
       fur: '#ffb3d1', fur2: '#ffd9e8', shade: '#f08cb4', skin: '#ff8fbd', dirt: '#6d7f5a', dirt2: '#4e5e3e',
       parts: [ { k: 'e', x: 0, y: .34, rx: .56, ry: .42 }, { k: 'c', x: 0, y: -.34, r: .52 } ],
-      gills: [ -.9, -.55, -.2, .2, .55, .9 ],
+      spots: () => [-.9, -.55, -.2, .2, .55, .9].map(a => {
+        const side = a < 0 ? -1 : 1;
+        return { x: side * 0.52, y: -.46 + (Math.abs(a) - .2) * .30, a, side, done: 0, pop: 0 };
+      }),
       extras: drawAxolotlExtras,
+    },
+    {
+      id: 'hedgehog', name: 'Pincho', cost: 450, own: 'leaves',
+      fur: '#c8a07a', fur2: '#f0dcc6', shade: '#a07c58', skin: '#f3bfae', dirt: '#6f5a3e', dirt2: '#51402b',
+      parts: [ { k: 'e', x: 0, y: .30, rx: .66, ry: .48 }, { k: 'c', x: 0, y: -.34, r: .44 } ],
+      spots: () => [[-.40, -.02], [-.02, -.22], [.38, -.06], [.20, .30], [-.26, .34]]
+        .map(([x, y], i) => ({ x, y, done: 0, pop: 0, rot: i * 1.3 })),
+      extras: drawHedgehogExtras, spotArt: drawHedgehogSpots,
+    },
+    {
+      id: 'fennec', name: 'Dune', cost: 800, own: 'sand',
+      fur: '#f2d7a8', fur2: '#fdf0d8', shade: '#d9b67e', skin: '#f6c3b4', dirt: '#8a7450', dirt2: '#675537',
+      parts: [ { k: 'e', x: 0, y: .36, rx: .58, ry: .44 }, { k: 'c', x: 0, y: -.34, r: .44 } ],
+      spots: () => {
+        const out = [];
+        [-1, 1].forEach(side => [0, 1, 2].forEach(i => {
+          out.push({ x: side * (0.40 + i * 0.05), y: -0.78 + i * 0.16, side, done: 0, pop: 0 });
+        }));
+        return out;
+      },
+      extras: drawFennecExtras, spotArt: drawFennecSpots,
+    },
+    {
+      id: 'octopus', name: 'Tinta', cost: 1400, own: 'suckers',
+      fur: '#b79ae8', fur2: '#ded0fa', shade: '#9377cd', skin: '#f3b6d8', dirt: '#5c6f6a', dirt2: '#3f4f4b',
+      parts: [ { k: 'e', x: 0, y: .34, rx: .50, ry: .34 }, { k: 'c', x: 0, y: -.32, r: .52 } ],
+      spots: () => {
+        const out = [];
+        for (let i = 0; i < 8; i++) {
+          const a = Math.PI * (0.10 + 0.80 * (i / 7));
+          out.push({ x: Math.cos(a) * 0.74, y: 0.42 + Math.sin(a) * 0.34, arm: i, done: 0, pop: 0 });
+        }
+        return out;
+      },
+      extras: drawOctopusExtras, spotArt: drawOctopusSpots,
     },
   ];
   const petById = (id) => PETS.find(p => p.id === id) || PETS[0];
@@ -438,8 +492,7 @@
       wetness: 0,
       wet: [],
       tufts: scatter(pet, 26, .06, .09).map(t => ({ ...t, ang: rnd(-1.2, 1.2), tgt: Math.atan2(t.y - .1, t.x) })),
-      knots: (pet.knots || []).map(([x, y]) => ({ x, y, alive: 1, pop: 0 })),
-      gills: (pet.gills || []).map(a => ({ a, done: 0 })),
+      own: pet.spots(),
       mood: -0.8, blink: 0, nextBlink: rnd(1.5, 4),
       shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
     };
@@ -453,8 +506,8 @@
   function snapshot(s) {
     return {
       dirt: s.dirt.map(d => ({ ...d })), wetness: 0, wet: [],
-      tufts: s.tufts.map(t => ({ ...t })), knots: s.knots.map(k => ({ ...k })),
-      gills: s.gills.map(g => ({ ...g })), mood: -0.8, blink: 0, nextBlink: 9,
+      tufts: s.tufts.map(t => ({ ...t })), own: s.own.map(o => ({ ...o })),
+      mood: -0.8, blink: 0, nextBlink: 9,
       shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
     };
   }
@@ -463,8 +516,7 @@
   function progress() {
     if (!st) return 0;
     const k = stageList[stageIdx];
-    if (k === 'knots') return st.knots.length ? st.knots.filter(x => !x.alive).length / st.knots.length : 1;
-    if (k === 'gills') return st.gills.length ? st.gills.reduce((a, g) => a + g.done, 0) / st.gills.length : 1;
+    if (k === pet.own) return st.own.length ? st.own.reduce((a, o) => a + o.done, 0) / st.own.length : 1;
     if (k === 'wash') return st.dirt.length ? st.dirt.filter(d => d.alive <= 0).length / st.dirt.length : 1;
     if (k === 'dry') return 1 - st.wetness;
     if (k === 'brush') {
@@ -565,20 +617,162 @@
       });
       return;
     }
+    whiskers(c, g, 0.16, 0.54);
+  }
+  function whiskers(c, g, x0, x1) {
     c.strokeStyle = 'rgba(58,43,79,.35)'; c.lineWidth = 0.014 * g.s;
     [-1, 1].forEach(d => { for (let i = 0; i < 2; i++) {
       c.beginPath();
-      c.moveTo(g.cx + d * 0.16 * g.s, g.cy + (-0.18 + i * 0.07) * g.s);
-      c.lineTo(g.cx + d * 0.54 * g.s, g.cy + (-0.26 + i * 0.13) * g.s);
+      c.moveTo(g.cx + d * x0 * g.s, g.cy + (-0.18 + i * 0.07) * g.s);
+      c.lineTo(g.cx + d * x1 * g.s, g.cy + (-0.26 + i * 0.13) * g.s);
       c.stroke();
     } });
+  }
+  // Matted knots: the cat's own-stage targets.
+  function drawCatSpots(c, p, s, g, t, flat) {
+    s.own.forEach((o, i) => {
+      if (o.done >= 1) return;
+      const w = flat ? 1 : 1 + Math.sin(t * 5 + i) * 0.06;
+      c.fillStyle = '#8d7c99';
+      blob(c, g, o.x, o.y, 0.105 * w, 0.095 * w, i);
+      c.strokeStyle = '#64556f'; c.lineWidth = 0.022 * g.s;
+      for (let a = 0; a < 3; a++) {
+        c.beginPath();
+        c.arc(g.cx + o.x * g.s, g.cy + o.y * g.s, (0.035 + a * 0.026) * g.s, i + a, i + a + 2.4);
+        c.stroke();
+      }
+    });
+  }
+
+  function drawHedgehogExtras(c, p, s, g, t, back) {
+    if (back) {
+      // quills fan out from the back and top; the face stays soft and bare
+      c.fillStyle = p.shade;
+      for (let i = 0; i < 26; i++) {
+        const a = Math.PI * (1.02 + 0.96 * (i / 25));
+        const bx = Math.cos(a) * 0.62, by = 0.30 + Math.sin(a) * 0.52;
+        const len = 0.26 + (i % 3) * 0.05;
+        c.beginPath();
+        c.moveTo(g.cx + (bx - Math.sin(a) * .05) * g.s, g.cy + (by + Math.cos(a) * .05) * g.s);
+        c.lineTo(g.cx + (bx + Math.cos(a) * len) * g.s, g.cy + (by + Math.sin(a) * len) * g.s);
+        c.lineTo(g.cx + (bx + Math.sin(a) * .05) * g.s, g.cy + (by - Math.cos(a) * .05) * g.s);
+        c.closePath(); c.fill();
+      }
+      return;
+    }
+    c.fillStyle = '#4a3a2c';
+    blob(c, g, 0, -0.18, 0.045, 0.036, 0);   // little dark snout
+    whiskers(c, g, 0.10, 0.40);
+  }
+  // Leaves caught in the quills: tap to pluck, gently.
+  function drawHedgehogSpots(c, p, s, g, t, flat) {
+    s.own.forEach((o, i) => {
+      if (o.done >= 1) return;
+      const sway = flat ? 0 : Math.sin(t * 2.4 + i) * 0.12;
+      c.save();
+      c.translate(g.cx + o.x * g.s, g.cy + o.y * g.s);
+      c.rotate(o.rot + sway);
+      c.fillStyle = '#7fbf5a';
+      c.beginPath();
+      c.moveTo(0, -0.10 * g.s);
+      c.quadraticCurveTo(0.09 * g.s, 0, 0, 0.10 * g.s);
+      c.quadraticCurveTo(-0.09 * g.s, 0, 0, -0.10 * g.s);
+      c.closePath(); c.fill();
+      c.strokeStyle = '#4e8c35'; c.lineWidth = 0.012 * g.s;
+      c.beginPath(); c.moveTo(0, -0.09 * g.s); c.lineTo(0, 0.09 * g.s); c.stroke();
+      c.restore();
+    });
+  }
+
+  function drawFennecExtras(c, p, s, g, t, back) {
+    const sh = Math.sin(t * 34) * s.shiver * 0.02;
+    if (back) {
+      // bushy tail
+      const sw = Math.sin(t * 1.5) * 0.14 + 0.1;
+      c.fillStyle = p.fur2;
+      c.beginPath();
+      c.moveTo(g.cx + 0.40 * g.s, g.cy + 0.58 * g.s);
+      c.quadraticCurveTo(g.cx + (1.05 + sw) * g.s, g.cy + (0.50 - sw) * g.s,
+                         g.cx + (0.82 + sw) * g.s, g.cy + (-0.10 - sw) * g.s);
+      c.quadraticCurveTo(g.cx + (0.78 + sw) * g.s, g.cy + 0.34 * g.s, g.cx + 0.42 * g.s, g.cy + 0.34 * g.s);
+      c.closePath(); c.fill();
+      // Oversized pointed ears: they are the fennec's whole silhouette, so they
+      // run nearly as tall as the body and taper to a tip.
+      [-1, 1].forEach(d => {
+        const by = -0.50 + sh;
+        const ear = (k, fill) => {
+          const ix = d * (0.06 + 0.10 * (1 - k)), iy = by + 0.24;
+          const tx = d * (0.52 * k + 0.10), ty = by - 0.86 * k;
+          const ox = d * (0.70 * k + 0.06), oy = by + 0.12;
+          c.fillStyle = fill;
+          c.beginPath();
+          c.moveTo(g.cx + ix * g.s, g.cy + iy * g.s);
+          c.quadraticCurveTo(g.cx + (ix + d * 0.02) * g.s, g.cy + (ty + 0.30) * g.s,
+                             g.cx + tx * g.s, g.cy + ty * g.s);
+          c.quadraticCurveTo(g.cx + (ox + d * 0.10) * g.s, g.cy + (ty + 0.40) * g.s,
+                             g.cx + ox * g.s, g.cy + oy * g.s);
+          c.closePath(); c.fill();
+        };
+        ear(1, p.shade);
+        ear(0.62, p.skin);
+      });
+      return;
+    }
+    whiskers(c, g, 0.14, 0.52);
+  }
+  // Sand trapped inside the ears: sweep it out with the comb.
+  function drawFennecSpots(c, p, s, g, t) {
+    s.own.forEach(o => {
+      if (o.done >= 1) return;
+      c.globalAlpha = 0.85 * (1 - o.done);
+      c.fillStyle = '#e8c87f';
+      blob(c, g, o.x, o.y, 0.065, 0.045, o.side);
+      c.fillStyle = '#c9a55c';
+      blob(c, g, o.x + 0.02, o.y + 0.012, 0.03, 0.02, o.side);
+      c.globalAlpha = 1;
+    });
+  }
+
+  function drawOctopusExtras(c, p, s, g, t, back) {
+    if (back) {
+      // eight arms curling out from under the mantle
+      c.strokeStyle = p.shade; c.lineCap = 'round';
+      for (let i = 0; i < 8; i++) {
+        const a = Math.PI * (0.10 + 0.80 * (i / 7));
+        const wob = Math.sin(t * 2 + i) * 0.06;
+        c.lineWidth = 0.10 * g.s;
+        c.beginPath();
+        c.moveTo(g.cx + Math.cos(a) * 0.26 * g.s, g.cy + (0.40 + Math.sin(a) * 0.12) * g.s);
+        c.quadraticCurveTo(
+          g.cx + Math.cos(a) * 0.62 * g.s, g.cy + (0.40 + Math.sin(a) * 0.30 + wob) * g.s,
+          g.cx + Math.cos(a) * 0.86 * g.s, g.cy + (0.42 + Math.sin(a) * 0.46 + wob) * g.s);
+        c.stroke();
+      }
+      return;
+    }
+    c.fillStyle = p.fur2;
+    blob(c, g, 0, -0.62, 0.20, 0.10, 0);   // soft dome highlight on the mantle
+  }
+  // Suckers to scrub one by one.
+  function drawOctopusSpots(c, p, s, g, t) {
+    s.own.forEach(o => {
+      c.fillStyle = o.done >= 1 ? p.skin : '#7f8c84';
+      blob(c, g, o.x, o.y, 0.055, 0.055, 0);
+      c.fillStyle = o.done >= 1 ? '#ffffff' : '#5e6a63';
+      blob(c, g, o.x, o.y, 0.026, 0.026, 0);
+      if (o.done > 0 && o.done < 1) {
+        c.strokeStyle = '#ffffff'; c.lineWidth = 0.016 * g.s;
+        c.beginPath();
+        c.arc(g.cx + o.x * g.s, g.cy + o.y * g.s, 0.072 * g.s, -1.57, -1.57 + o.done * 6.2832);
+        c.stroke();
+      }
+    });
   }
 
   function drawAxolotlExtras(c, p, s, g, t, back) {
     if (back) {
-      s.gills.forEach(gl => {
-        const side = gl.a < 0 ? -1 : 1, base = Math.abs(gl.a);
-        const ax = side * 0.42, ay = -0.46 + (base - 0.2) * 0.30;
+      s.own.forEach(gl => {
+        const side = gl.side, ax = side * 0.42, ay = gl.y;
         const droop = (1 - gl.done) * 0.26;
         c.strokeStyle = p.skin; c.lineWidth = 0.075 * g.s; c.lineCap = 'round';
         for (let k = -1; k <= 1; k++) {
@@ -703,24 +897,13 @@
     });
     c.restore();
 
-    // knots sit above the fur so they read as targets
-    if (s.knots) s.knots.forEach((k, i) => {
-      if (!k.alive) {
-        if (k.pop > 0) {
-          c.globalAlpha = k.pop; c.strokeStyle = '#ffffff'; c.lineWidth = 0.03 * g.s;
-          c.beginPath(); c.arc(g.cx + k.x * g.s, g.cy + k.y * g.s, (1 - k.pop) * 0.3 * g.s, 0, 6.2832); c.stroke();
-          c.globalAlpha = 1;
-        }
-        return;
-      }
-      const w = flat ? 1 : 1 + Math.sin(t * 5 + i) * 0.06;
-      c.fillStyle = '#8d7c99';
-      blob(c, g, k.x, k.y, 0.105 * w, 0.095 * w, i);
-      c.strokeStyle = '#64556f'; c.lineWidth = 0.022 * g.s;
-      for (let a = 0; a < 3; a++) {
-        c.beginPath();
-        c.arc(g.cx + k.x * g.s, g.cy + k.y * g.s, (0.035 + a * 0.026) * g.s, i + a, i + a + 2.4);
-        c.stroke();
+    // Own-stage targets sit above the fur so they always read as the thing to touch.
+    if (s.own && s.own.length && p.spotArt) p.spotArt(c, p, s, g, t, flat);
+    if (s.own) s.own.forEach(o => {
+      if (o.pop > 0) {
+        c.globalAlpha = o.pop; c.strokeStyle = '#ffffff'; c.lineWidth = 0.03 * g.s;
+        c.beginPath(); c.arc(g.cx + o.x * g.s, g.cy + o.y * g.s, (1 - o.pop) * 0.3 * g.s, 0, 6.2832); c.stroke();
+        c.globalAlpha = 1;
       }
     });
 
@@ -832,6 +1015,15 @@
     // droplets flung off by the dryer, stretched along their velocity
     if (SPR.drop) drip.forEach(d => {
       const k = clamp(1 - d.t / d.life, 0, 1);
+      if (d.sand) {                       // the fennec throws grains, not water
+        ctx.globalAlpha = k;
+        ctx.fillStyle = '#e8c87f';
+        ctx.beginPath();
+        ctx.arc(g.cx + d.x * g.s, g.cy + d.y * g.s, 0.016 * g.s, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        return;
+      }
       const rot = Math.atan2(d.vy, d.vx) - Math.PI / 2;
       const len = 0.075 * (1 + Math.hypot(d.vx, d.vy) * 0.5);
       ctx.globalAlpha = k * 0.6;
@@ -932,8 +1124,8 @@
   // A calm, clean pet idles on the menu so the first frame already sells the fantasy.
   function makeMenuState() {
     menuState = {
-      dirt: [], wetness: 0, wet: [], tufts: [], knots: [],
-      gills: (petById('axolotl').gills || []).map(a => ({ a, done: 1 })),
+      dirt: [], wetness: 0, wet: [], tufts: [],
+      own: pet.spots().map(o => ({ ...o, done: 1 })),
       mood: 0.8, blink: 0, nextBlink: rnd(1.5, 4), shiver: 0, puff: 1, shine: 1, wind: 0, shake: 0,
     };
   }
@@ -954,7 +1146,7 @@
         s.shine = lerp(s.shine, stageIdx >= stageList.length ? 1 : 0, dt * 1.5);
         s.mood = lerp(s.mood, -0.8 + 1.6 * (stageIdx / stageList.length), dt * 1.2);
         s.wind = lerp(s.wind, (ptr && tool === 'dryer' && k === 'dry') ? 1 : 0, dt * 6);
-        s.knots.forEach(n => { if (!n.alive && n.pop > 0) n.pop = Math.max(0, n.pop - dt * 2.5); });
+        s.own.forEach(o => { if (o.pop > 0) o.pop = Math.max(0, o.pop - dt * 2.5); });
       }
     }
     foam.forEach(f => f.t += dt); foam = foam.filter(f => f.t < f.life);
@@ -1025,29 +1217,52 @@
     if (tool !== toolForStage(k)) { refuse(); return; }
     const R = 0.20;
 
-    if (k === 'knots') {
-      st.knots.forEach(n => {
-        if (!n.alive) return;
-        if (Math.hypot(n.x - ptr.x, n.y - ptr.y) < 0.16) {
-          n.alive = 0; n.pop = 1;
-          sfx.knot(st.knots.filter(x => !x.alive).length);
-          buzz(12); st.shiver = 0.4;
-          for (let j = 0; j < 6; j++)
-            foam.push({ x: n.x + rnd(-.08, .08), y: n.y + rnd(-.08, .08), r: rnd(.02, .05), t: 0, life: rnd(.3, .6) });
+    // Each pet's own stage: a different gesture, which is what makes the roster
+    // worth collecting instead of being a palette swap.
+    if (k === 'knots' || k === 'leaves') {
+      // tap to pull free; the hedgehog curls up if you grab at it too fast
+      const gentle = k !== 'leaves' || ptrSpeed < 0.06;
+      st.own.forEach(o => {
+        if (o.done >= 1) return;
+        if (Math.hypot(o.x - ptr.x, o.y - ptr.y) >= 0.16) return;
+        if (!gentle) { st.shiver = 0.6; if (refuseCd <= time) { refuseCd = time + 0.8; sfx.nope(); } return; }
+        o.done = 1; o.pop = 1;
+        sfx.knot(st.own.filter(x => x.done >= 1).length);
+        buzz(12); st.shiver = 0.4;
+        for (let j = 0; j < 6; j++)
+          foam.push({ x: o.x + rnd(-.08, .08), y: o.y + rnd(-.08, .08), r: rnd(.02, .05), t: 0, life: rnd(.3, .6) });
+      });
+      return;
+    }
+
+    if (k === 'gills' || k === 'sand') {
+      // sweep across with the comb; progress follows how much you actually moved
+      st.own.forEach(o => {
+        if (o.done >= 1) return;
+        if (Math.hypot(o.x - ptr.x, o.y - ptr.y) < 0.30 && ptrSpeed > 0.004) {
+          const was = o.done;
+          o.done = clamp(o.done + ptrSpeed * 1.6, 0, 1);
+          if (Math.floor(was * 3) !== Math.floor(o.done * 3)) {
+            sfx.comb(); buzz(8);
+            if (k === 'sand') for (let j = 0; j < 3; j++)
+              drip.push({ x: o.x, y: o.y, vx: rnd(-.4, .4), vy: rnd(.2, .8), t: 0, life: rnd(.4, .7), sand: 1 });
+          }
         }
       });
       return;
     }
 
-    if (k === 'gills') {
-      st.gills.forEach(gl => {
-        if (gl.done >= 1) return;
-        const side = gl.a < 0 ? -1 : 1, base = Math.abs(gl.a);
-        const ax = side * 0.42, ay = -0.46 + (base - 0.2) * 0.30;
-        if (Math.hypot(ax - ptr.x, ay - ptr.y) < 0.34 && ptrSpeed > 0.004) {
-          const was = gl.done;
-          gl.done = clamp(gl.done + ptrSpeed * 1.6, 0, 1);
-          if (Math.floor(was * 3) !== Math.floor(gl.done * 3)) { sfx.comb(); buzz(8); }
+    if (k === 'suckers') {
+      // hold the sponge on each sucker: slow and deliberate, eight times over
+      st.own.forEach(o => {
+        if (o.done >= 1) return;
+        if (Math.hypot(o.x - ptr.x, o.y - ptr.y) < 0.20) {
+          const was = o.done;
+          o.done = clamp(o.done + dt * 1.6, 0, 1);
+          if (was < 1 && o.done >= 1) { o.pop = 1; sfx.knot(st.own.filter(x => x.done >= 1).length); buzz(10); }
+          else if (Math.random() < 0.25) sfx.bubble();
+          if (foam.length < 60 && Math.random() < 0.4)
+            foam.push({ x: o.x + rnd(-.06, .06), y: o.y + rnd(-.06, .06), r: rnd(.02, .05), t: 0, life: rnd(.4, .8) });
         }
       });
       return;
@@ -1225,8 +1440,8 @@
       box.appendChild(b);
       const c = cvs.getContext('2d');
       const demo = {
-        dirt: [], wetness: 0, wet: [], tufts: [], knots: [],
-        gills: (p.gills || []).map(a => ({ a, done: 1 })),
+        dirt: [], wetness: 0, wet: [], tufts: [],
+        own: p.spots().map(o => ({ ...o, done: 1 })),
         mood: 0.7, blink: 0, nextBlink: 9, shiver: 0, puff: 1, shine: owned ? 0.8 : 0, wind: 0, shake: 0,
       };
       if (!owned) c.globalAlpha = 0.45;
@@ -1255,6 +1470,7 @@
   function toMenu() {
     pet = petById(save.eq.pets);
     st = null; releaseHold();
+    makeMenuState();            // the idle pet differs per species, so rebuild it
     show('menu'); renderMenu();
   }
 
