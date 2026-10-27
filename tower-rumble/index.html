@@ -758,6 +758,7 @@
     rr(x - tw / 2, y - sz * 1.9, tw, sz * 2.9, 8); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.fillText(text, x, y - sz * 1.0);
     ctx.font = `900 ${sz * 1.05}px system-ui, sans-serif`; ctx.fillStyle = '#ffd23f'; ctx.fillText(String(floors), x, y + sz * 0.35);
+    return [x - tw / 2, x + tw / 2]; // left/right edges, for placing the VS badge
   }
   function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
   function txt(t, x, y, size, color, align, weight) { ctx.font = `${weight || 900} ${size}px system-ui, sans-serif`; ctx.textAlign = align || 'left'; ctx.fillStyle = color; ctx.fillText(t, x, y); }
@@ -781,6 +782,7 @@
       const mx = W / 2, sc = S * 0.85, my = H * 0.62, ly = H * 0.44;
       const fx = W * (bossMode ? 0.8 : 0.9), fs = S * (bossMode ? 0.7 : 0.55), lx = Math.min(fx, W - 48);
       const foe = bossMode ? boss : opp;
+      let foeEdges = null;
       if (foe) {
         let ox = fx, oy = bossMode ? H * 0.58 : my;
         if (bossMode) { // breathing, recoil, lunges and wind-up tremble
@@ -791,7 +793,7 @@
         anchors.foe = P(0, floorsOf(foe.tower) * BH, 0);
         if (!bossMode && foe.aura) drawAura(foe.aura.kind, foe.aura.lvl, P, topOf(foe.tower), floorsOf(foe.tower) * BH, fs);
         if (bossMode) drawBossFace(P, fs);
-        else label(lx, ly, foe.name, foe.avatar, floorsOf(foe.tower), false);
+        else foeEdges = label(lx, ly, foe.name, foe.avatar, floorsOf(foe.tower), false);
       }
       const PM = drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
       anchors.me = PM(0, floorsOf(me.tower) * BH + BH, 0);
@@ -799,9 +801,10 @@
       const movingNow = cur && (phase === 'play' || phase === 'boss');
       drawAura(save.eq.auras, auraLv(save.eq.auras), PM, movingNow ? cur : topOf(me.tower), floorsOf(me.tower) * BH + (movingNow ? BH : 0), sc);
       drawShotsAndEffects();
-      label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
-      if (phase === 'play' || phase === 'bossIntro') { // VS badge between the two towers
-        const vx = (mx + lx) / 2, vy = ly - 6, r = clamp(W * 0.045, 15, 22);
+      const meEdges = label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
+      if (phase === 'play' || phase === 'bossIntro') { // VS badge centered in the gap between the two labels
+        const vx = foeEdges ? (meEdges[1] + foeEdges[0]) / 2 : (mx + lx) / 2, vy = ly - 6;
+        const r = clamp(Math.min(W * 0.045, foeEdges ? (foeEdges[0] - meEdges[1]) / 2 - 2 : 99), 11, 22);
         ctx.fillStyle = '#e8364f'; ctx.beginPath(); ctx.arc(vx, vy, r, 0, 7); ctx.fill();
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
         ctx.textBaseline = 'middle'; txt('VS', vx, vy + 1, r * 0.8, '#fff', 'center');
@@ -866,11 +869,11 @@
   const AURA_RGB = { fire: '255,120,30', lightning: '90,170,255', frost: '120,210,255', toxic: '80,220,60', holy: '255,200,60', rainbow: '255,90,200' };
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
-  // Silhouette of the top block only (lower floors differ in size, so a longer rim would float off them).
+  // Rim of the block's top face only: effects grow up and out from that edge.
   function auraOutline(P, tb, yTop, sc) {
-    const drop = BH * sc, yb = yTop - BH;
-    const L = P(tb.x, yTop, tb.z + tb.d), Bk = P(tb.x, yTop, tb.z), R = P(tb.x + tb.w, yTop, tb.z);
-    const pts = [P(tb.x, yb, tb.z + tb.d), L, Bk, R, P(tb.x + tb.w, yb, tb.z), P(tb.x + tb.w, yb, tb.z + tb.d), P(tb.x, yb, tb.z + tb.d)];
+    const drop = BH * sc;
+    const L = P(tb.x, yTop, tb.z + tb.d), Bk = P(tb.x, yTop, tb.z), R = P(tb.x + tb.w, yTop, tb.z), F = P(tb.x + tb.w, yTop, tb.z + tb.d);
+    const pts = [L, Bk, R, F, L];
     const segs = []; let total = 0;
     for (let i = 0; i < pts.length - 1; i++) {
       const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], len = Math.hypot(x1 - x0, y1 - y0);
@@ -882,7 +885,7 @@
       const d = u * total; let s = segs[segs.length - 1];
       for (const sg of segs) if (d <= sg.from + sg.len) { s = sg; break; }
       const k = (d - s.from) / s.len, x = s.x0 + (s.x1 - s.x0) * k, y = s.y0 + (s.y1 - s.y0) * k;
-      const fade = s.ny > 0.3 ? 0.6 : 1; // bottom edges a bit calmer
+      const fade = 1;
       return { x, y, nx: s.nx, ny: s.ny, fade };
     };
     return { pts, at, total, top: Math.min(L[1], Bk[1], R[1]), drop };
