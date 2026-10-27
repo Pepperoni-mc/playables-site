@@ -49,6 +49,8 @@
 <script>
   // Add a new game here when it lands in the repo (newest first).
   const GAMES = [
+    { dir: 'grand-wave-pirates', name: 'Grand Wave Pirates', status: 'wip', label: 'In progress',
+      desc: 'Sail a pirate ship over giant waves: punch and cannon endless marine boats and sea monsters, then beat the Admiral or a Sea King at each island. Ships, devil fruits and upgrades.' },
     { dir: 'exotic-pet-spa', name: 'Exotic Pet Spa', status: 'wip', label: 'In progress',
       desc: 'Pet grooming ASMR: pluck, scrub, blow dry and brush each client, then see the before and after. Five pets, each with a grooming stage of its own, from a cat to an axolotl and an octopus.' },
     { dir: 'horde-hero', name: 'Horde Hero', status: 'wip', label: 'In progress',
@@ -59,7 +61,7 @@
       desc: 'Stack blocks 1v1 against simulated players in a 30-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
   // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
-  const BUILD = 'ab59583';
+  const BUILD = 'd5aa7c0';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');

@@ -1,0 +1,2033 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Grand Wave Pirates</title>
+<script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
+<style>
+  :root { --ink: #2a1d12; --gold: #ffc531; --gold-d: #e39a12; --accent: #2f7bd8; --green: #36c46b; --red: #e8364f; --sea: #0f3a63; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0f2a45; font-family: system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink); }
+  body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  canvas#c { display: block; width: 100vw; height: 100vh; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 16px; overflow-y: auto; }
+  .hidden { display: none !important; }
+  button { font: inherit; border: 0; cursor: pointer; color: inherit; }
+  .pill { background: rgba(15,20,40,.72); color: #fff; border-radius: 999px; padding: 6px 14px 6px 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; }
+  .coin { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff3b0, var(--gold) 45%, var(--gold-d)); box-shadow: inset 0 -2px 0 rgba(0,0,0,.15); flex: none; display: inline-block; }
+  .topbar { width: 100%; max-width: 520px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* Menu */
+  #menu { justify-content: space-between; }
+  .title { text-align: center; margin-top: 3vh; }
+  .title h1 { margin: 0; font-size: clamp(42px, 12.5vw, 74px); line-height: .9; font-weight: 900; font-family: Impact, "Arial Black", system-ui, sans-serif; letter-spacing: 1px;
+    color: var(--gold); -webkit-text-stroke: 3px #3a1c06; paint-order: stroke fill; text-shadow: 0 6px 0 #3a1c06; }
+  .title .stage { margin-top: 14px; display: inline-block; background: var(--accent); color: #fff; font-weight: 900; padding: 6px 16px; border-radius: 10px; box-shadow: 0 4px 0 #1c4f91; }
+  .bottom { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 12px; align-items: center; padding-bottom: 8px; }
+  .play { width: min(360px, 90%); padding: 18px; font-size: 26px; font-weight: 900; color: #fff; background: var(--green); border-radius: 18px; box-shadow: 0 6px 0 #22924c; animation: pulse 1.2s infinite; }
+  .play:active { transform: translateY(4px); box-shadow: 0 2px 0 #22924c; }
+  @keyframes pulse { 50% { transform: scale(1.04); } }
+  .shopBtn { background: #c4562b; color: #fff; font-weight: 900; padding: 12px 34px; border-radius: 14px; box-shadow: 0 5px 0 #8a3515; font-size: 17px; position: relative; }
+  .home { color: #fff; opacity: .8; font-weight: 800; font-size: 14px; text-decoration: none; padding: 4px 10px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  .badge { position: absolute; top: -8px; right: -8px; background: var(--red); color: #fff; border-radius: 999px; font-size: 12px; padding: 2px 7px; }
+
+  /* Shop */
+  #shop { background: #f3e6cc; }
+  #shop h2 { margin: 8px 0; font-size: 30px; font-weight: 900; }
+  .tabs { display: flex; gap: 6px; width: 100%; max-width: 520px; margin-bottom: 8px; }
+  .tab { flex: 1; padding: 9px 4px; border-radius: 10px; background: #fff; font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 #d6c39c; }
+  .tab.on { background: var(--ink); color: #fff; box-shadow: 0 3px 0 #000; }
+  .hint { font-size: 13px; opacity: .7; margin-bottom: 10px; text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 520px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: #fff; border-radius: 16px; padding: 10px; text-align: center; box-shadow: 0 4px 0 #d6c39c; display: flex; flex-direction: column; gap: 6px; align-items: center; border: 3px solid transparent; }
+  .card.eq { border-color: var(--green); }
+  .card canvas { width: 100%; height: 84px; border-radius: 10px; }
+  .card .em { font-size: 44px; line-height: 84px; height: 84px; }
+  .card .nm { font-weight: 900; }
+  .card .ds { font-size: 12px; opacity: .7; min-height: 30px; }
+  .card .lv { font-size: 12px; font-weight: 900; background: #ffe7a8; border-radius: 6px; padding: 1px 8px; }
+  .card button { width: 100%; padding: 8px; border-radius: 10px; font-weight: 900; display: flex; justify-content: center; align-items: center; gap: 6px; }
+  .card button .coin { width: 16px; height: 16px; }
+  .b-buy { background: var(--gold); box-shadow: 0 3px 0 var(--gold-d); }
+  .b-buy.poor { background: #e3e3e3; box-shadow: 0 3px 0 #bbb; color: #888; }
+  .b-eq { background: var(--accent); color: #fff; box-shadow: 0 3px 0 #1c4f91; }
+  .b-on { background: var(--green); color: #fff; }
+  .b-lock { background: #3a2a1d; color: #fff; font-size: 12px; }
+  .back { margin: 16px 0; background: var(--ink); color: #fff; font-weight: 900; padding: 12px 36px; border-radius: 14px; }
+
+  /* Matchmaking */
+  #match { background: rgba(10,22,40,.92); color: #fff; justify-content: center; gap: 12px; }
+  #match h2 { margin: 0; font-size: 26px; font-weight: 900; }
+  #match .count { font-size: 44px; font-weight: 900; color: var(--gold); }
+  .plist { width: min(340px, 90vw); display: flex; flex-direction: column; gap: 6px; min-height: 170px; }
+  .prow { background: rgba(255,255,255,.1); border-radius: 10px; padding: 6px 12px; display: flex; justify-content: space-between; font-weight: 700; animation: slide .25s ease-out; }
+  .prow .ping { opacity: .6; font-size: 13px; }
+  .prow.me { background: var(--green); }
+  @keyframes slide { from { transform: translateX(-20px); opacity: 0; } }
+  .spinner { width: 34px; height: 34px; border: 4px solid rgba(255,255,255,.2); border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result */
+  #result { background: rgba(10,22,40,.9); color: #fff; justify-content: center; gap: 14px; text-align: center; }
+  #result h2 { margin: 0; font-size: clamp(28px, 8.5vw, 44px); font-weight: 900; color: var(--gold); -webkit-text-stroke: 2px #7a4a00; paint-order: stroke fill; }
+  #result .sub { font-weight: 800; opacity: .85; }
+  .board { width: min(340px, 90vw); display: flex; flex-direction: column; gap: 5px; }
+  .brow { display: flex; justify-content: space-between; background: rgba(255,255,255,.12); border-radius: 8px; padding: 6px 12px; font-weight: 800; }
+  .brow.me { background: var(--green); }
+  .reward { display: flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 900; }
+  .reward .coin { width: 34px; height: 34px; }
+  .unlock { background: var(--accent); border-radius: 12px; padding: 8px 14px; font-weight: 800; }
+  .cont { background: var(--green); color: #fff; font-weight: 900; font-size: 20px; padding: 14px 40px; border-radius: 16px; box-shadow: 0 5px 0 #22924c; }
+
+  /* Touch controls like Hill Climb Racing: BRAKE pedal bottom-left, GAS pedal bottom-right, punch above gas.
+     In the air the pedals tilt the vehicle (HCR style); tapping anywhere else on the screen punches. */
+  #ctl { position: fixed; inset: 0; pointer-events: none; }
+  .pedal { position: absolute; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; color: #fff; font-weight: 900; font-size: 13px; letter-spacing: .5px;
+    border-radius: 16px; pointer-events: auto; touch-action: none; text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 6px, transparent 6px 14px); }
+  .pedal { transition: transform .06s, filter .06s; }
+  .pedal.on { transform: translateY(5px) scale(.95); filter: brightness(1.25) drop-shadow(0 0 12px rgba(255,255,255,.55)); }
+  #gas { right: max(14px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); width: 104px; height: 150px; background-color: #34b862; box-shadow: 0 6px 0 #1f7a3e, 0 8px 16px rgba(0,0,0,.3); }
+  #brake { left: max(14px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 96px; height: 130px; background-color: #d9433f; box-shadow: 0 6px 0 #8f2522, 0 8px 16px rgba(0,0,0,.3); }
+  #punch { position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: calc(max(22px, env(safe-area-inset-bottom)) + 172px); width: 88px; height: 88px; border-radius: 50%;
+    pointer-events: auto; touch-action: none; font-size: 34px; display: flex; align-items: center; justify-content: center; border: 4px solid #fff;
+    box-shadow: 0 5px 0 #8a3515, 0 8px 16px rgba(0,0,0,.35); background: conic-gradient(#ff8a2b var(--p, 360deg), #6b5a4a 0); }
+  #punch.on { transform: scale(.9); }
+  #punch.ready { animation: ready .55s ease-in-out infinite; }
+  @keyframes ready { 50% { transform: scale(1.1); box-shadow: 0 5px 0 #8a3515, 0 0 0 10px rgba(255,138,43,.4); } }
+  #punch .pl { position: absolute; bottom: -18px; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  /* PC: keyboard like Hill Climb Racing, so the pedals hide and a key legend shows */
+  body.pc #gas, body.pc #brake { display: none; }
+  #keys { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: none; gap: 8px; color: #fff; font-weight: 800; font-size: 13px; }
+  body.pc #keys { display: flex; }
+  .key { background: rgba(15,20,40,.72); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+  .key b { display: inline-block; min-width: 22px; padding: 1px 6px; margin-right: 6px; background: #fff; color: #2a1d12; border-radius: 5px; box-shadow: 0 2px 0 #b9ab92; text-align: center; }
+  body.pc #punch { bottom: 70px; }
+  /* Shop: HCR-style stat bars and upgrade level segments */
+  .stats { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; }
+  .stat span { width: 54px; text-align: left; opacity: .75; }
+  .stat i { flex: 1; height: 7px; background: #eadfc8; border-radius: 4px; overflow: hidden; }
+  .stat i b { display: block; height: 100%; background: linear-gradient(90deg, #ffb02e, #ff7a1f); }
+  .segs { display: flex; gap: 2px; width: 100%; }
+  .segs b { flex: 1; height: 9px; border-radius: 2px; background: #eadfc8; }
+  .segs b.on { background: var(--green); }
+  .vhead { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 8px 12px 8px 8px; box-shadow: 0 4px 0 #d6c39c; }
+  .vhead canvas { width: 140px; height: 98px; border-radius: 10px; flex: none; }
+  .vhead .nm { font-weight: 900; font-size: 20px; margin-bottom: 6px; }
+  .retry { background: #ff8a2b; color: #fff; font-weight: 900; font-size: 20px; padding: 14px 40px; border-radius: 16px; box-shadow: 0 5px 0 #b3561a; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ctl" class="hidden">
+  <div id="brake" class="pedal"></div>
+  <div id="gas" class="pedal"></div>
+  <div id="punch" class="hidden">👊<span class="pl" id="punchLbl"></span></div>
+  <div id="keys"></div>
+</div>
+
+<div id="menu" class="screen">
+  <div class="topbar">
+    <div class="pill" id="mStage"></div>
+    <div class="pill"><span class="coin"></span><span id="mCoins">0</span></div>
+  </div>
+  <div class="title">
+    <h1>GRAND WAVE<br>PIRATES</h1>
+    <div class="stage" id="mBoss"></div>
+  </div>
+  <div class="bottom">
+    <button class="play" id="playBtn"></button>
+    <button class="shopBtn" id="shopBtn"><span id="shopLbl"></span><span class="badge hidden" id="shopBadge">!</span></button>
+    <a class="home hidden" id="homeLink" href="../">← All games</a>
+  </div>
+</div>
+
+<div id="shop" class="screen hidden">
+  <div class="topbar"><span></span><div class="pill"><span class="coin"></span><span id="sCoins">0</span></div></div>
+  <h2 id="shopTitle"></h2>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="shopHint"></div>
+  <div class="grid" id="grid"></div>
+  <button class="back" id="shopBack"></button>
+</div>
+
+<div id="result" class="screen hidden">
+  <h2 id="rTitle"></h2>
+  <div class="sub" id="rSub"></div>
+  <div class="board" id="rBoard"></div>
+  <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
+  <div class="unlock hidden" id="rUnlock"></div>
+  <button class="retry hidden" id="retryBtn"></button>
+  <button class="cont" id="contBtn"></button>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Localization ----------
+  const STRINGS = {
+    en: { play: 'SET SAIL', boss: 'ADMIRAL', king: 'SEA KING', stage: 'ISLAND', shop: 'SHOP', back: 'BACK', hint: 'Beat bosses to unlock more devil fruits', cars: 'Ships', hats: 'Fruits', upgrades: 'Upgrades', islands: 'Islands',
+          you: 'You', go: 'GO!', gas: 'SAIL', brake: 'BRAKE', tilt: 'TILT', punch: 'PUNCH', crash: 'CAPSIZED!', hull: 'HULL', sunk: 'SUNK!', retry: 'TRY AGAIN', heal: 'MEAT! +15 HULL',
+          backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', finish: 'ISLAND AHEAD!', bossIn: 'ISLAND REACHED!', bossIn2: 'THE ADMIRAL ATTACKS!', bossIn2k: 'A SEA KING RISES!',
+          won: 'BOSS DEFEATED!', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat boss #', free: 'FREE', max: 'MAX',
+          rammed: 'RAMMED!', cannon: 'CANNONBALL!', fruit: 'COLA BOOST!', punchHint: 'PUNCH IT!', ctlHint: 'Hold SAIL · tap the screen to punch!',
+          ctlHintPc: 'Hold D to sail · W / S to tilt · SPACE to punch', toGo: 'm to the island', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distance', flipsL: 'Flips', foesHint: 'PUNCH THEM OR RAM THEM!',
+          speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Hull', richer: 'richer coins',
+          u_engine: 'Sails', u_engine_d: 'Top speed and power', u_susp: 'Hull', u_susp_d: 'More hull, steadier landings', u_tires: 'Rudder', u_tires_d: 'Climb steeper waves',
+          u_fwd: 'Rowers', u_fwd_d: 'The crew rows too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Iron hull', u_tank_d: 'Much more hull',
+          u_turbo: 'Turbo', u_turbo_d: 'Faster acceleration', u_stab: 'Stability', u_stab_d: 'Harder to capsize',
+          fr_rubber: 'Stretchy punch', fr_flame: 'Burning punch: double damage', fr_ice: 'Freezes foes around the target', fr_smoke: 'Much longer reach', fr_light: 'Lightning-fast punches',
+          isl_grass: 'Calm spring seas', isl_desert: 'Choppy desert waters', isl_snow: 'Icy, slippery swells', isl_night: 'Giant night waves', isl_sky: 'Sea of clouds: low gravity!' },
+    es: { play: 'ZARPAR', boss: 'ALMIRANTE', king: 'REY MARINO', stage: 'ISLA', shop: 'TIENDA', back: 'VOLVER', hint: 'Vence jefes para desbloquear frutas del diablo', cars: 'Barcos', hats: 'Frutas', upgrades: 'Mejoras', islands: 'Islas',
+          you: 'Tú', go: '¡YA!', gas: 'VELA', brake: 'FRENO', tilt: 'INCLINAR', punch: 'GOLPE', crash: '¡VOLCASTE!', hull: 'CASCO', sunk: '¡HUNDIDO!', retry: 'OTRA VEZ', heal: '¡CARNE! +15 CASCO',
+          backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', finish: '¡ISLA A LA VISTA!', bossIn: '¡LLEGASTE A LA ISLA!', bossIn2: '¡ATACA EL ALMIRANTE!', bossIn2k: '¡EMERGE UN REY MARINO!',
+          won: '¡JEFE DERROTADO!', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al jefe #', free: 'GRATIS', max: 'MÁX',
+          rammed: '¡EMBESTIDA!', cannon: '¡CAÑONAZO!', fruit: '¡COLA TURBO!', punchHint: '¡GOLPÉALO!', ctlHint: 'Mantén VELA · ¡toca la pantalla para golpear!',
+          ctlHintPc: 'Mantén D para navegar · W / S para inclinar · ESPACIO para golpear', toGo: 'm a la isla', checkpoint: 'PUNTO DE CONTROL', kos: 'KOs', dist: 'Distancia', flipsL: 'Mortales', foesHint: '¡GOLPÉALOS O EMBÍSTELOS!',
+          speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Casco', richer: 'monedas más valiosas',
+          u_engine: 'Velas', u_engine_d: 'Velocidad y potencia', u_susp: 'Casco', u_susp_d: 'Más casco, aterrizajes suaves', u_tires: 'Timón', u_tires_d: 'Sube olas más empinadas',
+          u_fwd: 'Remeros', u_fwd_d: 'La tripulación también rema', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Casco de hierro', u_tank_d: 'Mucho más casco',
+          u_turbo: 'Turbo', u_turbo_d: 'Acelera más rápido', u_stab: 'Estabilidad', u_stab_d: 'Cuesta más volcar',
+          fr_rubber: 'Golpe elástico', fr_flame: 'Golpe de fuego: doble daño', fr_ice: 'Congela a los que están cerca', fr_smoke: 'Alcance mucho mayor', fr_light: 'Golpes rapidísimos',
+          isl_grass: 'Mares tranquilos de primavera', isl_desert: 'Aguas picadas del desierto', isl_snow: 'Olas heladas y resbalosas', isl_night: 'Olas gigantes de noche', isl_sky: 'Mar de nubes: ¡gravedad baja!' },
+    pt: { play: 'ZARPAR', boss: 'ALMIRANTE', king: 'REI DO MAR', stage: 'ILHA', shop: 'LOJA', back: 'VOLTAR', hint: 'Vença chefes para desbloquear frutas do diabo', cars: 'Navios', hats: 'Frutas', upgrades: 'Melhorias', islands: 'Ilhas',
+          you: 'Você', go: 'JÁ!', gas: 'VELA', brake: 'FREIO', tilt: 'INCLINAR', punch: 'SOCO', crash: 'VIROU!', hull: 'CASCO', sunk: 'AFUNDOU!', retry: 'DE NOVO', heal: 'CARNE! +15 CASCO',
+          backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', finish: 'ILHA À VISTA!', bossIn: 'CHEGOU NA ILHA!', bossIn2: 'O ALMIRANTE ATACA!', bossIn2k: 'UM REI DO MAR SURGE!',
+          won: 'CHEFE DERROTADO!', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o chefe #', free: 'GRÁTIS', max: 'MÁX',
+          rammed: 'ABALROADO!', cannon: 'BALA DE CANHÃO!', fruit: 'COLA TURBO!', punchHint: 'SOQUE!', ctlHint: 'Segure VELA · toque na tela para socar!',
+          ctlHintPc: 'Segure D para navegar · W / S para inclinar · ESPAÇO para socar', toGo: 'm até a ilha', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distância', flipsL: 'Mortais', foesHint: 'SOQUE OU ABALROE!',
+          speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Casco', richer: 'moedas mais valiosas',
+          u_engine: 'Velas', u_engine_d: 'Velocidade e potência', u_susp: 'Casco', u_susp_d: 'Mais casco, pousos suaves', u_tires: 'Leme', u_tires_d: 'Sobe ondas mais íngremes',
+          u_fwd: 'Remadores', u_fwd_d: 'A tripulação também rema', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Casco de ferro', u_tank_d: 'Muito mais casco',
+          u_turbo: 'Turbo', u_turbo_d: 'Acelera mais rápido', u_stab: 'Estabilidade', u_stab_d: 'Mais difícil virar',
+          fr_rubber: 'Soco elástico', fr_flame: 'Soco de fogo: dano dobrado', fr_ice: 'Congela quem está perto', fr_smoke: 'Alcance muito maior', fr_light: 'Socos rapidíssimos',
+          isl_grass: 'Mares calmos de primavera', isl_desert: 'Águas agitadas do deserto', isl_snow: 'Ondas geladas e escorregadias', isl_night: 'Ondas gigantes à noite', isl_sky: 'Mar de nuvens: gravidade baixa!' },
+  };
+  let T = STRINGS.en;
+
+  // ---------- Content ----------
+  // Like Hill Climb Racing: every vehicle drives differently and has its own 4 upgrades (the 4th one is special per vehicle).
+  const CARS = [ // ships; each sails differently and has its own 4 upgrades (the 4th one is special)
+    { id: 'caravel', name: 'Caravel',       cost: 0,      upBase: 500,  sp: 'fwd',   top: 13,   acc: 17, mu: 0.9,  airT: 6.5, tank: 60, inertia: 1.1, k: 65, damp: 4.5, hull: '#9a5a2a', trim: '#f2d061', sail: '#fdf8ea' },
+    { id: 'sheep',   name: 'Sheep Caravel', cost: 15000,  upBase: 900,  sp: 'air',   top: 13.5, acc: 18, mu: 0.88, airT: 10,  tank: 55, inertia: 0.8, k: 55, damp: 3.5, hull: '#c98a4b', trim: '#fff6dc', sail: '#ffffff' },
+    { id: 'brig',    name: 'War Brig',      cost: 35000,  upBase: 1500, sp: 'tank',  top: 15.5, acc: 16, mu: 0.95, airT: 6,   tank: 80, inertia: 1.4, k: 70, damp: 5.5, hull: '#7a1f24', trim: '#ffc531', sail: '#f4e6d0' },
+    { id: 'shark',   name: 'Shark Sub',     cost: 75000,  upBase: 2500, sp: 'turbo', top: 17,   acc: 21, mu: 1.0,  airT: 7,   tank: 65, inertia: 1.1, k: 70, damp: 5,   hull: '#5b7fa6', trim: '#e8eef4', sail: '#e8eef4' },
+    { id: 'lion',    name: 'Lion Ship',     cost: 150000, upBase: 4000, sp: 'stab',  top: 17.5, acc: 20, mu: 1.12, airT: 7.5, tank: 75, inertia: 1.5, k: 75, damp: 6,   hull: '#f2c230', trim: '#7a4a22', sail: '#ffffff' },
+  ];
+  const UPG = ['engine', 'susp', 'tires', 'sp'], UPG_MAX = 10;
+  const UPG_MUL = { engine: 1.2, susp: 0.8, tires: 1, sp: 1.1 };
+  const UPG_ICON = { engine: '⛵', susp: '🛡️', tires: '🧭', fwd: '🚣', air: '🪽', tank: '⚓', turbo: '💨', stab: '🦁' };
+  // Islands are the stages: bought with coins, each with its own physics, and richer coins further on.
+  const ISLANDS = [
+    { id: 'grass',  name: 'Spring Island',  cost: 0,     g: 13, grip: 1,    amp: 1,   bump: 1,   rich: 0, theme: 0 },
+    { id: 'desert', name: 'Sand Kingdom',  cost: 8000,  g: 13, grip: 0.92, amp: 0.9, bump: 1.7, rich: 0.25, theme: 4 },
+    { id: 'snow',   name: 'Winter Island', cost: 20000, g: 13, grip: 0.72, amp: 1.1, bump: 1,   rich: 0.35, theme: 3 },
+    { id: 'night',  name: 'Night Sea',   cost: 40000, g: 13, grip: 1,    amp: 1.25, bump: 1.2, rich: 0.5, theme: 2 },
+    { id: 'sky',    name: 'Sky Island',   cost: 80000, g: 7,  grip: 1,    amp: 1.4, bump: 1,   rich: 0.65, theme: 5 },
+  ];
+  const COIN_VALUES = [5, 25, 100, 500];
+  const COIN_COLORS = [['#b8692e', '#e8a066'], ['#8d97a6', '#e2e8ef'], ['#e39a12', '#ffd23f'], ['#b3121a', '#ff6a6a']];
+  // Devil fruits (generic): each one changes the stretchy punch. Unlocked by beating boss #N, then bought.
+  const HATS = [
+    { id: 'rubber', name: 'Rubber Fruit', boss: 0, cost: 0,     col: '#f3c18c', glow: '',            reach: 9.5,  cd: 0.6,  dmg: 1, a: '#e8364f', b: '#ffd23f' },
+    { id: 'flame',  name: 'Flame Fruit',  boss: 1, cost: 1500,  col: '#ffb070', glow: '255,140,40',  reach: 9.5,  cd: 0.7,  dmg: 2, a: '#ff6a1f', b: '#ffd23f' },
+    { id: 'ice',    name: 'Ice Fruit',    boss: 2, cost: 3000,  col: '#cfefff', glow: '150,220,255', reach: 9.5,  cd: 0.65, dmg: 1, splash: 4.5, a: '#5ec8f0', b: '#ffffff' },
+    { id: 'smoke',  name: 'Smoke Fruit',  boss: 4, cost: 6000,  col: '#e4e4ea', glow: '200,200,214', reach: 14,   cd: 0.6,  dmg: 1, a: '#9a9aaa', b: '#f4f4f8' },
+    { id: 'light',  name: 'Light Fruit',  boss: 6, cost: 12000, col: '#fff3a0', glow: '255,240,150', reach: 10.5, cd: 0.32, dmg: 1, a: '#ffd23f', b: '#fffbe0' },
+  ];
+  const THEMES = [
+    { sky: ['#3fa9f5', '#c9ecff'], sea: '#1e8fd6', cloud: '#cfe3f7', sand: '#f4e2b0', seaLite: '#7fd0f5', seaDeep: '#136fb0', far: '#4f9f8f', mid: '#3f8a4a', grass: '#5cc64c', grass2: '#3e9a36', dirt: '#b8743c', dirt2: '#8a5229', sun: '#fff6b0' },
+    { sky: ['#ff7e5f', '#feb47b'], sea: '#c85c72', cloud: '#f6c9a8', sand: '#f7d9a8', seaLite: '#e89aa8', seaDeep: '#8a3e5a', far: '#7a3f62', mid: '#5b3a52', grass: '#78c04a', grass2: '#4c8f32', dirt: '#a8653a', dirt2: '#734225', sun: '#ffe08a' },
+    { sky: ['#0b1a3a', '#2f4a8a'], sea: '#12305e', cloud: '#5a6aa0', sand: '#8a8aa0', seaLite: '#2a5a9a', seaDeep: '#081a3a', far: '#1d2c55', mid: '#1a3a3a', grass: '#3fa35e', grass2: '#2a7444', dirt: '#6b4a3a', dirt2: '#4a3128', sun: '#f2f4ff', night: true },
+    { sky: ['#8fb3d6', '#e6f0f8'], sea: '#4f7fa8', cloud: '#d8e6f2', sand: '#f4fbff', seaLite: '#9fc3e0', seaDeep: '#2f5f88', far: '#8aa1bb', mid: '#6f8aa6', grass: '#f4fbff', grass2: '#c8dced', dirt: '#7a8aa0', dirt2: '#56647a', sun: '#ffffff' },
+    { sky: ['#f5b25a', '#ffe7b0'], sea: '#2fa4c8', cloud: '#f7e2c0', sand: '#f6dca0', seaLite: '#7fd6e8', seaDeep: '#1f7fa8', far: '#d49a5a', mid: '#b97a3e', grass: '#f0cf86', grass2: '#d8ac5c', dirt: '#d9a55e', dirt2: '#a8733a', sun: '#fff3c0' },
+    { sky: ['#1b1035', '#6a4aa8'], sea: '#b9a4f2', cloud: '#b9a8e8', sand: '#d8ccff', seaLite: '#e0d6ff', seaDeep: '#7a64c8', far: '#8a6ccf', mid: '#5b3a8a', grass: '#d8ccff', grass2: '#a898e0', dirt: '#6f6890', dirt2: '#47405f', sun: '#fff6e0', night: true },
+  ];
+
+  // ---------- Save (Bridge storage) ----------
+  const defUp = () => Object.fromEntries(CARS.map(c => [c.id, { engine: 0, susp: 0, tires: 0, sp: 0 }]));
+  let save = { v: 1, coins: 0, bosses: 0, owned: { cars: ['caravel'], hats: ['rubber'], islands: ['grass'] }, eq: { cars: 'caravel', hats: 'rubber', islands: 'grass' }, up: defUp(), seen: 1 };
+  let B = null;
+  const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
+  function persist() { if (B) B.storage.set(['grand_wave_pirates'], [JSON.stringify(save)]).catch(() => {}); }
+  async function load() {
+    if (!B) return;
+    try {
+      const d = await B.storage.get(['grand_wave_pirates']);
+      if (d[0]) {
+        const s = typeof d[0] === 'string' ? JSON.parse(d[0]) : d[0];
+        const up = defUp();
+        for (const id in up) Object.assign(up[id], (s.up || {})[id] || {});
+        save = Object.assign(save, s, { owned: Object.assign({}, save.owned, s.owned || {}), eq: Object.assign({}, save.eq, s.eq || {}), up });
+      }
+    } catch (e) {}
+  }
+  const CATS = { cars: CARS, hats: HATS, islands: ISLANDS };
+  const byId = (cat, id) => CATS[cat].find(x => x.id === id) || CATS[cat][0];
+  const island = () => byId('islands', save.eq.islands);
+  const upCost = (car, u) => Math.round(car.upBase * UPG_MUL[u] * Math.pow(1.32, save.up[car.id][u]) / 50) * 50;
+  const unlockedCount = () => HATS.filter(x => save.bosses >= x.boss).length;
+  const fruit = () => byId('hats', save.eq.hats);
+  const nextKing = () => save.bosses % 2 === 1; // bosses alternate: Admiral, Sea King, Admiral...
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+
+  // ---------- Helpers ----------
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // ---------- Canvas ----------
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  }
+
+  // ---------- Terrain (heightfield, meters, y up) ----------
+  const STEP = 0.5, TER_LEN = 4200, CP = 60;
+  let TER = new Float32Array(1), FINISH = 900;
+  function genTerrain(stage) {
+    const isl = island(), r = mulberry(1234 + stage * 7919 + isl.cost);
+    const amp = Math.min(1 + stage * 0.07, 1.45);
+    const oct = [[6.5 * isl.amp, 0.018], [3.2 * isl.amp, 0.05], [1.1 * isl.amp, 0.12], [0.12 * isl.bump, 0.33]].map(([a, f]) => ({ a: a * amp, f: f * (0.85 + r() * 0.3), p: r() * 6.28 }));
+    const n = Math.ceil(TER_LEN / STEP);
+    TER = new Float32Array(n);
+    let prev = 0;
+    for (let i = 0; i < n; i++) {
+      const x = i * STEP;
+      let ramp = clamp((x - 15) / 120, 0, 1); ramp = ramp * ramp * (3 - 2 * ramp);
+      const grow = 0.55 + 0.45 * clamp(x / 600, 0, 1);
+      let h = 0;
+      for (const o of oct) h += o.a * Math.sin(x * o.f + o.p) - o.a * Math.sin(o.p);
+      h *= ramp * grow;
+      const d = clamp(h - prev, -0.85 * STEP, 0.85 * STEP); // keep every slope climbable
+      h = prev + d; prev = h; TER[i] = h;
+    }
+    // flat-ish finish plateau
+    const fi = Math.round(FINISH / STEP), hf = TER[fi];
+    for (let i = fi - 40; i <= fi + 40; i++) { const w = clamp(1 - (Math.abs(i - fi) - 16) / 24, 0, 1); TER[i] = lerp(TER[i], hf, w * w * (3 - 2 * w)); }
+  }
+  function hAt(x) {
+    const f = clamp(x / STEP, 0, TER.length - 2), i = f | 0, k = f - i;
+    return TER[i] * (1 - k) + TER[i + 1] * k;
+  }
+  const slopeAt = (x) => (hAt(x + 0.3) - hAt(x - 0.3)) / 0.6;
+
+  // ---------- Vehicle physics ----------
+  // Rigid chassis with two soft (penalty-spring) wheels, a driver head that can bonk, and HCR-style air control.
+  const AX = 1.05, AY = 0.5, WR = 0.45, WI = 0.12, SUB = 8;
+  const BODY_PTS = [[-1.4, 0.05], [1.4, 0.05], [-1.25, 0.45], [1.3, 0.35], [0, -0.35]];
+  const HEAD = [-0.15, 1.02], HEAD_R = 0.3;
+  function carStats(id) {
+    const c = byId('cars', id || save.eq.cars), u = save.up[c.id], isl = island(), sp = u.sp;
+    return {
+      g: isl.g, inertia: c.inertia,
+      top: c.top + u.engine * 0.55 + (c.sp === 'turbo' ? sp * 0.3 : 0),
+      acc: c.acc + u.engine * 1.1 + (c.sp === 'turbo' ? sp * 1.5 : 0),
+      k: c.k + u.susp * 1.5, damp: c.damp + u.susp * 0.4,
+      mu: (c.mu + u.tires * 0.045) * isl.grip,
+      airT: c.airT + u.susp * 0.15 + (c.sp === 'air' ? sp * 0.6 : 0),
+      tank: c.tank + u.susp * 5 + (c.sp === 'tank' ? sp * 8 : 0), // hull points
+      fwd: c.sp === 'fwd' ? 0.35 + sp * 0.065 : 1,
+      stab: c.sp === 'stab' ? 1 + sp * 0.25 : 0,
+    };
+  }
+  function newCar(x) { const c = { x, y: 0, vx: 0, vy: 0, a: 0, w: 0, ws: 0, wr: 0, ground: 0, body: 0, head: false, air: 0, flip: 0 }; placeCar(c, x); return c; }
+  function placeCar(c, x) {
+    const s = (hAt(x + AX) - hAt(x - AX)) / (2 * AX);
+    c.x = x; c.a = Math.atan(s); c.y = (hAt(x - AX) + hAt(x + AX)) / 2 + (AY + WR) / Math.cos(c.a) + 0.04;
+    c.vx = c.vy = c.w = c.ws = 0; c.air = 0; c.flip = 0; c.head = false;
+  }
+  function contact(px, py) {
+    const s = slopeAt(px), inv = 1 / Math.sqrt(1 + s * s);
+    return { d: (py - hAt(px)) * inv, nx: -s * inv, ny: inv, tx: inv, ty: s * inv };
+  }
+  function stepCar(c, dt, inp, st) {
+    const cos = Math.cos(c.a), sin = Math.sin(c.a);
+    let fx = 0, fy = -st.g, tq = 0, ground = 0, body = 0;
+    const top = st.top * (inp.power || 1), acc = st.acc * (inp.power || 1);
+    const maxW = top / WR;
+    const fwd = c.vx * cos + c.vy * sin;
+    if (inp.gas > 0) { const tw = maxW * inp.gas; if (c.ws < tw) c.ws = Math.min(tw, c.ws + acc / WR * dt); }
+    else if (inp.brake) { if (fwd > 0.8) c.ws *= Math.max(0, 1 - 9 * dt); else c.ws = Math.max(-maxW * 0.35, c.ws - acc / WR * 0.6 * dt); }
+    else c.ws *= 1 - 0.35 * dt;
+    for (const ox of [-AX, AX]) {
+      const rx = ox * cos + AY * sin, ry = ox * sin - AY * cos;
+      const k = contact(c.x + rx, c.y + ry), pen = WR - k.d;
+      if (pen <= 0) continue;
+      ground++;
+      const px = rx - k.nx * WR, py = ry - k.ny * WR;
+      const vpx = c.vx - c.w * py, vpy = c.vy + c.w * px;
+      const vn = vpx * k.nx + vpy * k.ny, vt = vpx * k.tx + vpy * k.ty;
+      let fn = st.k * pen - st.damp * vn;
+      if (pen > 0.28) fn += (pen - 0.28) * 800;
+      if (fn < 0) fn = 0;
+      const drive = ox > 0 && !inp.brake ? st.fwd : 1; // front wheels only pull with 4WD
+      const lim = st.mu * fn, ft = clamp((c.ws * WR - vt) * 30, -lim, lim) * drive;
+      c.ws -= ft * WR / WI * dt;
+      fx += k.nx * fn + k.tx * ft; fy += k.ny * fn + k.ty * ft;
+      tq += rx * k.ny * fn - ry * k.nx * fn + px * k.ty * ft - py * k.tx * ft;
+    }
+    for (const [lx, ly] of BODY_PTS) {
+      const rx = lx * cos - ly * sin, ry = lx * sin + ly * cos;
+      const k = contact(c.x + rx, c.y + ry), pen = 0.04 - k.d;
+      if (pen <= 0) continue;
+      body++;
+      const vpx = c.vx - c.w * ry, vpy = c.vy + c.w * rx;
+      const vn = vpx * k.nx + vpy * k.ny, vt = vpx * k.tx + vpy * k.ty;
+      const fn = Math.max(0, 420 * pen - 12 * vn), ft = -clamp(vt * 6, -0.6 * fn, 0.6 * fn);
+      fx += k.nx * fn + k.tx * ft; fy += k.ny * fn + k.ty * ft;
+      tq += rx * (k.ny * fn + k.ty * ft) - ry * (k.nx * fn + k.tx * ft);
+    }
+    { const rx = HEAD[0] * cos - HEAD[1] * sin, ry = HEAD[0] * sin + HEAD[1] * cos;
+      if (contact(c.x + rx, c.y + ry).d < HEAD_R * 0.8) c.head = true; }
+    const air = ground === 0 && body === 0;
+    let lean = inp.lean || 0;
+    if (air && inp.autoTilt !== false) lean += (inp.gas > 0 ? 0.9 : 0) - (inp.brake ? 0.9 : 0); // HCR pedals tilt in the air; on PC W/S do it
+    else if (inp.gas > 0) tq += 1.2 * inp.gas; // engine reaction lifts the nose a little
+    tq += clamp(lean, -1, 1) * (air ? st.airT : 3);
+    const stab = st.stab + (inp.mercy || 0);
+    if (stab) tq -= (c.a - Math.atan(slopeAt(c.x))) * stab * (air ? 1.6 : 2.5);
+    if (inp.assist && ground) { const s = slopeAt(c.x), inv = 1 / Math.sqrt(1 + s * s); fx += inv * inp.assist; fy += s * inv * inp.assist; }
+    c.vx += fx * dt; c.vy += fy * dt;
+    c.w += tq / st.inertia * dt; c.w *= 1 - (air ? 0.4 : 1.4) * dt; c.w = clamp(c.w, -7, 7);
+    c.vx *= 1 - 0.015 * dt;
+    c.x += c.vx * dt; c.y += c.vy * dt; c.a += c.w * dt;
+    c.wr -= c.ws * dt;
+    c.ground = ground; c.body = body;
+    if (air) { c.air += dt; c.flip += c.w * dt; } else if (ground) { c.landed = c.air; c.air = 0; }
+  }
+
+  // ---------- Game state ----------
+  let phase = 'menu'; // menu | play | bossIntro | boss | win | result
+  let me = null, foes = [], shots = [], ship = null, feed = [], popups = [], parts = [], pickups = [], balls = [];
+  let myShots = [], sinkT = 0;
+  let introT = 0, winT = 0, shake = 0, time = 0, lastT = 0, paused = false, audioOn = true, elapsed = 0, nextFoeX = 2, kos = 0, combo = 0, comboT = 0;
+  let camX = 0, camY = 0, camK = 0.38, ppm = 30, demo = null;
+  const input = { gas: false, brake: false, kGas: false, kBrake: false, kBack: false, kFwd: false };
+
+  function readInput() {
+    const gas = input.gas || input.kGas ? 1 : 0;
+    const brake = !gas && (input.brake || input.kBrake);
+    const lean = clamp((input.kBack ? 1 : 0) - (input.kFwd ? 1 : 0), -1, 1);
+    return { gas, brake, lean, autoTilt: !isPc };
+  }
+
+  // HCR-style coin values: 5 -> 25 -> 100 the further you go; on pricier islands some groups jump a tier (up to 500).
+  const coinTier = (x, up) => Math.min(3, (x < FINISH * 0.3 ? 0 : x < FINISH * 0.65 ? 1 : 2) + up);
+  function genPickups() {
+    pickups = [];
+    for (let x = 40; x < TER_LEN - 50; x += rnd(32, 52)) {
+      if (Math.abs(x - FINISH) < 20) continue;
+      const n = 5, up = Math.random() < island().rich ? 1 : 0;
+      for (let i = 0; i < n; i++) { const px = x + i * 1.7; pickups.push({ x: px, y: hAt(px) + 1.3, type: 'coin', tier: coinTier(px, up) }); }
+    }
+    for (let x = 120; x < TER_LEN - 50; x += 150) pickups.push({ x, y: hAt(x) + 1.4, type: 'meat' });
+    for (let x = 230; x < TER_LEN - 50; x += 270) pickups.push({ x: x + 9, y: hAt(x + 9) + 2.2, type: 'fruit' });
+  }
+
+  function newRace() {
+    const stage = save.bosses + 1;
+    FINISH = Math.min(800 + stage * 40, 1100);
+    genTerrain(stage);
+    genPickups();
+    const st = carStats();
+    me = { name: T.you, isMe: true, car: newCar(6), hull: st.tank, cannonT: 1.5, coins: 0, flips: 0, crashT: 0, upT: 0, sideT: 0, progX: 6, noProgT: 0, best: 6, boost: 0,
+           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, punchTgt: null, cp: 6, hintShown: false };
+    foes = []; shots = []; myShots = []; nextFoeX = 25; kos = 0; combo = 0; comboT = 0; sinkT = 0;
+    PUNCH_CD = fruit().cd; PUNCH_REACH = fruit().reach;
+    elapsed = 0; feed = []; popups = []; parts = []; balls = []; ship = null; shake = 0; goSfx = false;
+    camX = me.car.x; camY = me.car.y; camK = 0.38;
+  }
+
+  // ---------- Enemies: unlimited marines along the road ----------
+  // Run them over or punch them. They can only slow you down or cost meat, never end the run.
+  // grunt = marine rowboat with a rifleman, cannon = marine gunboat, seaking = sea monster that rises and bites, gull = bomber
+  const FOES = {
+    grunt:   { hp: 1, ram: 3,  coins: 25,  w: 0.9, h: 1.8, from: 0 },
+    gull:    { hp: 1, ram: 99, coins: 50,  w: 0.8, h: 0.6, from: 90 },
+    seaking: { hp: 3, ram: 99, coins: 150, w: 1.0, h: 3.2, from: 160 },
+    cannon:  { hp: 2, ram: 6,  coins: 100, w: 1.4, h: 1.8, from: 220 },
+  };
+  const FOE_WEIGHT = { grunt: 5, gull: 1.6, seaking: 1.2, cannon: 1.4 };
+  let PUNCH_CD = 0.6, PUNCH_REACH = 9.5; // set from the equipped devil fruit
+  const foeHead = (f) => f.type === 'seaking' ? f.y + 0.8 + 2.6 * (f.rise || 0) : f.y + FOES[f.type].h * 0.6;
+  const bossHead = () => ship.kind === 'king' ? { x: ship.x + 4.2, y: ship.y + 5.2 } : { x: ship.x + 3, y: ship.y + 3 };
+  function spawnFoe() {
+    const c = me.car, x = c.x + (W * (1 - camK)) / ppm + rnd(4, 14);
+    if (x > FINISH - 15) return; // keep the finish line clear
+    const opts = Object.keys(FOES).filter(k => me.best >= FOES[k].from);
+    let r = Math.random() * opts.reduce((a, k) => a + FOE_WEIGHT[k], 0), type = opts[0];
+    for (const k of opts) { r -= FOE_WEIGHT[k]; if (r <= 0) { type = k; break; } }
+    const f = { type, x, y: hAt(x), hp: FOES[type].hp, t: rnd(0, 6), fireT: rnd(0.8, 2), dead: false, vx: 0, vy: 0, spin: 0, a: 0, flash: 0, bumpT: 0 };
+    if (type === 'gull') f.y = hAt(x) + rnd(5, 6.5);
+    foes.push(f);
+    if (type === 'seaking') { f.rise = 0.05; f.biteCD = 1; f.biteT = 0; }
+    if (type === 'grunt' && Math.random() < 0.3) foes.push({ ...f, x: f.x + 2.4, y: hAt(f.x + 2.4), t: rnd(0, 6), fireT: rnd(1, 2.5) }); // they come in pairs sometimes
+  }
+  function koFoe(f, power) {
+    f.dead = true; f.deadT = f.t; f.vx = power; f.vy = rnd(6, 10); f.spin = rnd(-12, -6);
+    kos++; combo = comboT > 0 ? combo + 1 : 1; comboT = 2.2; comboPop = 1;
+    hitStop = Math.max(hitStop, combo > 2 ? 0.07 : 0.045); zoomKick = Math.max(zoomKick, 0.05 + Math.min(combo, 5) * 0.01);
+    const v = FOES[f.type].coins * Math.min(combo, 3);
+    me.coins += v;
+    popup(combo > 1 ? `KO x${combo} +${fmt(v)}` : `KO! +${v}`, '#ffd23f');
+    sfx.ko(combo); shake = Math.max(shake, 5); buzz(12);
+    const hy = f.y + FOES[f.type].h * 0.8;
+    puff('star', f.x, hy, 5, { spd: 5, r: 0.5 }); puff('dust', f.x, f.y + 0.3, 4, { r: 0.6, spd: 2 });
+    ono('ko', f.x - 0.5, hy + 1.2, combo > 2 ? '#ff8a2b' : '#ffd23f', combo > 2 ? 1.25 : 1, combo > 1);
+    if (combo > 2 || f.type === 'seaking' || f.type === 'cannon') impact(f.x, hy, 0.08);
+  }
+  function hitFoe(f, dmg) {
+    f.hp -= dmg || 1; f.flash = 0.2;
+    if (f.hp <= 0) koFoe(f, 9);
+    else { f.x += 1; sfx.bossHit(false); ono('ko', f.x - 0.5, f.y + 2.4, '#fff', 0.8); puff('star', f.x, f.y + 1.6, 3, { spd: 4, r: 0.4 }); }
+  }
+  // The hull is your life: at 0 the ship sinks and the run is lost.
+  function damageHull(n) {
+    if (phase !== 'play' && phase !== 'boss') return;
+    me.hull = Math.max(0, me.hull - n * (1 + save.bosses * 0.08)); // later islands hit harder
+    if (me.hull <= 0) sink();
+  }
+  function sink() {
+    phase = 'sunk'; sinkT = 2.6; me.punchT = -1;
+    popup(T.sunk, '#ff5d73'); ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.4, true);
+    shake = 14; sfx.crash(); buzz([40, 60, 40]); hitStop = 0.12; zoomKick = 0.1;
+  }
+  function playerHit(meat) {
+    if (me.crashT > 0) return;
+    damageHull(meat); me.car.vx *= 0.75;
+    popup(`-${meat} ${T.hull}`, '#ff5d73'); shake = 8; buzz(25); sfx.thud();
+    ono('ouch', me.car.x, me.car.y + 2.4, '#ff5d73', 0.8); puff('smoke', me.car.x, me.car.y + 0.5, 4, { r: 0.6, spd: 2 });
+  }
+  function updateFoes(dt) {
+    const c = me.car;
+    if (phase === 'play') {
+      if (me.best >= nextFoeX && foes.filter(f => !f.dead).length < 8) { nextFoeX = me.best + rnd(18, 34) / (1 + me.best / 1500 + save.bosses * 0.05); spawnFoe(); }
+    }
+    comboT -= dt;
+    for (const f of foes) {
+      f.t += dt; f.flash = Math.max(0, f.flash - dt);
+      if (f.dead) { f.vy -= 18 * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.a += f.spin * dt; continue; }
+      const dx = f.x - c.x, def = FOES[f.type];
+      if (!me.hintShown && dx < 14) { me.hintShown = true; popup('👊 ' + T.foesHint, '#ff8a2b'); }
+      if (f.type === 'grunt' || f.type === 'cannon') { if (f.type === 'grunt') f.x -= 1.3 * dt; f.y = hAt(f.x); }
+      else if (f.type === 'seaking') { // rises when you get close, telegraphs (open jaws + "!"), then bites
+        f.x -= 0.5 * dt; f.y = hAt(f.x);
+        f.rise += ((dx < 16 ? 1 : 0.05) - f.rise) * Math.min(1, dt * 1.8);
+        f.biteCD -= dt;
+        if (f.biteT > 0) {
+          f.biteT -= dt;
+          if (f.biteT <= 0) {
+            f.biteCD = 2.4;
+            if (dx > -1.5 && dx < 5.5 && me.crashT <= 0) { playerHit(16); c.vx = Math.min(c.vx, -4); ono('chomp', c.x + 1, c.y + 2.6, '#ff5d73', 1.2, true); }
+          }
+        } else if (f.biteCD <= 0 && f.rise > 0.8 && dx > -1 && dx < 5) f.biteT = 0.55;
+      }
+      else if (f.type === 'gull') { f.x -= 3 * dt; const dive = dx > -2 && dx < 9 ? 2.6 : 5.5; f.y += (hAt(f.x) + dive + Math.sin(f.t * 2) * 0.6 - f.y) * Math.min(1, dt * (dive < 5 ? 3.5 : 2)); } // dives at you
+      if (f.type === 'grunt' && dx > 5 && dx < 20 && (f.fireT -= dt) <= 0) { // rifle shot aimed at you
+        f.fireT = rnd(2.2, 3.6);
+        const sx = f.x - 0.8, sy = f.y + 1.1, ex = c.x - sx, ey = c.y + 0.3 - sy, d = Math.hypot(ex, ey) || 1;
+        shots.push({ x: sx, y: sy, vx: ex / d * 13, vy: ey / d * 13, t: 0, kind: 'bullet' }); sfx.shot(); puff('smoke', sx, sy, 2, { r: 0.3, spd: 1 });
+      }
+      if (f.type === 'gull' && f.fireT < 50 && dx > -1 && dx < 5) { f.fireT = 99; shots.push({ x: f.x, y: f.y - 0.3, vx: -3, vy: 0, t: 0, kind: 'bomb' }); }
+      if (f.type === 'cannon' && dx > 7 && dx < 28 && (f.fireT -= dt) <= 0) {
+        f.fireT = rnd(3, 4.5);
+        const tx = c.x + Math.max(0, c.vx) * 1.1;
+        balls.push({ x0: f.x - 1, y0: f.y + 1, x1: tx, y1: hAt(tx) + 0.6, t: 0, dur: 1.1 }); sfx.cannon();
+        puff('fire', f.x - 1.2, f.y + 1, 4, { spd: 3, vx: -3, r: 0.5, life: 0.5 }); puff('smoke', f.x - 1.2, f.y + 1, 5, { spd: 2, vx: -2, r: 0.7 });
+      }
+      // driving into them: fast enough knocks them flying, too slow bounces you back
+      if (f.type !== 'gull' && f.type !== 'seaking' && me.crashT <= 0 && Math.abs(dx) < 1.4 + def.w && Math.abs(f.y + def.h / 2 - c.y) < 2) {
+        if (c.vx > def.ram) { koFoe(f, c.vx * 0.7 + 4); c.vx *= 0.93; }
+        else if (f.t > f.bumpT) { f.bumpT = f.t + 0.8; c.vx = Math.min(c.vx, -2); shake = 6; sfx.thud(); if (--f.hp <= 0) koFoe(f, 6); else { f.flash = 0.2; f.x += 2; } }
+      }
+    }
+    foes = foes.filter(f => f.x > c.x - 25 && !(f.dead && f.t - f.deadT > 2.5));
+  }
+  function updateShots(dt) {
+    const c = me.car;
+    for (const b of shots) {
+      b.t += dt;
+      if (b.kind === 'bomb') b.vy -= 14 * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (Math.hypot(b.x - c.x, b.y - (c.y + 0.4)) < 1.3) { b.done = true; playerHit(b.kind === 'bomb' ? 11 : 6); }
+      else if (b.y < hAt(b.x) || b.t > 3) {
+        b.done = true;
+        if (b.kind === 'bomb') { sfx.boom(); puff('fire', b.x, hAt(b.x) + 0.3, 6, { spd: 3, r: 0.6, life: 0.6 }); puff('smoke', b.x, hAt(b.x) + 0.4, 6, { r: 0.9, spd: 2 }); }
+      }
+    }
+    shots = shots.filter(b => !b.done);
+  }
+  // Nearest enemy (or the boss ship) the stretchy arm can reach; null means a forward swing.
+  function punchTarget() {
+    const c = me.car;
+    if (ship && phase === 'boss' && c.x - ship.x < 16) return { ship: true };
+    let best = null, bd = PUNCH_REACH;
+    for (const f of foes) {
+      if (f.dead || f.x < c.x - 2) continue;
+      const d = Math.hypot(f.x - c.x, foeHead(f) - c.y - 0.6);
+      if (d < bd) { bd = d; best = f; }
+    }
+    return best ? { foe: best } : null;
+  }
+  function punchPoint(tg) {
+    const c = me.car;
+    if (tg && tg.ship && ship) return bossHead();
+    if (tg && tg.foe) return { x: tg.foe.x, y: foeHead(tg.foe) };
+    return { x: c.x + Math.cos(c.a) * 4.5, y: c.y + 0.6 + Math.sin(c.a) * 4.5 };
+  }
+
+  function crash() {
+    if (me.crashT > 0) return;
+    me.crashT = 1.5;
+    me.mercy = Math.min(3, me.mercy + 1); // invisible help after repeated crashes, so nobody gets stuck on one hill
+    damageHull(14);
+    popup(T.crash, '#ff5d73');
+    shake = 12; sfx.crash(); buzz([30, 40, 30]);
+    ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.1, true); zoomKick = Math.max(zoomKick, 0.05); hitStop = 0.06; puff('dust', me.car.x, me.car.y, 8, { r: 0.8, spd: 3 });
+    for (let i = 0; i < 14; i++) parts.push({ x: me.car.x, y: me.car.y + 1, vx: rnd(-4, 4), vy: rnd(2, 8), t: 0, life: rnd(0.5, 1), c: i % 2 ? '#ffd23f' : '#fff', r: rnd(0.08, 0.16) });
+  }
+  function respawn() {
+    const x = Math.max(6, me.cp);
+    placeCar(me.car, x);
+    me.upT = 0; me.sideT = 0; me.noProgT = 0; me.progX = Math.min(me.progX, x);
+    if (ship) ship.x = Math.min(ship.x, x - 16);
+  }
+
+  function updatePlayer(dt) {
+    const c = me.car, st = carStats();
+    let inp = readInput();
+    if (me.crashT > 0) {
+      me.crashT -= dt;
+      inp = { gas: 0, brake: false, lean: 0 };
+      if (me.crashT <= 0) respawn();
+    }
+    let power = 1;
+    if (me.boost > 0) { me.boost -= dt; power *= 1.35; }
+    inp.power = power;
+    me.mercy = Math.max(0, me.mercy - dt / 15);
+    inp.mercy = me.mercy * 1.2;
+    // Invisible crew push on a hill you can't climb (the run never stalls).
+    const speed = Math.hypot(c.vx, c.vy);
+    // Progress watchdog (the run never stalls): no new ground for 3 s -> a growing invisible crew push; 12 s -> hop past the obstacle.
+    if (c.x > me.progX + 3) { me.progX = c.x; me.noProgT = 0; } else if (me.crashT <= 0) me.noProgT += dt;
+    inp.assist = inp.gas && me.noProgT > 3 ? Math.min(16, (me.noProgT - 3) * 4) : 0;
+    if (me.noProgT > 12 && me.crashT <= 0) { placeCar(c, me.progX + 10); me.progX = c.x; me.noProgT = 0; me.mercy = Math.min(3, me.mercy + 1); }
+    const prevAir = c.air;
+    for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, inp, st);
+    me.squash = (me.squash || 0) * Math.exp(-dt * 8);
+    if (prevAir > 0.35 && c.air === 0 && me.crashT <= 0) { // landing: squash, camera dip, dust and a buzz scaled by the fall
+      me.squash = Math.min(0.3, prevAir * 0.16); camDip = Math.min(0.6, prevAir * 0.3);
+      puff('dust', c.x, hAt(c.x) + 0.1, Math.min(12, 4 + Math.round(prevAir * 5)), { r: 0.8, spd: 4, c: '235,248,255' }); if (prevAir > 1) ono('splash', c.x, c.y + 2.2, '#7fd0ff', 0.9); buzz(Math.min(45, 10 + Math.round(prevAir * 20)));
+    }
+    if (c.ground && inp.gas && Math.abs(c.vx) > 3 && Math.random() < 0.3) puff('dust', c.x - 1.6 * Math.cos(c.a), hAt(c.x - 1.6) + 0.1, 1, { r: 0.55, spd: 1, vx: -3, life: 0.7, c: '235,248,255' }); // wake foam
+    if (me.crashT <= 0) {
+      if (me.hull < st.tank * 0.25) { me.beepT -= dt; if (me.beepT <= 0) { me.beepT = 0.9; sfx.low(); } } // low hull warning
+      if (c.head) crash();
+      const rel = Math.cos(c.a - Math.atan(slopeAt(c.x)));
+      if (rel < -0.1 && c.body) me.upT += dt; else me.upT = 0;
+      if (rel < 0.35 && c.body) me.sideT += dt; else me.sideT = Math.max(0, me.sideT - dt); // stuck on its side or tail
+      if (me.upT > 1.0 || me.sideT > 1.8) crash();
+    }
+    // flips & landings
+    if (c.air > 0) {
+      if (me.crashT <= 0) {
+        while (c.flip > Math.PI * 2 - 0.4) { c.flip -= Math.PI * 2; trick(T.backflip); }
+        while (c.flip < -Math.PI * 2 + 0.4) { c.flip += Math.PI * 2; trick(T.frontflip); }
+      }
+    } else {
+      if (prevAir > 0 && me.crashT <= 0) {
+        if (prevAir > 0.9) { const n = Math.round(prevAir * 2) * 50; me.coins += n; popup(`${T.air} +${fmt(n)}`, '#7cdcff'); sfx.land(true); if (ship && phase === 'boss') hitShip(5, true); }
+        else if (prevAir > 0.25) sfx.land(false);
+        if (prevAir > 0.25) for (let i = 0; i < 6; i++) parts.push({ x: c.x + rnd(-1, 1), y: hAt(c.x) + 0.1, vx: rnd(-2, 2), vy: rnd(1, 3), t: 0, life: 0.5, c: 'rgba(160,120,80,.8)', r: rnd(0.1, 0.2) });
+      }
+      c.flip = 0;
+    }
+    me.best = Math.max(me.best, c.x);
+    const cp = Math.floor((c.x - 6) / CP) * CP + 6;
+    if (cp > me.cp && me.crashT <= 0) { me.cp = cp; if (cp > 6) { sfx.tick(6); } }
+    // pickups
+    for (const p of pickups) {
+      if (p.taken || Math.abs(p.x - c.x) > 2) continue;
+      if (Math.hypot(p.x - c.x, p.y - (c.y + 0.4)) < 1.5) {
+        p.taken = true;
+        if (p.type === 'coin') { me.coins += COIN_VALUES[p.tier]; sfx.coin(); }
+        else if (p.type === 'meat') { me.hull = Math.min(st.tank, me.hull + 15); popup('🍖 ' + T.heal, '#7cff8a'); sfx.munch(); }
+        else { me.boost = 3; popup('🥤 ' + T.fruit, '#7fd0ff'); sfx.fruit(); puff('star', p.x, p.y, 6, { c: '#d18bff', spd: 5, r: 0.45 }); }
+      }
+    }
+    if (me.punchCD > 0) me.punchCD -= dt;
+    if (me.punchT >= 0) {
+      const prev = me.punchT; me.punchT += dt;
+      if (prev < 0.16 && me.punchT >= 0.16) {
+        const tg = me.punchTgt;
+        const fr = fruit();
+        if (tg && tg.ship && ship && me.car.x - ship.x < 16) { hitShip(fr.dmg > 1 ? 11 : 7, false); if (fr.glow) puff('smoke', bossHead().x, bossHead().y, 6, { c: fr.glow, r: 1, spd: 3 }); } // the arm only reaches a boss on screen
+        else if (tg && tg.foe && !tg.foe.dead) {
+          const f0 = tg.foe; hitFoe(f0, fr.dmg);
+          if (fr.splash) for (const o of foes) if (o !== f0 && !o.dead && Math.abs(o.x - f0.x) < fr.splash) hitFoe(o, 1); // ice: frost bursts around the target
+          if (fr.glow) puff('smoke', f0.x, foeHead(f0), 6, { c: fr.glow, r: 0.9, spd: 3 });
+        }
+      }
+      if (me.punchT > 0.34) me.punchT = -1;
+    }
+    me.cannonT -= dt;
+    if (me.cannonT <= 0 && me.crashT <= 0) {
+      let tgt = null, bd = 24;
+      if (phase === 'play') for (const f of foes) { const d = f.x - c.x; if (!f.dead && d > 6 && d < bd) { bd = d; tgt = f; } }
+      if (tgt || (phase === 'boss' && ship)) {
+        me.cannonT = 2.2;
+        const bow = tgt ? 1 : -1, x0 = c.x + bow * 1.6 * Math.cos(c.a), y0 = c.y + 0.3;
+        const q = tgt ? { x: tgt.x, y: foeHead(tgt) } : bossHead();
+        myShots.push({ x0, y0, x1: q.x, y1: q.y, t: 0, dur: Math.min(0.9, 0.35 + Math.abs(q.x - x0) * 0.03), tgt });
+        sfx.cannon(); puff('fire', x0, y0, 4, { spd: 3, vx: bow * 4, r: 0.45, life: 0.4 }); puff('smoke', x0, y0, 4, { spd: 2, vx: bow * 3, r: 0.7 });
+      } else me.cannonT = 0.3;
+    }
+  }
+  function updateMyShots(dt) {
+    for (const b of myShots) {
+      b.t += dt;
+      if (b.t >= b.dur && !b.done) {
+        b.done = true;
+        if (b.tgt && !b.tgt.dead && Math.abs(b.tgt.x - b.x1) < 3) hitFoe(b.tgt, 1);
+        else if (!b.tgt && ship && phase === 'boss') hitShip(4, false);
+        puff('fire', b.x1, b.y1, 4, { spd: 3, r: 0.5, life: 0.4 }); puff('smoke', b.x1, b.y1, 5, { r: 0.8, spd: 2 });
+      }
+    }
+    myShots = myShots.filter(b => !b.done);
+  }
+  function trick(name) {
+    me.flips++; me.coins += 500;
+    popup(`${name} +500`, '#ffd23f'); sfx.flip(me.flips);
+    ono('flip', me.car.x, me.car.y + 2.8, '#7cdcff', 1.1);
+    if (ship && phase === 'boss') hitShip(10, true);
+  }
+
+  // ---------- Boss: the Admiral's warship chases you ----------
+  function startBossIntro() {
+    phase = 'bossIntro'; introT = 2.6;
+    foes = foes.filter(f => f.dead); shots = [];
+    popup('🏁 ' + T.finish, '#7cff8a');
+    sfx.bossIntro(); focusT = 2.6;
+  }
+  function spawnBoss() {
+    const stage = save.bosses + 1, hp = Math.min(95 + stage * 15, 260);
+    const kind = nextKing() ? 'king' : 'admiral';
+    ship = { kind, enter: 1.3, x: me.car.x - 16, y: hAt(me.car.x - 16), a: 0, v: 8, hp, hpMax: hp, flash: 0, fireT: 3.5, name: `${kind === 'king' ? T.king : T.boss} Lv${stage * 5 + 10}` };
+    phase = 'boss';
+    popup('👊 ' + T.punchHint, '#ff8a2b');
+    ono('splash', ship.x + 2, ship.y + 3, '#7fd0ff', 1.3, true);
+    puff('smoke', ship.x, ship.y + 0.5, 14, { c: '220,240,255', r: 1.2, spd: 5, spread: 4 });
+  }
+  function doPunch() {
+    if ((phase !== 'play' && phase !== 'boss') || !me || me.punchCD > 0 || me.punchT >= 0 || me.crashT > 0) return;
+    me.punchTgt = punchTarget();
+    me.punchT = 0; me.punchCD = PUNCH_CD; sfx.whoosh(); buzz(8);
+  }
+  function hitShip(dmg, big) {
+    if (!ship || ship.hp <= 0) return;
+    ship.hp = Math.max(0, ship.hp - dmg); ship.flash = 0.25;
+    popup(`-${dmg}`, big ? '#ffd23f' : '#ff5d73', 'boss');
+    sfx.bossHit(big); shake = Math.max(shake, big ? 8 : 4); buzz(15);
+    const bh = bossHead(), sx = bh.x, sy = bh.y + 1.5;
+    puff('star', sx, sy, big ? 6 : 3, { spd: 6, r: 0.5 });
+    ono(big ? 'hit' : 'ko', sx + 1, sy + 1.5, big ? '#ff8a2b' : '#ffd23f', big ? 1.4 : 1, big);
+    if (big) impact(sx, sy, 0.1);
+    hitStop = Math.max(hitStop, big ? 0.09 : 0.03); zoomKick = Math.max(zoomKick, big ? 0.08 : 0.03);
+    if (ship.hp <= 0) shipDefeated();
+  }
+  function updateShip(dt) {
+    const c = me.car, speed = Math.max(0, c.vx);
+    const want = c.x - 11.5;
+    ship.v += ((want - ship.x) * 1.1 + speed - ship.v) * Math.min(1, dt * 2);
+    ship.v = clamp(ship.v, 3, 24);
+    ship.x += ship.v * dt;
+    ship.y += (hAt(ship.x) + 0.2 - ship.y) * Math.min(1, dt * 3);
+    ship.a += (Math.atan(slopeAt(ship.x)) * 0.5 - ship.a) * Math.min(1, dt * 2);
+    ship.flash = Math.max(0, ship.flash - dt);
+    if (ship.enter > 0) ship.enter = Math.max(0, ship.enter - dt);
+    if (ship.x > c.x - 8 && me.crashT <= 0) { // ram: slows you, never knocks you out
+      c.vx *= 0.45; ship.x = c.x - 18; ship.v = 4; damageHull(12);
+      if (ship.kind === 'king') ono('chomp', c.x, c.y + 2.6, '#ff5d73', 1.3, true);
+      popup('💥 ' + T.rammed, '#ff8a2b'); shake = 12; sfx.boom(); buzz(40);
+    }
+    ship.fireT -= dt;
+    if (ship.fireT <= 0) {
+      ship.fireT = rnd(4, 6);
+      const tx = c.x + c.vx * 1.1 + (Math.random() < 0.45 ? rnd(4, 8) : 0);
+      balls.push({ x0: ship.x + (ship.kind === 'king' ? 5.8 : 4.5), y0: ship.y + (ship.kind === 'king' ? 5 : 2.6), x1: tx, y1: hAt(tx) + 0.6, t: 0, dur: 1.1, water: ship.kind === 'king' });
+      sfx.cannon();
+      puff('fire', ship.x + 6.4, ship.y + 1.6, 6, { spd: 4, vx: 4, r: 0.7, life: 0.5 }); puff('smoke', ship.x + 6.4, ship.y + 1.6, 8, { spd: 3, vx: 3, r: 1 });
+      ono('boom', ship.x + 6.5, ship.y + 3.2, '#ff8a2b', 1);
+    }
+  }
+  function updateBalls(dt) {
+    for (const b of balls) {
+      b.t += dt;
+      if (b.t >= b.dur && !b.done) {
+        b.done = true;
+        const c = me.car;
+        if (Math.abs(b.x1 - c.x) < 2.2 && me.crashT <= 0 && (phase === 'boss' || phase === 'play')) { c.vx *= 0.6; damageHull(11); popup('💣 ' + T.cannon, '#ff5d73'); shake = 10; buzz(30); }
+        sfx.boom();
+        puff('fire', b.x1, b.y1, 7, { spd: 4, r: 0.7, life: 0.6 }); puff('smoke', b.x1, b.y1 + 0.3, 8, { r: 1.1, spd: 2.5 }); puff('dust', b.x1, b.y1, 5, { r: 0.8, spd: 4 });
+      }
+    }
+    balls = balls.filter(b => b.t < b.dur + 0.05);
+  }
+  function shipDefeated() {
+    phase = 'win'; winT = 2.6;
+    puff('fire', ship.x, ship.y + 2.5, 22, { spd: 8, spread: 4, r: 1, life: 1 }); puff('smoke', ship.x, ship.y + 3, 24, { spd: 5, spread: 4, r: 1.5, life: 1.4 }); puff('star', ship.x + 3, ship.y + 5, 8, { spd: 9, r: 0.6 });
+    ono('hit', ship.x + 3, ship.y + 7, '#ffc531', 1.7, true); impact(ship.x + 2, ship.y + 4, 0.15);
+    hitStop = 0.22; zoomKick = 0.14;
+    shake = 18; sfx.bossDown(); buzz([20, 30, 20, 30, 60]);
+  }
+
+  // ---------- Feedback ----------
+  function popup(text, color, where) { popups.push({ text, color, t: 0, where: where || 'me' }); if (popups.length > 4) popups.shift(); }
+  function pushFeed(text, mine) { if (feed[0] && feed[0].text === text) return; feed.unshift({ text, mine, t: 0 }); feed.length = Math.min(feed.length, 3); }
+
+  // ---------- Update ----------
+  let goSfx = false;
+  function updateCamera(c, dt, bossCam) {
+    const base = Math.max(22, Math.min(W / 10.5, H / 15));
+    const sp = Math.hypot(c.vx, c.vy);
+    const target = base * (1 - Math.min(0.18, sp * 0.008)) * (bossCam ? 0.62 : 1);
+    ppm += (target * (1 + zoomKick) - ppm) * Math.min(1, dt * (zoomKick > 0.01 ? 12 : 2));
+    zoomKick *= Math.exp(-dt * 5);
+    camDip *= Math.exp(-dt * 9);
+    camK += ((bossCam ? 0.7 : 0.36) - camK) * Math.min(1, dt * 2);
+    camX += (c.x + clamp(c.vx * 0.25, -2, 4) - camX) * Math.min(1, dt * 6);
+    camY += (c.y + 1 - camY) * Math.min(1, dt * 4);
+  }
+  function update(dt) {
+    time += dt;
+    const racing = phase === 'play' || phase === 'bossIntro' || phase === 'boss' || phase === 'win' || phase === 'sunk';
+    if (racing && me) {
+      if (phase === 'play') elapsed += dt;
+      if (phase === 'sunk') { // the ship goes down; then the result screen offers another try
+        sinkT -= dt; me.car.y -= dt * 1.6; me.car.a += dt * 0.45;
+        if (Math.random() < 0.6) puff('smoke', me.car.x + rnd(-1, 1), hAt(me.car.x) + 0.3, 1, { c: '230,245,255', r: 0.5, spd: 1.5 });
+        if (sinkT <= 0) showResult(false);
+      } else updatePlayer(dt);
+      updateMyShots(dt);
+      updateFoes(dt);
+      updateShots(dt);
+      if (phase === 'play') {
+        if (me.car.x >= FINISH) startBossIntro();
+      } else if (phase === 'bossIntro') { introT -= dt; if (introT <= 0) spawnBoss(); }
+      else if (phase === 'boss') updateShip(dt);
+      else if (phase === 'win') {
+        winT -= dt;
+        if (ship) { ship.y -= dt * 3; ship.a += (-0.35 - ship.a) * Math.min(1, dt * 1.5); if (Math.random() < 0.6) puff('smoke', ship.x + rnd(-3, 3), ship.y + 3, 1, { r: 1.3, spd: 1.5, c: '70,70,80' }); }
+        if (winT <= 0) showResult(true);
+      }
+      updateBalls(dt);
+      updateCamera(me.car, dt, phase === 'boss' || phase === 'win');
+    } else if (demo) {
+      const c = demo, sl = Math.atan(slopeAt(c.x));
+      const lean = c.ground ? 0 : clamp(-(c.a - sl) * 1.5 - c.w * 0.3, -1, 1);
+      const st = carStats();
+      for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, { gas: 0.7, brake: false, lean, power: 1 }, st);
+      if (c.head || c.x > 600 || Math.cos(c.a - sl) < 0) placeCar(c, 8);
+      updateCamera(c, dt, false);
+    }
+    for (const p of popups) p.t += dt;
+    popups = popups.filter(p => p.t < 1.2);
+    for (const f of feed) f.t += dt;
+    feed = feed.filter(f => f.t < 4);
+    impactT -= dt; focusT -= dt; comboPop = Math.max(0, comboPop - dt * 5);
+    for (const o of fxt) o.t += dt;
+    fxt = fxt.filter(o => o.t < 0.9);
+    for (const p of parts) { if (p.kind === 'smoke' || p.kind === 'fire') { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - 2 * dt; p.vy += 2.5 * dt; continue; } if (p.kind === 'star' || p.kind === 'dust') { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= (p.kind === 'dust' ? 3 : 10) * dt; continue; } p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= 14 * dt; }
+    parts = parts.filter(p => p.t < p.life);
+    shake = Math.max(0, shake - dt * 40);
+    syncControls();
+  }
+
+  // ---------- Rendering ----------
+  const CY = 0.56;
+  const sxOf = (x) => W * camK + (x - camX) * ppm;
+  const syOf = (y) => H * CY - (y - camY) * ppm;
+  function rr(x, y, w, h, r, g) { g = g || ctx; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); }
+  function txt(t, x, y, size, color, align, weight) { ctx.font = `${weight || 900} ${size}px system-ui, sans-serif`; ctx.textAlign = align || 'left'; ctx.fillStyle = color; ctx.fillText(t, x, y); }
+  function banner(text, color, y, size, x) {
+    x = x ?? W / 2;
+    size = size || Math.min(W * 0.1, 56);
+    ctx.font = `900 ${size}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = size * 0.16; ctx.strokeStyle = '#1b1530'; ctx.lineJoin = 'round';
+    ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
+  }
+  // ---------- Manga FX: soft sprites, particles, onomatopoeia, impact frames ----------
+  const sprites = {};
+  // Soft radial sprite, pre-rendered once (smoke, glow, fire, dust): effects never look flat or cheap.
+  function soft(rgb) {
+    if (sprites[rgb]) return sprites[rgb];
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.5, `rgba(${rgb},.55)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return (sprites[rgb] = c);
+  }
+  function blob(rgb, x, y, r, alpha) { if (r <= 0 || alpha <= 0) return; ctx.globalAlpha = alpha; ctx.drawImage(soft(rgb), x - r, y - r, r * 2, r * 2); ctx.globalAlpha = 1; }
+  const wrapX = (x, span) => ((x % span) + span) % span;
+  // kinds: smoke / fire / dust (soft sprites that rise or settle), star (spinning KO stars), default dot
+  function puff(kind, x, y, n, o) {
+    o = o || {};
+    for (let i = 0; i < n; i++) {
+      const a = rnd(0, Math.PI * 2), sp = rnd(0.3, 1) * (o.spd ?? 3);
+      parts.push({ kind, x: x + rnd(-1, 1) * (o.spread ?? 0.3), y: y + rnd(-1, 1) * (o.spread ?? 0.3), vx: Math.cos(a) * sp + (o.vx || 0), vy: Math.abs(Math.sin(a)) * sp * 0.8 + (o.vy || 0),
+        t: 0, life: rnd(0.5, 1) * (o.life || 1), c: o.c || (kind === 'smoke' ? '120,120,132' : kind === 'fire' ? '255,140,40' : kind === 'dust' ? '190,150,105' : '#ffd23f'), r: rnd(0.6, 1) * (o.r || 0.5), spin: rnd(-8, 8) });
+    }
+    if (parts.length > 280) parts.splice(0, parts.length - 280);
+  }
+  let fxt = [], impactT = 0, impactAt = null, impactSeed = 0, focusT = 0;
+  let hitStop = 0, zoomKick = 0, camDip = 0, comboPop = 0; // game feel: freeze frames, camera punch-ins, landing dip
+  const ONO = { chomp: ['CHOMP!', 'GNASH!'], ko: ['BAM!', 'POW!', 'WHAM!', 'BONK!'], boom: ['BOOM!', 'KABOOM!'], crash: ['CRASH!', 'CLONK!'], flip: ['WHOOSH!', 'WOOO!'], hit: ['DOOON!', 'KA-POW!'], ouch: ['OUCH!', 'OOF!'], splash: ['SPLASH!'] };
+  function ono(kind, x, y, col, size, burst) {
+    const list = ONO[kind];
+    fxt.push({ text: list[(Math.random() * list.length) | 0], x, y, t: 0, rot: rnd(-0.3, 0.3), col: col || '#ffd23f', size: size || 1, burst: !!burst });
+    if (fxt.length > 5) fxt.shift();
+  }
+  function impact(x, y, dur) { impactT = dur || 0.09; impactAt = { x, y }; impactSeed = (Math.random() * 1000) | 0; }
+  function star5(x, y, r, rot, alpha, col) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot);
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, k = i % 2 ? 0.45 : 1; ctx.lineTo(Math.cos(a) * r * k, Math.sin(a) * r * k); }
+    ctx.closePath(); ctx.fillStyle = col || '#ffd23f'; ctx.fill(); ctx.lineWidth = Math.max(1.5, r * 0.18); ctx.strokeStyle = '#2a1a10'; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.restore();
+  }
+  function star4(x, y, r) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r); ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  }
+  function drawParts() {
+    for (const p of parts) {
+      const k = p.t / p.life, sx = sxOf(p.x), sy = syOf(p.y);
+      if (p.kind === 'smoke' || p.kind === 'dust') blob(p.c, sx, sy, p.r * ppm * (1 + k * 1.8), (1 - k) * (p.kind === 'dust' ? 0.7 : 0.6));
+      else if (p.kind === 'fire') {
+        blob(p.c, sx, sy, p.r * ppm * (1.1 - k * 0.6), 1 - k);
+        ctx.globalCompositeOperation = 'lighter'; blob('255,235,170', sx, sy, p.r * ppm * 0.45 * (1 - k), 0.7 * (1 - k)); ctx.globalCompositeOperation = 'source-over';
+      } else if (p.kind === 'star') star5(sx, sy, p.r * ppm * 0.7, p.t * p.spin, Math.min(1, (1 - k) * 2), p.c);
+      else { ctx.globalAlpha = Math.max(0, 1 - k); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(sx, sy, p.r * ppm, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    }
+  }
+  function drawOno(o) {
+    const t = o.t, pop = t < 0.1 ? t / 0.1 * 1.35 : t < 0.2 ? 1.35 - (t - 0.1) / 0.1 * 0.35 : 1;
+    const a = t > 0.55 ? Math.max(0, 1 - (t - 0.55) / 0.3) : 1;
+    const size = Math.max(24, ppm * 1.05) * o.size * Math.max(pop, 0.01);
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(sxOf(o.x), syOf(o.y) - t * ppm * 0.8); ctx.rotate(o.rot);
+    ctx.font = `${size}px Impact, "Arial Black", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    if (o.burst) { // spiky manga balloon behind the word
+      const w = ctx.measureText(o.text).width * 0.62 + size * 0.5, h = size * 0.95;
+      ctx.beginPath();
+      for (let i = 0; i < 28; i++) { const an = i / 28 * Math.PI * 2, k = i % 2 ? 0.72 : 1.08; ctx.lineTo(Math.cos(an) * w * k, Math.sin(an) * h * k); }
+      ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = Math.max(2.5, size * 0.07); ctx.strokeStyle = '#1b1530'; ctx.stroke();
+    }
+    ctx.lineWidth = size * 0.22; ctx.strokeStyle = '#1b1530';
+    ctx.strokeText(o.text, size * 0.05, size * 0.08); ctx.strokeText(o.text, 0, 0);
+    ctx.fillStyle = o.col; ctx.fillText(o.text, 0, 0);
+    ctx.lineWidth = size * 0.035; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.strokeText(o.text, 0, -size * 0.03);
+    ctx.restore();
+  }
+  // Screen-space manga layers: speed lines when fast, focus lines for the boss entrance, one-frame impact frames.
+  function drawScreenFx() {
+    const R = Math.hypot(W, H);
+    if (me && phase !== 'result') {
+      const sp = Math.hypot(me.car.vx, me.car.vy), a = clamp((sp - 10) / 8, 0, 0.5) + (me.boost > 0 ? 0.3 : 0);
+      if (a > 0.02) {
+        ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineCap = 'round';
+        for (let i = 0; i < 16; i++) {
+          const y = hash(i + 90) * H, len = 60 + hash(i + 91) * 160, x = W + 220 - ((time * (900 + hash(i) * 700) + hash(i + 92) * W * 2) % (W + 440));
+          ctx.lineWidth = 1.5 + hash(i + 93) * 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+        }
+      }
+    }
+    const radial = (cx, cy, r0, alpha, seed) => {
+      ctx.fillStyle = `rgba(20,16,40,${alpha})`;
+      for (let i = 0; i < 44; i++) {
+        const an = hash(i + seed) * Math.PI * 2, w = 0.01 + hash(i + seed + 70) * 0.018, r = R * (r0 + hash(i + seed + 30) * 0.12);
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(an) * r, cy + Math.sin(an) * r);
+        ctx.lineTo(cx + Math.cos(an - w) * R, cy + Math.sin(an - w) * R); ctx.lineTo(cx + Math.cos(an + w) * R, cy + Math.sin(an + w) * R); ctx.fill();
+      }
+    };
+    if (focusT > 0) radial(W / 2, H * 0.42, 0.34, Math.min(0.55, focusT * 0.6), Math.floor(time * 12) * 7);
+    if (impactT > 0 && impactAt) {
+      const cx = sxOf(impactAt.x), cy = syOf(impactAt.y);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(0, 0, W, H);
+      radial(cx, cy, 0.16, 0.85, impactSeed);
+      blob('255,255,255', cx, cy, Math.min(W, H) * 0.25, 0.9);
+    }
+  }
+  const theme = () => THEMES[island().theme];
+
+  // ---------- Anime backdrop: flat two-tone clouds, glowing sun, horizon islands, a ship, gulls and drawn waves ----------
+  function drawCloud(x, y, s, shade) {
+    const L = [[0, 0, 1], [0.95, 0.2, 0.72], [-0.95, 0.25, 0.68], [0.45, -0.5, 0.78], [-0.45, -0.38, 0.66], [1.7, 0.45, 0.48], [-1.7, 0.5, 0.42]];
+    ctx.fillStyle = shade;
+    for (const [lx, ly, r] of L) { ctx.beginPath(); ctx.arc(x + lx * s, y + ly * s + s * 0.16, r * s, 0, 7); ctx.fill(); }
+    ctx.fillStyle = '#ffffff';
+    for (const [lx, ly, r] of L) { ctx.beginPath(); ctx.arc(x + lx * s - s * 0.05, y + ly * s - s * 0.03, r * s * 0.92, 0, 7); ctx.fill(); }
+  }
+  function drawBgShip(x, y, s) { // a small pirate caravel on the horizon
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = '#5a3a1f'; ctx.fillRect(-9, -40, 2.5, 40); ctx.fillRect(10, -32, 2.5, 32);
+    ctx.fillStyle = '#fdf8ea'; ctx.beginPath(); ctx.ellipse(-8, -23, 12, 13, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(11, -18, 9, 10, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1b1820'; ctx.fillRect(-8, -46, 9, 5);
+    ctx.fillStyle = '#6b3a1f'; ctx.beginPath(); ctx.moveTo(-30, -2); ctx.lineTo(33, -3); ctx.lineTo(24, 9); ctx.lineTo(-24, 9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f2d061'; ctx.fillRect(-28, -2, 59, 2.5);
+    ctx.restore();
+  }
+  function drawBackground() {
+    const th = theme(), m = Math.min(W, H);
+    const horizon = H * 0.47 + clamp(camY * ppm * 0.04, -40, 40);
+    const g = ctx.createLinearGradient(0, 0, 0, horizon);
+    g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (th.night) {
+      for (let i = 0; i < 80; i++) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * Math.abs(Math.sin(time * 1.3 + i))})`; const z = hash(i + 3) < 0.15 ? 3 : 2; ctx.fillRect(hash(i) * W, hash(i + 50) * horizon * 0.9, z, z); }
+    }
+    const sunX = W * 0.76, sunY = horizon * 0.3;
+    blob(th.night ? '200,210,255' : '255,240,180', sunX, sunY, m * 0.34, th.night ? 0.35 : 0.6);
+    ctx.fillStyle = th.sun; ctx.beginPath(); ctx.arc(sunX, sunY, m * 0.075, 0, 7); ctx.fill();
+    if (th.night) { ctx.fillStyle = th.sky[0]; ctx.beginPath(); ctx.arc(sunX + m * 0.032, sunY - m * 0.016, m * 0.066, 0, 7); ctx.fill(); } // crescent moon
+    for (let layer = 0; layer < 2; layer++) { // two depths of big cumulus clouds
+      const par = layer ? 0.06 : 0.025, cs = m * (layer ? 0.075 : 0.045), sp = W + cs * 9;
+      for (let i = 0; i < 3; i++) {
+        const x = wrapX(hash(i * 7 + layer * 31) * sp - camX * ppm * par + time * (layer ? 6 : 3), sp) - cs * 4;
+        const y = horizon * (layer ? 0.45 + hash(i + 11) * 0.28 : 0.12 + hash(i + 21) * 0.22);
+        drawCloud(x, y, cs, th.cloud);
+      }
+    }
+    // horizon islands with palm silhouettes
+    const isp = Math.max(W * 0.9, 380), off = camX * ppm * 0.06, base = Math.floor(off / isp);
+    for (let i = -1; i <= Math.ceil(W / isp) + 1; i++) {
+      const k = base + i, x = i * isp - wrapX(off, isp) + hash(k) * isp * 0.4, w = isp * (0.16 + hash(k + 3) * 0.16), h = Math.max(18, horizon * (0.05 + hash(k + 5) * 0.06));
+      ctx.fillStyle = th.sand; ctx.beginPath(); ctx.ellipse(x, horizon, w * 1.15, h * 0.32, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = th.far; ctx.beginPath(); ctx.ellipse(x, horizon, w, h, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(x - w * 0.3, horizon - h * 0.55, w * 0.32, h * 0.3, -0.2, 0, 7); ctx.fill();
+      if (hash(k + 9) < 0.7) {
+        const px = x + w * 0.2, py = horizon - h * 0.85, ps = h * 0.95;
+        ctx.strokeStyle = th.far; ctx.lineWidth = Math.max(2, ps * 0.08); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(px, py + ps * 0.3); ctx.quadraticCurveTo(px + ps * 0.15, py - ps * 0.3, px + ps * 0.05, py - ps * 0.8); ctx.stroke();
+        ctx.fillStyle = th.far;
+        for (let j = 0; j < 5; j++) { const a = -2.7 + j * 0.85; ctx.beginPath(); ctx.ellipse(px + ps * 0.05 + Math.cos(a) * ps * 0.35, py - ps * 0.8 + Math.sin(a) * ps * 0.16, ps * 0.38, ps * 0.08, a, 0, 7); ctx.fill(); }
+      }
+    }
+    const sg = ctx.createLinearGradient(0, horizon, 0, H);
+    sg.addColorStop(0, th.seaLite); sg.addColorStop(0.3, th.sea); sg.addColorStop(1, th.seaDeep);
+    ctx.fillStyle = sg; ctx.fillRect(0, horizon, W, H - horizon);
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(0, horizon, W, 2);
+    drawBgShip(wrapX(time * 14 - camX * ppm * 0.09 + W * 0.3, W + 300) - 150, horizon + 1, m / 650);
+    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineCap = 'round';
+    for (let row = 0; row < 4; row++) { // drawn wave marks, bigger and faster closer to us
+      const y = horizon + 10 + row * row * 10 + row * 12, sc = 0.5 + row * 0.4, gap = 70 + row * 40;
+      ctx.lineWidth = 1.5 + row * 0.7;
+      for (let i = 0; i < W / gap + 2; i++) {
+        const x = wrapX(i * gap + hash(i + row * 13) * gap - camX * ppm * (0.08 + row * 0.05) + time * 8, W + gap * 2) - gap;
+        ctx.beginPath(); ctx.arc(x, y + Math.sin(time * 2 + i) * 1.5, 8 * sc, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+      }
+    }
+    if (!th.night) {
+      ctx.strokeStyle = 'rgba(40,50,70,.75)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const x = wrapX(hash(i + 40) * W - time * (22 + i * 6) - camX * ppm * 0.03, W + 100) - 50, y = horizon * (0.25 + hash(i + 44) * 0.3), f = Math.sin(time * 6 + i * 2) * 4;
+        ctx.beginPath(); ctx.moveTo(x - 9, y - f); ctx.quadraticCurveTo(x - 4, y - 5, x, y); ctx.quadraticCurveTo(x + 4, y - 5, x + 9, y - f); ctx.stroke();
+      }
+    }
+  }
+
+  function drawPalm(x) {
+    const y = hAt(x), sc = 0.8 + hash(x) * 0.5, sway = Math.sin(time * 1.5 + x) * 0.05, ink = '#2a1a10';
+    ctx.save(); ctx.translate(sxOf(x), syOf(y - 0.2)); ctx.scale(ppm * sc, -ppm * sc);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(0.7, 2, 0.3, 3.8);
+    ctx.strokeStyle = ink; ctx.lineWidth = 0.42; ctx.stroke(); ctx.strokeStyle = '#9a6430'; ctx.lineWidth = 0.28; ctx.stroke();
+    ctx.strokeStyle = '#6e4420'; ctx.lineWidth = 0.05;
+    for (let k = 0.5; k < 3.6; k += 0.5) { const t = k / 3.8, px = 2 * (1 - t) * t * 0.7 + t * t * 0.3, py = 2 * (1 - t) * t * 2 + t * t * 3.8; ctx.beginPath(); ctx.moveTo(px - 0.13, py); ctx.lineTo(px + 0.13, py + 0.05); ctx.stroke(); }
+    for (let i = 0; i < 6; i++) {
+      ctx.save(); ctx.translate(0.3, 3.8); ctx.rotate(-0.35 + i * 0.72 + sway);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(0.9, 0.45, 1.9, -0.25); ctx.quadraticCurveTo(0.9, -0.05, 0, 0); ctx.closePath();
+      ctx.fillStyle = '#2f9a45'; ctx.fill(); ctx.lineWidth = 0.06; ctx.strokeStyle = ink; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0.1, 0.02); ctx.quadraticCurveTo(0.9, 0.2, 1.8, -0.22); ctx.strokeStyle = '#7fd36a'; ctx.lineWidth = 0.05; ctx.stroke();
+      ctx.restore();
+    }
+    for (const [cx, cy] of [[0.15, 3.65], [0.45, 3.6]]) { ctx.beginPath(); ctx.arc(cx, cy, 0.16, 0, 7); ctx.fillStyle = '#6b4a22'; ctx.fill(); ctx.lineWidth = 0.05; ctx.strokeStyle = ink; ctx.stroke(); }
+    ctx.restore();
+  }
+
+  function drawTerrain() {
+    const th = theme(), ink = '#14304f';
+    const x0 = camX - (W * camK) / ppm - 2, x1 = camX + (W * (1 - camK)) / ppm + 2;
+    const step = Math.max(STEP, 3 / ppm);
+    const wob = (x) => Math.sin(x * 1.7 + time * 3) * 0.06; // little ripples riding on the big swell
+    ctx.beginPath(); ctx.moveTo(sxOf(x0), H + 10);
+    for (let x = x0; x <= x1; x += step) ctx.lineTo(sxOf(x), syOf(hAt(x) + wob(x)));
+    ctx.lineTo(sxOf(x1), H + 10); ctx.closePath();
+    const g = ctx.createLinearGradient(0, syOf(camY), 0, syOf(camY) + H * 0.55);
+    g.addColorStop(0, th.seaLite); g.addColorStop(0.35, th.sea); g.addColorStop(1, th.seaDeep);
+    ctx.fillStyle = g; ctx.fill();
+    // flat lighter bands inside the water (toon shading) and drifting sparkles
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (const [d, a] of [[0.9, 0.22], [2.4, 0.12]]) {
+      ctx.beginPath();
+      for (let x = x0; x <= x1; x += step * 2) { const sx = sxOf(x), sy = syOf(hAt(x) - d + Math.sin(x * 0.5 + time) * 0.2); x === x0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy); }
+      ctx.lineWidth = Math.max(3, ppm * 0.35); ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.stroke();
+    }
+    for (let k = Math.floor(x0 / 2.3); k <= x1 / 2.3; k++) {
+      const x = k * 2.3 + hash(k) * 1.5, d = 0.6 + hash(k + 3) * 4, tw = Math.sin(time * 3 + k) * 0.5 + 0.5;
+      if (tw > 0.75) star4(sxOf(x), syOf(hAt(x) - d), ppm * 0.12 * (tw - 0.75) * 4);
+    }
+    // surface: a white foam band with an ink edge, plus curling caps on the crests
+    const surf = (dy) => { ctx.beginPath(); for (let x = x0; x <= x1; x += step) { const sx = sxOf(x), sy = syOf(hAt(x) + wob(x)) + dy * ppm; x === x0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy); } };
+    surf(0.12); ctx.lineWidth = 0.28 * ppm; ctx.strokeStyle = '#eaf8ff'; ctx.stroke();
+    surf(-0.02); ctx.lineWidth = Math.max(2, ppm * 0.06); ctx.strokeStyle = ink; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.5, ppm * 0.045);
+    for (let k = Math.floor(x0 / 1.0); k <= x1; k++) {
+      const x = k, s1 = slopeAt(x - 0.6), s2 = slopeAt(x + 0.6);
+      if (!(s1 > 0.04 && s2 < -0.04)) continue; // a crest
+      const sx = sxOf(x), sy = syOf(hAt(x)), z = ppm * 0.42;
+      ctx.beginPath(); ctx.arc(sx - z * 0.6, sy - z * 0.2, z * 0.55, 0, 7); ctx.arc(sx + z * 0.1, sy - z * 0.45, z * 0.62, 0, 7); ctx.arc(sx + z * 0.75, sy - z * 0.15, z * 0.45, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx + z * 0.1, sy - z * 0.45, z * 0.62, Math.PI * 1.1, Math.PI * 1.95); ctx.stroke();
+    }
+    for (let k = Math.floor(x0 / 1.4); k <= x1 / 1.4; k++) { // foam bubbles along the surface
+      if (hash(k + 17) < 0.5) continue;
+      const x = k * 1.4 + hash(k) * 0.8, r = ppm * (0.06 + hash(k + 2) * 0.08);
+      ctx.beginPath(); ctx.arc(sxOf(x), syOf(hAt(x) + wob(x) + 0.12), r, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill();
+    }
+    if (!me) return;
+    // checkpoints and finish
+    for (let k = Math.ceil((x0 - 6) / CP); k <= (x1 - 6) / CP; k++) {
+      const x = k * CP + 6; if (x <= 6 || Math.abs(x - FINISH) < 30) continue;
+      const sx = sxOf(x), sy = syOf(hAt(x));
+      ctx.fillStyle = '#5a3a1f'; ctx.fillRect(sx - 2, sy - 2.6 * ppm, 4, 2.6 * ppm);
+      ctx.fillStyle = x <= me.cp ? '#36c46b' : '#e8364f';
+      ctx.beginPath(); ctx.moveTo(sx + 2, sy - 2.6 * ppm); ctx.lineTo(sx + 2 + ppm * 0.9, sy - 2.3 * ppm + Math.sin(time * 6) * 2); ctx.lineTo(sx + 2, sy - 2 * ppm); ctx.fill();
+      ctx.textBaseline = 'middle'; txt(`${x - 6}m`, sx, sy - 3 * ppm, Math.max(10, ppm * 0.4), 'rgba(255,255,255,.85)', 'center', 800);
+    }
+    if (FINISH > x0 - 5 && FINISH < x1 + 5) {
+      const sx = sxOf(FINISH), sy = syOf(hAt(FINISH)), hh = 5 * ppm, bw = 0.6 * ppm;
+      ctx.fillStyle = '#f2f2f2'; ctx.fillRect(sx - 3.4 * ppm, sy - hh, 6, hh); ctx.fillRect(sx + 3.4 * ppm - 6, sy - hh, 6, hh);
+      for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(sx - 3.4 * ppm + i * (6.8 * ppm / 12), sy - hh + j * bw / 2, 6.8 * ppm / 12 + 0.5, bw / 2 + 0.5); }
+      ctx.textBaseline = 'middle'; txt('FINISH', sx, sy - hh - 0.5 * ppm, Math.max(12, ppm * 0.6), '#fff', 'center');
+    }
+  }
+
+  function drawPickups() {
+    const x0 = camX - (W * camK) / ppm - 2, x1 = camX + (W * (1 - camK)) / ppm + 2;
+    for (const p of pickups) {
+      if (p.taken || p.x < x0 || p.x > x1) continue;
+      const sx = sxOf(p.x), sy = syOf(p.y + Math.sin(time * 3 + p.x) * 0.12), r = ppm * 0.38;
+      if (p.type === 'coin') {
+        const sq = Math.abs(Math.cos(time * 2 + p.x * 0.3)), [dk, lt] = COIN_COLORS[p.tier], cw = r * (0.25 + 0.75 * sq);
+        ctx.lineWidth = Math.max(1.5, ppm * 0.05); ctx.strokeStyle = '#2a1a10';
+        ctx.fillStyle = dk; ctx.beginPath(); ctx.ellipse(sx, sy, cw, r, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = lt; ctx.beginPath(); ctx.ellipse(sx, sy, cw * 0.74, r * 0.74, 0, 0, 7); ctx.fill();
+        const gl = (time * 1.3 + p.x * 0.17) % 2.5;
+        if (gl < 0.3) star4(sx + cw * 0.45, sy - r * 0.55, Math.sin(gl / 0.3 * Math.PI) * r * 0.9);
+        if (sq > 0.55) { ctx.textBaseline = 'middle'; txt(String(COIN_VALUES[p.tier]), sx, sy + 1, r * (p.tier > 1 ? 0.75 : 0.95), 'rgba(60,30,0,.85)', 'center'); }
+      } else if (p.type === 'meat') {
+        ctx.save(); ctx.translate(sx, sy); ctx.rotate(-0.5); ctx.scale(r / 10, r / 10);
+        ctx.fillStyle = '#f4f0e6'; rr(4, -3, 16, 6, 3); ctx.fill(); ctx.beginPath(); ctx.arc(20, -4, 4, 0, 7); ctx.arc(20, 4, 4, 0, 7); ctx.fill();
+        ctx.fillStyle = '#b5532c'; ctx.beginPath(); ctx.ellipse(-4, 0, 13, 10, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = '#d97a45'; ctx.beginPath(); ctx.ellipse(-7, -3, 6, 4, -0.4, 0, 7); ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.save(); ctx.translate(sx, sy); ctx.scale(r / 10, r / 10);
+        ctx.lineWidth = 2; ctx.strokeStyle = '#2a1a10';
+        ctx.fillStyle = '#7a4a22'; rr(-10, -12, 20, 26, 5); ctx.fill(); ctx.stroke(); // cola barrel
+        ctx.fillStyle = '#5b5b66'; ctx.fillRect(-10, -6, 20, 3); ctx.fillRect(-10, 6, 20, 3);
+        ctx.fillStyle = '#e8364f'; ctx.beginPath(); ctx.arc(0, 1, 5, 0, 7); ctx.fill();
+        for (let i = 0; i < 3; i++) { ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(-4 + i * 4, -16 - ((time * 20 + i * 5) % 10), 1.8, 0, 7); ctx.fill(); }
+        ctx.restore();
+      }
+    }
+  }
+
+  // Vehicle + pirate in local meters (y up, origin = chassis center). g already has the world transform.
+  function drawCar(g, carId, hatId, wr, o) {
+    o = o || {};
+    const lw = 0.07, out = '#2a1a10';
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    const shape = (pts, fill) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fillStyle = fill; g.fill(); g.lineWidth = lw; g.strokeStyle = out; g.stroke(); };
+    const ell = (x, y, rx, ry, fill, stroke) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fillStyle = fill; g.fill(); if (stroke !== false) { g.lineWidth = lw; g.strokeStyle = out; g.stroke(); } };
+    // ship rig behind the captain: mast, a sail bellying in the wind, and a jolly roger
+    const S = byId('cars', carId), sailBelly = Math.sin(time * 2.2) * 0.06;
+    if (carId !== 'shark') {
+      g.fillStyle = '#6b4a2a'; g.fillRect(0.7, 0.2, 0.13, 2.6); g.lineWidth = lw; g.strokeStyle = out; g.strokeRect(0.7, 0.2, 0.13, 2.6);
+      g.beginPath(); g.moveTo(0.2, 2.45); g.quadraticCurveTo(0.8, 2.6, 1.5, 2.45); g.quadraticCurveTo(1.85 + sailBelly, 1.65, 1.45, 0.95);
+      g.quadraticCurveTo(0.8, 1.05, 0.25, 0.95); g.quadraticCurveTo(0.6 + sailBelly, 1.7, 0.2, 2.45); g.closePath();
+      g.fillStyle = S.sail; g.fill(); g.stroke();
+      g.fillStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.moveTo(1.45, 0.95); g.quadraticCurveTo(1.85 + sailBelly, 1.65, 1.5, 2.45); g.lineTo(1.25, 2.4); g.quadraticCurveTo(1.5, 1.65, 1.25, 1.0); g.closePath(); g.fill();
+      g.fillStyle = '#1b1820'; g.beginPath(); g.moveTo(0.83, 2.8); g.lineTo(1.5, 2.72 + Math.sin(time * 6) * 0.06); g.lineTo(0.83, 2.45); g.closePath(); g.fill(); // flag
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(1.05, 2.64, 0.08, 0, 7); g.fill();
+    } else {
+      shape([[0.3, 0.3], [0.75, 1.05], [1.05, 0.3]], '#4d6f96');
+    }
+    // driver: chibi pirate with a big expressive head (o.mood: grin | wow | shout | dizzy)
+    const mood = o.mood || 'grin', HD = [-0.12, 1.16], HR = 0.44, skin = '#f3c18c', hair = '#1b1820';
+    g.lineWidth = lw; g.strokeStyle = out;
+    g.fillStyle = '#d8343f'; rr(-0.38, 0.18, 0.5, 0.62, 0.14, g); g.fill(); g.stroke();
+    g.fillStyle = skin; g.beginPath(); g.moveTo(-0.02, 0.8); g.lineTo(0.12, 0.8); g.lineTo(0.06, 0.42); g.closePath(); g.fill(); // open vest
+    g.fillStyle = hair; g.beginPath(); // spiky hair at the back of the head
+    g.moveTo(HD[0] - 0.36, HD[1] + 0.2); g.lineTo(HD[0] - 0.66, HD[1] + 0.02); g.lineTo(HD[0] - 0.42, HD[1] - 0.02); g.lineTo(HD[0] - 0.58, HD[1] - 0.24);
+    g.lineTo(HD[0] - 0.3, HD[1] - 0.16); g.lineTo(HD[0] - 0.2, HD[1] + 0.1); g.closePath(); g.fill(); g.stroke();
+    ell(HD[0], HD[1], HR, HR * 0.96, skin);
+    g.fillStyle = hair; g.beginPath(); // fringe
+    g.moveTo(HD[0] - 0.42, HD[1] + 0.2); g.lineTo(HD[0] + 0.36, HD[1] + 0.22); g.lineTo(HD[0] + 0.3, HD[1] + 0.09); g.lineTo(HD[0] + 0.19, HD[1] + 0.17);
+    g.lineTo(HD[0] + 0.08, HD[1] + 0.05); g.lineTo(HD[0] - 0.03, HD[1] + 0.16); g.lineTo(HD[0] - 0.18, HD[1] + 0.06); g.lineTo(HD[0] - 0.3, HD[1] + 0.17); g.closePath(); g.fill();
+    ell(HD[0] - 0.33, HD[1] - 0.02, 0.08, 0.11, skin);
+    g.fillStyle = 'rgba(255,110,120,.45)'; g.beginPath(); g.ellipse(HD[0] + 0.14, HD[1] - 0.15, 0.09, 0.05, 0, 0, 7); g.fill();
+    for (const [ex, ey, k] of [[HD[0] + 0.07, HD[1] + 0.02, 1], [HD[0] + 0.3, HD[1] + 0.03, 0.75]]) { // 3/4 view: near eye big, far eye smaller
+      g.strokeStyle = out; g.lineWidth = 0.045;
+      if (mood === 'dizzy') {
+        g.beginPath(); g.moveTo(ex - 0.06 * k, ey + 0.06 * k); g.lineTo(ex + 0.06 * k, ey - 0.06 * k); g.moveTo(ex - 0.06 * k, ey - 0.06 * k); g.lineTo(ex + 0.06 * k, ey + 0.06 * k); g.stroke();
+        continue;
+      }
+      const ry = (mood === 'shout' ? 0.08 : 0.12) * k;
+      g.beginPath(); g.ellipse(ex, ey, 0.085 * k, ry, 0, 0, 7); g.fillStyle = '#fff'; g.fill(); g.stroke();
+      g.fillStyle = hair; g.beginPath(); g.ellipse(ex + 0.025 * k, ey - 0.01, 0.05 * k, Math.min(ry * 0.8, 0.08 * k), 0, 0, 7); g.fill();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + 0.045 * k, ey + 0.035 * k, 0.022 * k, 0, 7); g.fill();
+      g.beginPath(); // brows: arched when happy, slanted when fierce
+      if (mood === 'shout') { g.moveTo(ex - 0.08 * k, ey + 0.17 * k); g.lineTo(ex + 0.08 * k, ey + 0.1 * k); }
+      else { g.moveTo(ex - 0.08 * k, ey + 0.16 * k); g.quadraticCurveTo(ex, ey + 0.22 * k, ex + 0.08 * k, ey + 0.17 * k); }
+      g.lineWidth = 0.05; g.stroke();
+    }
+    { const mx = HD[0] + 0.2, my = HD[1] - 0.2; g.lineWidth = 0.04; g.strokeStyle = out;
+      if (mood === 'grin') {
+        g.beginPath(); g.moveTo(mx - 0.17, my + 0.05); g.quadraticCurveTo(mx, my - 0.22, mx + 0.17, my + 0.06); g.closePath(); g.fillStyle = '#7a1a26'; g.fill(); g.stroke();
+        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(mx - 0.15, my + 0.045); g.lineTo(mx + 0.15, my + 0.055); g.lineTo(mx + 0.12, my); g.lineTo(mx - 0.12, my - 0.005); g.closePath(); g.fill();
+        g.fillStyle = '#ff7a8a'; g.beginPath(); g.ellipse(mx, my - 0.09, 0.06, 0.035, 0, 0, 7); g.fill();
+      } else if (mood === 'wow') { g.beginPath(); g.ellipse(mx - 0.02, my - 0.03, 0.065, 0.085, 0, 0, 7); g.fillStyle = '#7a1a26'; g.fill(); g.stroke(); }
+      else if (mood === 'shout') {
+        g.beginPath(); g.ellipse(mx - 0.02, my - 0.05, 0.14, 0.12, 0, 0, 7); g.fillStyle = '#7a1a26'; g.fill(); g.stroke();
+        g.fillStyle = '#fff'; g.fillRect(mx - 0.13, my + 0.02, 0.22, 0.04);
+      } else { g.beginPath(); g.moveTo(mx - 0.12, my); for (let i = 1; i <= 6; i++) g.lineTo(mx - 0.12 + i * 0.04, my + (i % 2 ? 0.03 : -0.03)); g.stroke(); }
+    }
+    g.save(); g.translate(HD[0], HD[1] + 0.06); g.scale(1.4, 1.4); g.translate(-HEAD[0], -HEAD[1]);
+    drawHat(g, 'straw');
+    g.restore();
+    // hull riding on the wave (its keel sits where the wheels used to touch the ground)
+    if (carId === 'shark') {
+      ell(0.05, -0.35, 1.7, 0.55, S.hull);
+      g.save(); g.beginPath(); g.ellipse(0.05, -0.35, 1.69, 0.54, 0, 0, 7); g.clip(); g.fillStyle = S.trim; g.fillRect(-1.8, -0.95, 3.7, 0.45); g.restore();
+      g.lineWidth = lw; g.strokeStyle = out; g.beginPath(); g.ellipse(0.05, -0.35, 1.7, 0.55, 0, 0, 7); g.stroke();
+      shape([[-1.6, -0.35], [-2.15, 0.15], [-1.95, -0.35], [-2.15, -0.8]], '#4d6f96');
+      ell(1.3, -0.2, 0.09, 0.09, '#111', false);
+      g.fillStyle = '#fff'; g.beginPath(); g.moveTo(1.3, -0.48); for (let i = 0; i < 4; i++) { g.lineTo(1.36 + i * 0.09, -0.6); g.lineTo(1.41 + i * 0.09, -0.48); } g.fill();
+    } else {
+      shape([[-1.8, 0.32], [1.95, 0.38], [1.35, -0.92], [-1.4, -0.92]], S.hull);
+      g.fillStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.moveTo(-1.4, -0.92); g.lineTo(1.35, -0.92); g.lineTo(1.6, -0.4); g.lineTo(-1.6, -0.4); g.fill();
+      g.fillStyle = S.trim; g.fillRect(-1.72, 0.1, 3.58, 0.13);
+      g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 0.035; g.beginPath(); g.moveTo(-1.6, -0.2); g.lineTo(1.7, -0.15); g.moveTo(-1.5, -0.55); g.lineTo(1.5, -0.52); g.stroke(); // planks
+      for (const x of [-0.9, -0.15, 0.6]) ell(x, -0.32, 0.1, 0.1, carId === 'brig' ? '#1b1b22' : '#2c2c3a', false);
+      if (carId === 'brig') for (const x of [-0.9, -0.15, 0.6]) { g.fillStyle = '#1b1b22'; g.fillRect(x - 0.06, -0.37, 0.32, 0.1); }
+      if (carId === 'sheep') { // curly sheep figurehead
+        g.fillStyle = '#ffffff';
+        for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; ell(2.05 + Math.cos(a) * 0.32, 0.55 + Math.sin(a) * 0.3, 0.16, 0.16, '#ffffff'); }
+        ell(2.12, 0.55, 0.26, 0.24, '#f7efe0');
+        g.fillStyle = out; g.beginPath(); g.arc(2.18, 0.62, 0.035, 0, 7); g.arc(2.3, 0.6, 0.03, 0, 7); g.fill();
+        g.strokeStyle = '#c9a24b'; g.lineWidth = 0.07; g.beginPath(); g.arc(1.85, 0.72, 0.16, 0.5, 5.5); g.stroke(); // horn swirl
+      } else if (carId === 'lion') { // sunny lion figurehead
+        g.fillStyle = '#e07a1f';
+        for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.ellipse(2.1 + Math.cos(a) * 0.42, 0.55 + Math.sin(a) * 0.42, 0.19, 0.12, a, 0, 7); g.fill(); g.lineWidth = 0.04; g.strokeStyle = out; g.stroke(); }
+        ell(2.1, 0.55, 0.4, 0.4, '#e07a1f'); ell(2.16, 0.53, 0.29, 0.27, '#f7d36a');
+        g.fillStyle = out; g.beginPath(); g.arc(2.08, 0.62, 0.045, 0, 7); g.arc(2.28, 0.62, 0.045, 0, 7); g.fill();
+        ell(2.18, 0.47, 0.07, 0.05, '#8a3a1a', false);
+      } else { // a carved scroll at the bow
+        g.strokeStyle = out; g.lineWidth = 0.08; g.beginPath(); g.moveTo(1.9, 0.35); g.quadraticCurveTo(2.35, 0.6, 2.15, 0.85); g.arc(2.05, 0.8, 0.1, 0, Math.PI * 1.5); g.stroke();
+      }
+    }
+    // stretchy rubber arm: a bezier that wobbles while it is out, a big fist and speed marks
+    { const sh = [0.02, 0.6];
+      let fx = 0.46, fy = 0.42;
+      if (o.punch > 0) { fx = sh[0] + Math.cos(o.punchA) * o.punch; fy = sh[1] + Math.sin(o.punchA) * o.punch; }
+      const mx = (sh[0] + fx) / 2, my = (sh[1] + fy) / 2, wob = o.punch > 0 ? Math.sin(o.wob || 0) * Math.min(0.5, o.punch * 0.12) : 0;
+      const nx = -(fy - sh[1]), ny = fx - sh[0], nl = Math.hypot(nx, ny) || 1, cx = mx + nx / nl * wob, cy = my + ny / nl * wob;
+      g.beginPath(); g.moveTo(sh[0], sh[1]); g.quadraticCurveTo(cx, cy, fx, fy);
+      g.strokeStyle = out; g.lineWidth = 0.2; g.stroke(); g.strokeStyle = '#f3c18c'; g.lineWidth = 0.12; g.stroke();
+      if (o.punch > 0) {
+        const ux = fx - cx, uy = fy - cy, ul = Math.hypot(ux, uy) || 1;
+        g.strokeStyle = out; g.lineWidth = 0.045;
+        for (const k of [-0.2, 0, 0.2]) { const px = fx - ux / ul * 0.45 - uy / ul * k, py = fy - uy / ul * 0.45 + ux / ul * k; g.beginPath(); g.moveTo(px, py); g.lineTo(px - ux / ul * 0.5, py - uy / ul * 0.5); g.stroke(); }
+      }
+      const fr = o.punch > 0 ? 0.3 : 0.12;
+      const FR = byId('hats', hatId) || HATS[0];
+      if (o.punch > 0 && FR.glow) blob(FR.glow, fx, fy, fr * 2.6, 0.9); // devil-fruit aura around the fist
+      ell(fx, fy, fr, fr, o.punch > 0 ? FR.col : '#f3c18c');
+      if (o.punch > 0) { g.lineWidth = 0.035; g.strokeStyle = out; for (const k of [-0.12, 0, 0.12]) { const a = o.punchA + k * 2.2; g.beginPath(); g.moveTo(fx + Math.cos(a) * fr * 0.35, fy + Math.sin(a) * fr * 0.35); g.lineTo(fx + Math.cos(a) * fr * 0.85, fy + Math.sin(a) * fr * 0.85); g.stroke(); } }
+      ell(sh[0], sh[1], 0.14, 0.14, '#d8343f');
+    }
+  }
+  function drawHat(g, id) {
+    const hx = HEAD[0], hy = HEAD[1], out = '#2a1a10';
+    g.lineWidth = 0.05; g.strokeStyle = out;
+    const fillStroke = (c) => { g.fillStyle = c; g.fill(); g.stroke(); };
+    if (id === 'straw') {
+      g.beginPath(); g.ellipse(hx, hy + 0.2, 0.55, 0.1, 0, 0, 7); fillStroke('#f2d061');
+      g.beginPath(); g.ellipse(hx, hy + 0.24, 0.3, 0.26, 0, 0, Math.PI); fillStroke('#f2d061');
+      g.fillStyle = '#d8343f'; g.fillRect(hx - 0.3, hy + 0.23, 0.6, 0.08);
+    } else if (id === 'bandana') {
+      g.beginPath(); g.arc(hx, hy + 0.04, 0.32, 0, Math.PI); fillStroke('#2f6fd8');
+      g.beginPath(); g.moveTo(hx - 0.3, hy + 0.12); g.lineTo(hx - 0.62, hy + 0.2); g.lineTo(hx - 0.55, hy - 0.02); g.closePath(); fillStroke('#2f6fd8');
+      g.fillStyle = '#fff'; for (const [dx, dy] of [[-0.1, 0.22], [0.1, 0.18], [0, 0.3]]) { g.beginPath(); g.arc(hx + dx, hy + dy, 0.03, 0, 7); g.fill(); }
+    } else if (id === 'tricorn') {
+      g.beginPath(); g.moveTo(hx - 0.62, hy + 0.16); g.lineTo(hx + 0.5, hy + 0.16); g.lineTo(hx + 0.3, hy + 0.48); g.lineTo(hx, hy + 0.38); g.lineTo(hx - 0.42, hy + 0.5); g.closePath(); fillStroke('#1e1a26');
+      g.strokeStyle = '#ffc531'; g.beginPath(); g.moveTo(hx - 0.6, hy + 0.18); g.lineTo(hx + 0.48, hy + 0.18); g.stroke();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(hx - 0.05, hy + 0.3, 0.07, 0, 7); g.fill();
+    } else if (id === 'marine') {
+      g.beginPath(); g.ellipse(hx, hy + 0.2, 0.32, 0.18, 0, 0, Math.PI); fillStroke('#f4f6fa');
+      g.beginPath(); g.ellipse(hx + 0.22, hy + 0.17, 0.25, 0.06, 0, 0, 7); fillStroke('#1d3f80');
+      g.fillStyle = '#1d3f80'; g.fillRect(hx - 0.32, hy + 0.17, 0.64, 0.07);
+    } else if (id === 'crown') {
+      g.beginPath(); g.moveTo(hx - 0.3, hy + 0.18); g.lineTo(hx - 0.3, hy + 0.5); g.lineTo(hx - 0.15, hy + 0.34); g.lineTo(hx, hy + 0.55); g.lineTo(hx + 0.15, hy + 0.34); g.lineTo(hx + 0.3, hy + 0.5); g.lineTo(hx + 0.3, hy + 0.18); g.closePath(); fillStroke('#ffc531');
+      g.fillStyle = '#e8364f'; g.beginPath(); g.arc(hx, hy + 0.27, 0.05, 0, 7); g.fill();
+    }
+  }
+
+  function drawWorldCar(x, y, a, carId, hatId, wr, alpha, o) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.translate(sxOf(x), syOf(y)); ctx.scale(ppm, -ppm); ctx.rotate(a);
+    if (o && o.squash) { ctx.translate(0, -0.95); ctx.scale(1 + o.squash * 0.5, 1 - o.squash); ctx.translate(0, 0.95); } // squash on landing
+    drawCar(ctx, carId, hatId, wr, o);
+    ctx.restore();
+  }
+  function nameTag(sx, sy, text, mine) {
+    const sz = clamp(W / 34, 10, 14);
+    ctx.font = `800 ${sz}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(text).width + 12;
+    sx = clamp(sx, tw / 2 + 4, W - tw / 2 - 4);
+    ctx.fillStyle = mine ? 'rgba(54,196,107,.95)' : 'rgba(15,20,40,.6)'; rr(sx - tw / 2, sy - sz * 0.8, tw, sz * 1.6, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(text, sx, sy);
+  }
+  // Chibi marines (generic: white sailor top, navy collar, cap with a black visor), all facing left toward you.
+  // Local meters, y up, origin at their feet.
+  function drawFoe(f) {
+    ctx.save(); ctx.translate(sxOf(f.x), syOf(f.y)); ctx.scale(ppm, -ppm);
+    if (f.dead) { ctx.translate(0, 0.9); ctx.rotate(f.a); ctx.translate(0, -0.9); ctx.globalAlpha = clamp(2.5 - (f.t - f.deadT), 0, 1); }
+    const g = ctx, out = '#1c2438', fl = f.flash > 0, ko = f.dead, dx = me ? f.x - me.car.x : 99;
+    if (f.type === 'seaking') { drawSeaKingFoe(f, g, out, fl, ko); ctx.restore(); return; }
+    g.lineJoin = 'round'; g.lineCap = 'round'; g.lineWidth = 0.07; g.strokeStyle = out;
+    const ell = (x, y, rx, ry, fill) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fillStyle = fill; g.fill(); g.lineWidth = 0.07; g.strokeStyle = out; g.stroke(); };
+    const spiral = (x, y, r) => { g.beginPath(); for (let a = 0; a < 12; a += 0.4) g.lineTo(x + Math.cos(a) * r * a / 12, y + Math.sin(a) * r * a / 12); g.lineWidth = 0.035; g.strokeStyle = out; g.stroke(); };
+    const bang = (x, y) => { // manga "!" when about to shoot
+      g.fillStyle = '#e8364f'; g.beginPath(); g.moveTo(x - 0.1, y + 0.55); g.lineTo(x + 0.1, y + 0.55); g.lineTo(x + 0.04, y + 0.12); g.lineTo(x - 0.04, y + 0.12); g.closePath(); g.fill(); g.lineWidth = 0.05; g.stroke();
+      g.beginPath(); g.arc(x, y, 0.07, 0, 7); g.fill(); g.stroke();
+    };
+    const face = (hx, hy, hr, shouting) => {
+      for (const [ex, k, side] of [[hx - hr * 0.3, 1, 1], [hx - hr * 0.74, 0.72, -1]]) {
+        if (ko) { spiral(ex, hy + 0.02, 0.1 * k); continue; }
+        g.beginPath(); g.ellipse(ex, hy + 0.02, 0.075 * k, 0.1 * k, 0, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 0.035; g.strokeStyle = out; g.stroke();
+        g.fillStyle = out; g.beginPath(); g.ellipse(ex - 0.025 * k, hy, 0.04 * k, 0.065 * k, 0, 0, 7); g.fill();
+        g.lineWidth = 0.055; g.beginPath(); // angry brows slant down toward the nose
+        if (side > 0) { g.moveTo(ex - 0.09 * k, hy + 0.11); g.lineTo(ex + 0.08 * k, hy + 0.18); } else { g.moveTo(ex - 0.08 * k, hy + 0.18); g.lineTo(ex + 0.09 * k, hy + 0.11); }
+        g.stroke();
+      }
+      const mx = hx - hr * 0.5, my = hy - hr * 0.48;
+      g.lineWidth = 0.04;
+      if (ko) { g.beginPath(); g.moveTo(mx - 0.1, my); for (let i = 1; i <= 5; i++) g.lineTo(mx - 0.1 + i * 0.04, my + (i % 2 ? 0.03 : -0.03)); g.stroke(); }
+      else if (shouting) { g.beginPath(); g.ellipse(mx, my, 0.09, 0.08, 0, 0, 7); g.fillStyle = '#7a1a26'; g.fill(); g.stroke(); }
+      else { g.beginPath(); g.arc(mx, my - 0.08, 0.08, Math.PI * 0.25, Math.PI * 0.75); g.stroke(); }
+    };
+    if (f.type === 'grunt' || f.type === 'brute') {
+      const big = f.type === 'brute', sw = ko ? 0.3 : Math.sin(f.t * 9) * 0.2;
+      const aiming = !ko && f.type === 'grunt' && dx > 5 && dx < 20 && f.fireT < 0.6;
+      if (big) g.scale(1.4, 1.4);
+      g.lineWidth = 0.17; g.strokeStyle = '#1d3f80';
+      g.beginPath(); g.moveTo(0, 0.48); g.lineTo(-0.12 + sw, 0.07); g.moveTo(0, 0.48); g.lineTo(0.12 - sw, 0.07); g.stroke();
+      ell(-0.17 + sw, 0.05, 0.13, 0.06, '#2a2a33'); ell(0.07 - sw, 0.05, 0.13, 0.06, '#2a2a33');
+      g.beginPath(); rr(-0.28, 0.42, 0.56, 0.55, 0.16, g); g.fillStyle = fl ? '#ffd23f' : '#f4f6fa'; g.fill(); g.lineWidth = 0.07; g.strokeStyle = out; g.stroke();
+      g.fillStyle = '#2c5aa0'; g.beginPath(); g.moveTo(-0.05, 0.97); g.lineTo(0.3, 0.97); g.lineTo(0.3, 0.72); g.closePath(); g.fill(); // collar
+      g.fillStyle = '#e8364f'; g.beginPath(); g.moveTo(-0.22, 0.95); g.lineTo(0.02, 0.95); g.lineTo(-0.1, 0.72); g.closePath(); g.fill(); // neckerchief
+      const hx = 0, hy = 1.36, hr = 0.38;
+      ell(hx, hy, hr, hr * 0.95, '#f0b98a');
+      ell(hx + hr * 0.82, hy - 0.04, 0.07, 0.1, '#f0b98a');
+      face(hx, hy, hr, aiming || big);
+      if (big) { g.fillStyle = '#3a2a1d'; g.beginPath(); g.ellipse(hx - hr * 0.5, hy - hr * 0.3, 0.16, 0.05, 0.2, 0, 7); g.fill(); } // mustache
+      g.beginPath(); g.ellipse(hx + 0.02, hy + hr * 0.5, hr * 1.02, hr * 0.52, 0, 0, Math.PI); g.fillStyle = '#f4f6fa'; g.fill(); g.lineWidth = 0.07; g.stroke(); // cap
+      g.fillStyle = '#2c5aa0'; g.fillRect(hx - hr, hy + hr * 0.42, hr * 2.04, 0.08);
+      ell(hx - hr * 0.78, hy + hr * 0.45, hr * 0.48, 0.06, '#1b1820'); // visor
+      if (!big) {
+        g.strokeStyle = out; g.lineWidth = 0.13; g.beginPath(); g.moveTo(0.12, 0.66); g.lineTo(-0.55, 0.76); g.stroke();
+        g.strokeStyle = '#6b4a2a'; g.lineWidth = 0.08; g.stroke();
+        g.strokeStyle = '#2a2a33'; g.lineWidth = 0.07; g.beginPath(); g.moveTo(-0.5, 0.76); g.lineTo(-0.92, 0.82); g.stroke();
+        if (aiming) blob('255,220,120', -0.95, 0.83, 0.25 + Math.sin(time * 30) * 0.05, 0.9);
+        ell(-0.25, 0.7, 0.09, 0.09, '#f0b98a');
+      } else {
+        ell(-0.45, 0.75, 0.22, 0.46, fl ? '#ffd23f' : '#a8642f');
+        g.strokeStyle = '#6e3c17'; g.lineWidth = 0.04; g.beginPath(); g.moveTo(-0.45, 0.35); g.lineTo(-0.45, 1.15); g.stroke();
+        for (const y of [0.45, 0.75, 1.05]) ell(-0.52, y, 0.04, 0.04, '#c9d2dc');
+      }
+      if (aiming) bang(hx, hy + hr + 0.35);
+      // the marine's rowboat (covers the legs)
+      g.beginPath(); g.moveTo(-1.05, 0.62); g.lineTo(1.05, 0.62); g.lineTo(0.75, -0.25); g.lineTo(-0.8, -0.25); g.closePath();
+      g.fillStyle = fl ? '#ffd23f' : '#f4f6fa'; g.fill(); g.lineWidth = 0.07; g.strokeStyle = out; g.stroke();
+      g.fillStyle = '#2c5aa0'; g.fillRect(-0.98, 0.32, 1.96, 0.12);
+      g.strokeStyle = '#8a5a2b'; g.lineWidth = 0.07; g.beginPath(); g.moveTo(0.5, 0.55); g.lineTo(1.3, -0.15 + Math.sin(f.t * 4) * 0.1); g.stroke(); // oar
+    } else if (f.type === 'gull') {
+      const flap = Math.sin(f.t * 10);
+      if (f.fireT < 50) { ell(0.08, -0.36, 0.17, 0.17, '#1b1b22'); blob('255,170,60', 0.18, -0.2, 0.14 + Math.sin(time * 25) * 0.04, 1); }
+      ell(0, 0, 0.5, 0.33, fl ? '#ffd23f' : '#fff');
+      g.beginPath(); g.moveTo(0.02, 0.12); g.lineTo(0.42, 0.22 + flap * 0.65); g.lineTo(0.38, 0.0); g.closePath(); g.fillStyle = '#e8eef5'; g.fill(); g.lineWidth = 0.06; g.stroke();
+      g.fillStyle = '#ffb02e'; g.beginPath(); g.moveTo(-0.45, 0.06); g.lineTo(-0.82, -0.02); g.lineTo(-0.45, -0.08); g.closePath(); g.fill(); g.lineWidth = 0.04; g.stroke();
+      if (ko) spiral(-0.26, 0.12, 0.1);
+      else {
+        g.beginPath(); g.ellipse(-0.26, 0.12, 0.1, 0.12, 0, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 0.035; g.stroke();
+        g.fillStyle = out; g.beginPath(); g.ellipse(-0.3, 0.1, 0.05, 0.07, 0, 0, 7); g.fill();
+        g.lineWidth = 0.05; g.beginPath(); g.moveTo(-0.38, 0.2); g.lineTo(-0.16, 0.27); g.stroke();
+      }
+      g.fillStyle = '#f4f6fa'; g.beginPath(); g.ellipse(-0.12, 0.33, 0.2, 0.09, 0, 0, Math.PI); g.fill(); g.lineWidth = 0.04; g.stroke();
+      g.fillStyle = '#2c5aa0'; g.fillRect(-0.32, 0.31, 0.4, 0.05);
+    } else if (f.type === 'cannon') {
+      const charging = !ko && dx > 7 && dx < 28 && f.fireT < 0.6;
+      g.translate(0, 0.6); // the cannon stands on the gunboat's deck
+      g.save(); g.translate(-0.1, 0.78); g.rotate(-0.25);
+      g.beginPath(); rr(-1.15, -0.22, 1.45, 0.44, 0.2, g); g.fillStyle = fl ? '#ffd23f' : '#2a2a33'; g.fill(); g.lineWidth = 0.07; g.stroke();
+      ell(-1.15, 0, 0.1, 0.24, '#1b1b22');
+      if (charging) blob('255,160,60', -1.2, 0, 0.35 + (0.6 - f.fireT) * 0.8, 1);
+      g.restore();
+      g.beginPath(); rr(-0.6, 0.2, 1.2, 0.5, 0.12, g); g.fillStyle = '#8a5a2b'; g.fill(); g.stroke();
+      for (const [ex, k] of [[-0.3, 1], [0.05, 0.85]]) { // angry painted eyes on the carriage
+        if (ko) { spiral(ex, 0.48, 0.1); continue; }
+        g.beginPath(); g.ellipse(ex, 0.46, 0.09 * k, 0.11 * k, 0, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 0.035; g.stroke();
+        g.fillStyle = out; g.beginPath(); g.arc(ex - 0.03, 0.45, 0.05 * k, 0, 7); g.fill();
+        g.lineWidth = 0.05; g.beginPath(); g.moveTo(ex - 0.1, 0.62); g.lineTo(ex + 0.09, 0.56 + (ex < 0 ? 0 : 0.08)); g.stroke();
+      }
+      ell(-0.35, 0.18, 0.23, 0.23, '#5a3a1f'); ell(0.4, 0.18, 0.23, 0.23, '#5a3a1f');
+      g.fillStyle = '#6b4a2a'; g.fillRect(0.5, 0.65, 0.06, 1.1);
+      g.fillStyle = '#2c5aa0'; g.fillRect(0.56, 1.4, 0.45, 0.3);
+      g.beginPath(); g.moveTo(-1.6, 0.05); g.lineTo(1.7, 0.05); g.lineTo(1.25, -0.8); g.lineTo(-1.25, -0.8); g.closePath(); // gunboat hull
+      g.fillStyle = fl ? '#ffd23f' : '#e8eef5'; g.fill(); g.lineWidth = 0.07; g.strokeStyle = out; g.stroke();
+      g.fillStyle = '#2c5aa0'; g.fillRect(-1.5, -0.32, 3.1, 0.14);
+      if (charging) bang(0, 1.6);
+    }
+    ctx.restore();
+  }
+
+  // A sea king (generic sea serpent): a long neck rising from the waves, a big head facing you, spikes and fins.
+  // Local meters, y up, origin at the waterline. rise 0..1 lifts it out of the water; biteT > 0 opens the jaws (telegraph).
+  function serpent(g, out, col, belly, hx, hy, scale, rise, jaw, eyeMode, look) {
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    const pts = [];
+    for (let i = 0; i <= 10; i++) { const k = i / 10; pts.push([hx + 0.8 * scale * (1 - k) + Math.sin(k * 3 + time * 2) * 0.25 * scale, -0.6 * scale + (hy + 0.6 * scale) * k]); }
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const q of pts) g.lineTo(q[0], q[1]);
+    g.strokeStyle = out; g.lineWidth = 1.05 * scale; g.stroke(); g.strokeStyle = col; g.lineWidth = 0.9 * scale; g.stroke();
+    g.strokeStyle = belly; g.lineWidth = 0.35 * scale; g.beginPath(); g.moveTo(pts[0][0] + 0.25 * scale, pts[0][1]); for (const q of pts) g.lineTo(q[0] + 0.25 * scale, q[1]); g.stroke();
+    for (let i = 2; i < 10; i += 2) { const q = pts[i]; g.beginPath(); g.moveTo(q[0] - 0.42 * scale, q[1]); g.lineTo(q[0] - 0.85 * scale, q[1] + 0.25 * scale); g.lineTo(q[0] - 0.42 * scale, q[1] + 0.3 * scale); g.closePath(); g.fillStyle = belly; g.fill(); g.lineWidth = 0.05 * scale; g.strokeStyle = out; g.stroke(); }
+    g.save(); g.translate(hx, hy); g.scale(scale, scale);
+    // head facing -x (toward the player when it's ahead) or +x (boss behind you)
+    g.scale(look, 1);
+    g.beginPath(); g.ellipse(-0.35, 0.05, 0.95, 0.55, 0, 0, 7); g.fillStyle = col; g.fill(); g.lineWidth = 0.07; g.strokeStyle = out; g.stroke();
+    g.beginPath(); g.moveTo(-1.25, -0.05 - jaw * 0.1); g.lineTo(0.2, -0.15); g.lineTo(-0.1, -0.5 - jaw * 0.55); g.lineTo(-1.15, -0.3 - jaw * 0.5); g.closePath(); g.fillStyle = belly; g.fill(); g.stroke(); // jaw
+    if (jaw > 0.05) { g.fillStyle = '#7a1a26'; g.beginPath(); g.moveTo(-1.2, -0.08); g.lineTo(-0.1, -0.16); g.lineTo(-1.1, -0.28 - jaw * 0.45); g.closePath(); g.fill(); }
+    g.fillStyle = '#fff'; for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(-1.15 + i * 0.22, -0.08); g.lineTo(-1.05 + i * 0.22, -0.25); g.lineTo(-0.95 + i * 0.22, -0.08); g.fill(); }
+    for (const [x, y] of [[0.2, 0.55], [0.45, 0.4]]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + 0.5, y + 0.45); g.lineTo(x + 0.15, y - 0.05); g.closePath(); g.fillStyle = belly; g.fill(); g.lineWidth = 0.05; g.stroke(); } // fins
+    if (eyeMode === 'ko') { g.beginPath(); for (let a = 0; a < 12; a += 0.4) g.lineTo(-0.55 + Math.cos(a) * 0.15 * a / 12, 0.25 + Math.sin(a) * 0.15 * a / 12); g.lineWidth = 0.05; g.stroke(); }
+    else if (eyeMode === 'hurt') { g.beginPath(); g.moveTo(-0.7, 0.32); g.lineTo(-0.5, 0.25); g.lineTo(-0.7, 0.18); g.lineWidth = 0.06; g.stroke(); }
+    else {
+      g.beginPath(); g.ellipse(-0.55, 0.25, 0.17, 0.14, 0, 0, 7); g.fillStyle = '#ffd23f'; g.fill(); g.lineWidth = 0.05; g.stroke();
+      g.fillStyle = '#c4161c'; g.beginPath(); g.ellipse(-0.6, 0.25, 0.05, 0.11, 0, 0, 7); g.fill();
+      g.lineWidth = 0.08; g.beginPath(); g.moveTo(-0.8, 0.38); g.lineTo(-0.35, 0.5); g.stroke();
+    }
+    g.restore();
+  }
+  function drawSeaKingFoe(f, g, out, fl, ko) {
+    const cols = [['#5a9a4a', '#d9f2a8'], ['#7a4fc4', '#e9d3ff'], ['#c4562b', '#ffd9a8']][Math.floor(hash(f.x | 0) * 3)];
+    const r = f.rise || 0, jaw = f.biteT > 0 ? clamp(1 - f.biteT / 0.55, 0, 1) : 0;
+    g.save(); g.translate(0, (r - 1) * 3.2);
+    serpent(g, out, fl ? '#ffd23f' : cols[0], cols[1], -0.2, 3.3, 0.85, r, jaw, ko ? 'ko' : fl ? 'hurt' : 'open', 1);
+    g.restore();
+    if (!ko && f.biteT > 0) { g.fillStyle = '#e8364f'; g.strokeStyle = out; g.lineWidth = 0.05; g.beginPath(); g.moveTo(-0.6, 4.5 + (r - 1) * 3.2); g.lineTo(-0.4, 4.5 + (r - 1) * 3.2); g.lineTo(-0.46, 4.0 + (r - 1) * 3.2); g.lineTo(-0.54, 4.0 + (r - 1) * 3.2); g.closePath(); g.fill(); g.stroke(); }
+    // ripples where it breaks the surface
+    g.strokeStyle = '#ffffff'; g.lineWidth = 0.08; g.beginPath(); g.ellipse(0.2, 0.05, 1.3 + Math.sin(time * 4) * 0.1, 0.18, 0, 0, Math.PI); g.stroke();
+  }
+  function drawKing() {
+    const s = ship, win = phase === 'win', windup = !win && phase === 'boss' && s.fireT < 0.9, hurt = s.flash > 0;
+    ctx.save(); ctx.translate(sxOf(s.x), syOf(s.y - (s.enter || 0) * 6)); ctx.scale(ppm, -ppm); ctx.rotate(s.a * 0.5);
+    const g = ctx, out = '#1c2438';
+    // humps of its body coiling through the waves behind
+    for (const [x, r] of [[-5, 1.3], [-2.4, 1.6]]) { g.beginPath(); g.arc(x, -0.2, r, Math.PI, 0, true); g.fillStyle = '#4b2f8a'; g.fill(); g.lineWidth = 0.12; g.strokeStyle = out; g.stroke(); }
+    const breathe = Math.sin(time * 2.2) * 0.15;
+    serpent(g, out, hurt ? '#ffd23f' : '#7a4fc4', '#e9d3ff', 3.6, 5.0 + breathe, 1.8, 1, windup ? clamp((0.9 - s.fireT) / 0.6, 0, 1) : hurt ? 0.6 : 0.15, win ? 'ko' : hurt ? 'hurt' : 'open', -1);
+    if (windup) { blob('120,200,255', 5.8, 4.9, 0.6 + (0.9 - s.fireT) * 1.2, 0.9); g.fillStyle = '#e8364f'; g.strokeStyle = out; g.lineWidth = 0.07; g.beginPath(); g.moveTo(3.3, 8.2); g.lineTo(3.65, 8.2); g.lineTo(3.55, 7.3); g.lineTo(3.4, 7.3); g.closePath(); g.fill(); g.stroke(); g.beginPath(); g.arc(3.47, 7.0, 0.13, 0, 7); g.fill(); g.stroke(); }
+    g.fillStyle = '#e6f6ff'; for (let x = -6; x <= 6; x += 1.1) { const y = 0.1 + Math.sin(x * 1.3 + time * 6) * 0.2; g.beginPath(); g.arc(x, y, 0.28, 0, 7); g.fill(); }
+    ctx.restore();
+  }
+  function drawShip() {
+    if (ship.kind === 'king') return drawKing();
+    const s = ship, win = phase === 'win';
+    ctx.save(); ctx.translate(sxOf(s.x), syOf(s.y - (s.enter || 0) * 5)); ctx.scale(ppm, -ppm); ctx.rotate(s.a);
+    const g = ctx, out = '#1c2438';
+    g.lineJoin = 'round'; g.lineCap = 'round'; g.lineWidth = 0.13; g.strokeStyle = out;
+    const shape = (pts, fill) => { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fillStyle = fill; g.fill(); g.lineWidth = 0.13; g.strokeStyle = out; g.stroke(); };
+    const ell = (x, y, rx, ry, fill, lw) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fillStyle = fill; g.fill(); g.lineWidth = lw || 0.08; g.strokeStyle = out; g.stroke(); };
+    // smoke from the stack: soft sprites
+    for (let i = 0; i < 5; i++) { const k = (time * 0.7 + i / 5) % 1; blob(win ? '60,60,70' : '110,110,122', -2.6 - k * 2.2, 5.2 + k * 3, 0.6 + k * 1.3, (1 - k) * 0.7); }
+    shape([[-3, 4.8], [-2.2, 4.8], [-2.3, 3.3], [-3, 3.3]], '#3a3a48');
+    shape([[-3.8, 2.2], [-0.8, 2.2], [-0.8, 3.6], [-3.8, 3.6]], '#f4f6fa');
+    g.fillStyle = '#2c5aa0'; g.fillRect(-3.8, 3.4, 3, 0.25);
+    for (const x of [-3.2, -2.4, -1.6]) { g.fillStyle = '#7fc4ff'; g.fillRect(x, 2.7, 0.45, 0.45); }
+    g.fillStyle = '#6b4a2a'; g.fillRect(0.6, 2.2, 0.22, 4.6);
+    const bil = Math.sin(time * 2) * 0.12; // the sail bellies in the wind
+    g.beginPath(); g.moveTo(-0.8, 6.2); g.quadraticCurveTo(0.8, 6.2 + bil, 2.4, 6.2); g.quadraticCurveTo(2.7 + bil, 4.8, 2.1, 3.4); g.lineTo(-0.6, 3.4); g.quadraticCurveTo(-0.5, 4.8, -0.8, 6.2); g.closePath();
+    g.fillStyle = '#fdfcf6'; g.fill(); g.lineWidth = 0.13; g.strokeStyle = out; g.stroke();
+    g.fillStyle = '#2c5aa0'; g.beginPath(); g.arc(0.75, 4.8, 0.65, 0, 7); g.fill();
+    g.strokeStyle = '#fdfcf6'; g.lineWidth = 0.14; g.beginPath(); g.moveTo(0.75, 5.25); g.lineTo(0.75, 4.35); g.moveTo(0.45, 4.95); g.lineTo(1.05, 4.95); g.arc(0.75, 4.6, 0.32, 0.3, Math.PI - 0.3); g.stroke();
+    // the Admiral: breathes, blinks, tracks you, winces when hit, winds up before each cannon shot
+    const windup = !win && phase === 'boss' && s.fireT < 0.9, hurt = s.flash > 0;
+    const AX = 2.9, AY = 2.35, S = 1.45, br = 1 + Math.sin(time * 2.2) * 0.03;
+    g.save(); g.translate(AX, AY); g.scale(S, S * br);
+    g.beginPath(); g.moveTo(-0.5, 1.2); g.quadraticCurveTo(-1.2, 0.8, -1.45, 0.15 + Math.sin(time * 7) * 0.15); g.lineTo(-0.3, 0.15); g.closePath(); g.fillStyle = '#f4f6fa'; g.fill(); g.lineWidth = 0.07; g.stroke(); // cape
+    g.beginPath(); g.moveTo(-0.55, 0); g.lineTo(0.55, 0); g.lineTo(0.45, 1.25); g.lineTo(-0.45, 1.25); g.closePath(); g.fillStyle = hurt ? '#ffd23f' : '#f4f6fa'; g.fill(); g.stroke(); // coat
+    g.fillStyle = '#1d3f80'; g.fillRect(0.05, 0.05, 0.22, 1.15);
+    ell(-0.42, 1.22, 0.18, 0.08, '#ffc531', 0.05); ell(0.42, 1.22, 0.18, 0.08, '#ffc531', 0.05); // epaulettes
+    const shx = 0.36, shy = 1.05, hx2 = windup ? 1.05 : 0.6, hy2 = windup ? 1.75 : 0.45; // arm: raised and pointing during the wind-up
+    g.beginPath(); g.moveTo(shx, shy); g.lineTo(hx2, hy2); g.strokeStyle = out; g.lineWidth = 0.26; g.stroke(); g.strokeStyle = '#f4f6fa'; g.lineWidth = 0.17; g.stroke();
+    ell(hx2, hy2, 0.13, 0.13, '#f0b98a', 0.05);
+    const hx = 0.05, hy = 1.72;
+    ell(hx, hy, 0.44, 0.46, '#f0b98a', 0.07);
+    g.beginPath(); rr(hx - 0.2, hy - 0.48, 0.58, 0.32, 0.12, g); g.fillStyle = '#f0b98a'; g.fill(); g.lineWidth = 0.06; g.stroke(); // big jaw
+    let px = 0.03, py = 0;
+    if (me) { const vx = me.car.x - (s.x + AX + hx * S), vy = me.car.y - (s.y + AY + hy * S), vl = Math.hypot(vx, vy) || 1; px = vx / vl * 0.035; py = vy / vl * 0.035; }
+    const blink = (time % 3.4) < 0.12;
+    for (const [ex, k] of [[hx + 0.12, 1], [hx + 0.34, 0.8]]) {
+      g.strokeStyle = out; g.lineWidth = 0.045;
+      if (win) { g.beginPath(); g.moveTo(ex - 0.06, hy + 0.08); g.lineTo(ex + 0.06, hy - 0.04); g.moveTo(ex - 0.06, hy - 0.04); g.lineTo(ex + 0.06, hy + 0.08); g.stroke(); }
+      else if (hurt) { g.beginPath(); g.moveTo(ex - 0.06, hy + 0.08); g.lineTo(ex + 0.05, hy + 0.02); g.lineTo(ex - 0.06, hy - 0.04); g.stroke(); } // squeezed shut
+      else if (blink) { g.beginPath(); g.moveTo(ex - 0.06, hy + 0.02); g.lineTo(ex + 0.06, hy + 0.02); g.stroke(); }
+      else {
+        g.beginPath(); g.ellipse(ex, hy + 0.02, 0.07 * k, 0.085 * k, 0, 0, 7); g.fillStyle = '#fff'; g.fill(); g.stroke();
+        g.fillStyle = '#c4161c'; g.beginPath(); g.arc(ex + px, hy + 0.02 + py, 0.04 * k, 0, 7); g.fill();
+      }
+      g.lineWidth = 0.075; g.beginPath(); g.moveTo(ex - 0.09, hy + 0.2); g.lineTo(ex + 0.08, hy + 0.13); g.stroke(); // thick angry brows
+    }
+    ell(hx + 0.24, hy - 0.2, 0.2, 0.07, '#f4f6fa', 0.04); ell(hx + 0.02, hy - 0.2, 0.16, 0.06, '#f4f6fa', 0.04); // mustache
+    if (hurt || windup || win) { g.beginPath(); g.ellipse(hx + 0.16, hy - 0.33, 0.12, windup ? 0.1 : 0.07, 0, 0, 7); g.fillStyle = '#7a1a26'; g.fill(); g.lineWidth = 0.04; g.stroke(); }
+    if (hurt) { g.fillStyle = '#7fd0ff'; g.beginPath(); g.ellipse(hx - 0.32, hy + 0.2, 0.05, 0.08, 0, 0, 7); g.fill(); } // sweat drop
+    g.beginPath(); g.ellipse(hx, hy + 0.36, 0.48, 0.28, 0, 0, Math.PI); g.fillStyle = '#f4f6fa'; g.fill(); g.lineWidth = 0.06; g.stroke(); // officer cap
+    g.fillStyle = '#1d3f80'; g.fillRect(hx - 0.48, hy + 0.3, 0.96, 0.1);
+    ell(hx + 0.36, hy + 0.32, 0.32, 0.06, '#1b1820', 0.04);
+    g.fillStyle = '#ffc531'; g.beginPath(); g.arc(hx + 0.05, hy + 0.5, 0.07, 0, 7); g.fill();
+    if (windup) { // manga "!" over his head
+      g.fillStyle = '#e8364f'; g.strokeStyle = out; g.lineWidth = 0.05;
+      g.beginPath(); g.moveTo(hx - 0.12, hy + 1.35); g.lineTo(hx + 0.12, hy + 1.35); g.lineTo(hx + 0.05, hy + 0.85); g.lineTo(hx - 0.05, hy + 0.85); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.arc(hx, hy + 0.7, 0.08, 0, 7); g.fill(); g.stroke();
+    }
+    g.restore();
+    // hull (in front of the Admiral's legs)
+    shape([[-5.2, 2.3], [5.6, 2.5], [4.3, -0.4], [-4.5, -0.4]], hurt ? '#ffffff' : '#e8eef5');
+    g.fillStyle = 'rgba(28,36,56,.12)'; g.beginPath(); g.moveTo(-4.5, -0.4); g.lineTo(4.3, -0.4); g.lineTo(4.75, 0.6); g.lineTo(-4.75, 0.5); g.fill(); // shadow side
+    g.fillStyle = '#2c5aa0'; g.beginPath(); g.moveTo(-5, 1.25); g.lineTo(5.15, 1.4); g.lineTo(5, 1.0); g.lineTo(-4.85, 0.85); g.fill();
+    for (const x of [-3.5, -2, -0.5, 1, 2.5]) ell(x, 1.75, 0.2, 0.2, '#1c2438', 0.05);
+    for (const y of [1.6, 0.6]) {
+      shape([[5.1, y + 0.17], [6.3, y + 0.22], [6.3, y - 0.14], [5.1, y - 0.17]], '#2a2a33');
+      if (windup) blob('255,170,60', 6.4, y + 0.04, 0.4 + (0.9 - s.fireT) * 1.1, 1);
+    }
+    // the wave it rides on
+    g.fillStyle = '#2f8fd8'; g.beginPath(); g.moveTo(-6.6, -2.2);
+    for (let x = -6.6; x <= 6.6; x += 0.4) g.lineTo(x, 0.3 + Math.sin(x * 1.3 + time * 6) * 0.25 - (Math.abs(x) > 5 ? (Math.abs(x) - 5) * 0.8 : 0));
+    g.lineTo(6.6, -2.2); g.closePath(); g.fill(); g.lineWidth = 0.1; g.strokeStyle = out; g.stroke();
+    g.fillStyle = '#e6f6ff';
+    for (let x = -6; x <= 6; x += 1.1) { const y = 0.38 + Math.sin(x * 1.3 + time * 6) * 0.25; g.beginPath(); g.arc(x, y, 0.26, 0, 7); g.arc(x + 0.35, y + 0.12, 0.18, 0, 7); g.fill(); }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    drawBackground();
+    const sx = shake ? rnd(-shake, shake) : 0, sy = shake ? rnd(-shake, shake) : 0;
+    ctx.save(); ctx.translate(sx, sy + camDip * ppm);
+    drawTerrain();
+    if (me) {
+      drawPickups();
+      if (ship) drawShip();
+      for (const b of balls) {
+        const k = Math.min(1, b.t / b.dur), x = lerp(b.x0, b.x1, k), y = lerp(b.y0, b.y1, k) + Math.sin(k * Math.PI) * 5;
+        blob('120,120,130', sxOf(x - 0.6), syOf(y + 0.2), ppm * 0.5, 0.5);
+        ctx.fillStyle = b.water ? '#5ec8f0' : '#1b1b22'; ctx.strokeStyle = b.water ? '#1c4f91' : '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sxOf(x), syOf(y), ppm * (b.water ? 0.45 : 0.34), 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(sxOf(x) - ppm * 0.1, syOf(y) - ppm * 0.1, ppm * 0.09, 0, 7); ctx.fill();
+      }
+      for (const b of myShots) { // your cannonballs
+        const k = Math.min(1, b.t / b.dur), x = lerp(b.x0, b.x1, k), y = lerp(b.y0, b.y1, k) + Math.sin(k * Math.PI) * 2.5;
+        blob('140,140,150', sxOf(x - 0.4), syOf(y), ppm * 0.4, 0.45);
+        ctx.fillStyle = '#1b1b22'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sxOf(x), syOf(y), ppm * 0.26, 0, 7); ctx.fill(); ctx.stroke();
+      }
+      for (const f of foes) drawFoe(f);
+      for (const b of shots) {
+        if (b.kind === 'bomb') { ctx.fillStyle = '#1b1b22'; ctx.beginPath(); ctx.arc(sxOf(b.x), syOf(b.y), ppm * 0.2, 0, 7); ctx.fill(); blob('255,170,60', sxOf(b.x + 0.12), syOf(b.y + 0.2), ppm * 0.16, 1); }
+        else { const l = Math.hypot(b.vx, b.vy) || 1; ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = Math.max(2, ppm * 0.1); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(sxOf(b.x), syOf(b.y)); ctx.lineTo(sxOf(b.x - b.vx / l * 0.6), syOf(b.y - b.vy / l * 0.6)); ctx.stroke(); }
+      }
+      const c = me.car;
+      if ((phase === 'play' || phase === 'boss') && me.punchCD <= 0 && me.punchT < 0 && me.crashT <= 0) { // spinning target reticle on what the punch would hit
+        const tg = punchTarget();
+        if (tg && tg.foe) {
+          const q = punchPoint(tg), rx = sxOf(q.x), ry = syOf(q.y), r = ppm * (0.75 + Math.sin(time * 8) * 0.06);
+          ctx.lineWidth = 3; ctx.strokeStyle = '#ff8a2b';
+          for (let i = 0; i < 4; i++) { const a = time * 3 + i * Math.PI / 2; ctx.beginPath(); ctx.arc(rx, ry, r, a, a + 1.0); ctx.stroke(); }
+        }
+      }
+      const o = { mood: me.crashT > 0 || phase === 'sunk' ? 'dizzy' : me.punchT >= 0 ? 'shout' : c.air > 0.35 ? 'wow' : 'grin', squash: me.squash };
+      if (me.punchT >= 0) {
+        const q = punchPoint(me.punchTgt);
+        o.punchA = Math.atan2(q.y - (c.y + 0.6), q.x - c.x) - c.a;
+        o.punch = Math.sin(Math.PI * clamp(me.punchT / 0.34, 0, 1)) * Math.hypot(q.x - c.x, q.y - c.y - 0.6);
+        o.wob = me.punchT * 40;
+      }
+      drawWorldCar(c.x, c.y, c.a, me.carId, me.hatId, c.wr, me.crashT > 0 && me.crashT < 0.5 ? me.crashT * 2 : 1, o);
+      if (me.boost > 0 && Math.random() < 0.5) puff('smoke', c.x - 1.5, c.y + 0.2, 1, { c: '200,140,255', r: 0.4, life: 0.5, spd: 1, vx: -3 });
+      if (me.crashT > 0) { // dizzy stars circling the head
+        const hx = c.x - 0.12 * Math.cos(c.a) - 1.5 * Math.sin(c.a), hy = c.y - 0.12 * Math.sin(c.a) + 1.5 * Math.cos(c.a);
+        for (let i = 0; i < 3; i++) { const a = time * 5 + i * 2.1; star5(sxOf(hx + Math.cos(a) * 0.6), syOf(hy + Math.sin(a) * 0.2), ppm * 0.18, a, 1); }
+      }
+      if (phase === 'play' && elapsed < 6) nameTag(sxOf(c.x), syOf(c.y + 2.6), T.you, true);
+    } else if (demo) {
+      drawWorldCar(demo.x, demo.y, demo.a, save.eq.cars, save.eq.hats, demo.wr, 1, { mood: demo.air > 0.35 ? 'wow' : 'grin' });
+    }
+    drawParts();
+    for (const o of fxt) drawOno(o);
+    ctx.restore();
+    drawScreenFx();
+    if (me && phase !== 'result') drawHud();
+  }
+
+  function drawTrack(y, sc) {
+    const x0 = 16, x1 = W - 16, h = 10 * sc;
+    ctx.fillStyle = 'rgba(15,20,40,.6)'; rr(x0 - 4, y - 4, x1 - x0 + 8, h + 8, 9); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.15)'; rr(x0, y, x1 - x0, h, 5); ctx.fill();
+    const mx = x0 + (x1 - x0 - 14) * clamp(me.car.x / FINISH, 0, 1);
+    ctx.fillStyle = '#36c46b'; rr(x0, y, Math.max(h, mx - x0 + 6), h, 5); ctx.fill();
+    ctx.font = `${12 * sc}px system-ui`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('🏁', x1 + 2, y + h / 2);
+    ctx.fillStyle = '#36c46b'; ctx.beginPath(); ctx.arc(mx + 6, y + h / 2, 8 * sc, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    return y + h + 8;
+  }
+
+  function drawHud() {
+    ctx.textBaseline = 'middle';
+    const sc = clamp(Math.min(W, H) / 420, 0.8, 1.3);
+    const bossMode = phase === 'boss' || phase === 'win';
+    let y = 18;
+    if (!bossMode) {
+      y = drawTrack(18, sc) + 6;
+      ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(12, y, 80 * sc, 34 * sc, 12); ctx.fill();
+      txt(`💀 ${kos}`, 12 + 40 * sc, y + 18 * sc, 18 * sc, '#fff', 'center');
+      const left = Math.max(0, Math.round(FINISH - me.car.x));
+      if (phase === 'play') txt(`${left} ${T.toGo}`, W / 2, y + 18 * sc, 13 * sc, '#fff', 'center', 800);
+    } else if (ship) {
+      const bw = Math.min(W - 40, 420), bx = (W - bw) / 2;
+      ctx.font = `900 ${15 * sc}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#1b1530';
+      ctx.strokeText(`⚓ ${ship.name}`, W / 2, y + 4); txt(`⚓ ${ship.name}`, W / 2, y + 4, 15 * sc, '#fff', 'center');
+      ctx.fillStyle = '#1b1530'; rr(bx, y + 16, bw, 18 * sc, 9); ctx.fill();
+      ctx.fillStyle = '#e8364f'; rr(bx + 3, y + 19, Math.max(0, (bw - 6) * ship.hp / ship.hpMax), 18 * sc - 6, 6); ctx.fill();
+      txt(`${Math.ceil(ship.hp)} / ${ship.hpMax}`, W / 2, y + 16 + 9 * sc, 11 * sc, '#fff', 'center');
+      y += 26 + 18 * sc;
+    }
+    // coins (right)
+    const ct = fmt(me.coins);
+    ctx.font = `900 ${15 * sc}px system-ui`;
+    const cw = ctx.measureText(ct).width + 40 * sc;
+    ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(W - 12 - cw, y, cw, 30 * sc, 15 * sc); ctx.fill();
+    ctx.fillStyle = '#ffc531'; ctx.beginPath(); ctx.arc(W - 12 - cw + 16 * sc, y + 15 * sc, 9 * sc, 0, 7); ctx.fill();
+    txt(ct, W - 22, y + 16 * sc, 15 * sc, '#fff', 'right');
+    if (combo > 1 && comboT > 0 && (phase === 'play' || phase === 'boss')) { // pulsing combo meter that drains
+      const cx = W - 16, cy = y + 38 * sc, pop = 1 + comboPop * 0.5, ctext = `x${combo}`;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.08); ctx.scale(pop, pop);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
+      ctx.font = `${34 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 7 * sc; ctx.strokeStyle = '#1b1530';
+      ctx.strokeText(ctext, 0, 0); ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; ctx.fillText(ctext, 0, 0);
+      ctx.font = `${13 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 4 * sc;
+      ctx.strokeText('COMBO', 0, 36 * sc); ctx.fillStyle = '#fff'; ctx.fillText('COMBO', 0, 36 * sc);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(15,20,40,.6)'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc, 7 * sc, 4); ctx.fill();
+      ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc * clamp(comboT / 2.2, 0, 1), 7 * sc, 4); ctx.fill();
+    }
+    // hull gauge (your life)
+    const my = y + 40 * sc, st = carStats(), k = clamp(me.hull / st.tank, 0, 1);
+    ctx.font = `${16 * sc}px system-ui`; ctx.textAlign = 'left'; ctx.fillText('⚓', 12, my + 8 * sc);
+    ctx.fillStyle = 'rgba(15,20,40,.7)'; rr(36 * sc, my, 110 * sc, 16 * sc, 8); ctx.fill();
+    ctx.fillStyle = k < 0.25 ? (Math.sin(time * 10) > 0 ? '#e8364f' : '#ff8a2b') : k < 0.5 ? '#ffc531' : '#36c46b'; rr(36 * sc + 2, my + 2, Math.max(0, (110 * sc - 4) * k), 16 * sc - 4, 6); ctx.fill();
+    txt(`${Math.ceil(me.hull)}`, 36 * sc + 55 * sc, my + 8.5 * sc, 11 * sc, '#fff', 'center', 900);
+    // feed
+    let fy = my + 24 * sc;
+    for (const f of feed) {
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 4);
+      ctx.font = `700 ${11 * sc}px system-ui, sans-serif`;
+      const tw = Math.min(ctx.measureText(f.text).width + 14, W - 24);
+      ctx.fillStyle = f.mine ? 'rgba(54,196,107,.9)' : 'rgba(15,20,40,.6)'; rr(12, fy, tw, 20 * sc, 7); ctx.fill();
+      txt(f.text, 19, fy + 10 * sc, 11 * sc, '#fff', 'left', 700);
+      fy += 24 * sc;
+    }
+    ctx.globalAlpha = 1;
+    if (phase === 'play') {
+      if (elapsed < 1.6) banner(T.go, '#36c46b', H * 0.3);
+      if (!goSfx) { goSfx = true; sfx.go(); }
+      else if (elapsed < 5 && me.car.x < 20) banner(isPc ? T.ctlHintPc : T.ctlHint, '#fff', H * 0.4, Math.min(W * 0.05, 22));
+    }
+    if (phase === 'bossIntro') { const t = 1 - introT / 2.6; banner(t < 0.45 ? T.bossIn : (nextKing() ? T.bossIn2k : T.bossIn2), t < 0.45 ? '#ffc531' : '#e8364f', H * 0.3); }
+    if (phase === 'win') banner(T.won, '#ffc531', H * 0.33);
+    for (const p of popups) {
+      ctx.globalAlpha = Math.min(1, 1.7 - p.t * 1.4);
+      const foe = p.where === 'boss';
+      banner(p.text, p.color, H * (foe ? 0.36 : 0.44) - p.t * 40, Math.min(W * 0.06, 28), foe ? W * 0.3 : W / 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function frame(t) {
+    let dt = Math.min((t - lastT) / 1000 || 0, 0.05);
+    lastT = t;
+    if (hitStop > 0) { hitStop -= dt; dt *= 0.06; } // freeze frame on big hits
+    if (!paused) update(dt);
+    render();
+    engineSound();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Touch controls ----------
+  const $ = (id) => document.getElementById(id);
+  let lastPunchP = -1, isPc = false;
+  function syncControls() {
+    const on = me && (phase === 'play' || phase === 'bossIntro' || phase === 'boss' || phase === 'win');
+    $('ctl').classList.toggle('hidden', !on);
+    const showPunch = on && (phase === 'play' || phase === 'boss');
+    $('punch').classList.toggle('hidden', !showPunch);
+    if (showPunch) {
+      const p = Math.round(360 * (1 - clamp(me.punchCD / PUNCH_CD, 0, 1)));
+      if (p !== lastPunchP) { lastPunchP = p; $('punch').style.setProperty('--p', p + 'deg'); }
+    }
+    $('punch').classList.toggle('ready', !!(showPunch && me.punchCD <= 0 && me.punchT < 0 && punchTarget()));
+    $('gas').classList.toggle('on', input.gas || input.kGas);
+    $('brake').classList.toggle('on', input.brake || input.kBrake);
+  }
+  function holdButton(el, key) {
+    const down = (e) => { e.preventDefault(); unlockAudio(); input[key] = true; try { el.setPointerCapture(e.pointerId); } catch (_) {} };
+    const up = (e) => { e.preventDefault(); input[key] = false; };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
+  }
+  function releaseAll() { input.gas = input.brake = input.kGas = input.kBrake = input.kBack = input.kFwd = false; }
+
+  // ---------- Screens ----------
+  const screens = ['menu', 'shop', 'result'];
+  function show(id) { screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
+
+  function renderMenu() {
+    $('mCoins').textContent = fmt(save.coins);
+    $('mStage').textContent = `🏝️ ${island().name}`;
+    $('mBoss').textContent = `⚓ ${T.boss} #${save.bosses + 1}`;
+    $('playBtn').textContent = T.play;
+    $('shopLbl').textContent = '🛒 ' + T.shop;
+    const car = byId('cars', save.eq.cars), can = (x, cat) => !save.owned[cat].includes(x.id) && save.coins >= x.cost;
+    const affordable = CARS.some(x => can(x, 'cars')) || ISLANDS.some(x => can(x, 'islands')) || HATS.some(x => save.bosses >= x.boss && can(x, 'hats'))
+      || UPG.some(u => save.up[car.id][u] < UPG_MAX && save.coins >= upCost(car, u));
+    $('shopBadge').classList.toggle('hidden', !(affordable || unlockedCount() > save.seen));
+  }
+
+  let shopTab = 'upgrades';
+  function buyBtn(b, cost, onBuy) {
+    b.className = 'b-buy' + (save.coins < cost ? ' poor' : '');
+    b.innerHTML = cost ? `<span class="coin"></span>${fmt(cost)}` : T.free;
+    b.onclick = () => { if (save.coins < cost) return; save.coins -= cost; onBuy(); persist(); sfx.buy(); renderShop(); };
+  }
+  function statBars(c) {
+    const rows = [[T.speed, c.top / 20], [T.grip, c.mu / 1.25], [T.airS, c.airT / 11], [T.fuel, c.tank / 65]];
+    return '<div class="stats">' + rows.map(([n, v]) => `<div class="stat"><span>${n}</span><i><b style="width:${Math.round(clamp(v, 0.08, 1) * 100)}%"></b></i></div>`).join('') + '</div>';
+  }
+  function addDiv(parent, cls, text) { const d = document.createElement('div'); d.className = cls; d.textContent = text; parent.appendChild(d); return d; }
+  function renderShop() {
+    if (unlockedCount() > save.seen) { save.seen = unlockedCount(); persist(); }
+    $('sCoins').textContent = fmt(save.coins);
+    $('shopTitle').textContent = T.shop;
+    $('shopBack').textContent = T.back;
+    $('shopHint').textContent = shopTab === 'hats' ? T.hint : '';
+    const tabs = $('tabs'); tabs.innerHTML = '';
+    for (const id of ['upgrades', 'cars', 'islands', 'hats']) {
+      const b = document.createElement('button'); b.className = 'tab' + (id === shopTab ? ' on' : ''); b.textContent = T[id];
+      b.onclick = () => { shopTab = id; sfx.ui(); renderShop(); };
+      tabs.appendChild(b);
+    }
+    const g = $('grid'); g.innerHTML = '';
+    if (shopTab === 'upgrades') { // the selected vehicle's own upgrades, like the HCR garage
+      const car = byId('cars', save.eq.cars), lv = save.up[car.id];
+      const head = document.createElement('div'); head.className = 'vhead';
+      const pv = document.createElement('canvas'); pv.width = 280; pv.height = 196; head.appendChild(pv);
+      drawPreview(pv, car.id, save.eq.hats, false);
+      const info = document.createElement('div'); info.style.flex = '1'; head.appendChild(info);
+      addDiv(info, 'nm', car.name); info.insertAdjacentHTML('beforeend', statBars(carStats(car.id)));
+      g.appendChild(head);
+      for (const u of UPG) {
+        const key = u === 'sp' ? car.sp : u, level = lv[u];
+        const card = document.createElement('div'); card.className = 'card';
+        addDiv(card, 'em', UPG_ICON[key]); addDiv(card, 'nm', T['u_' + key]); addDiv(card, 'ds', T['u_' + key + '_d']);
+        card.insertAdjacentHTML('beforeend', `<div class="segs">${Array.from({ length: UPG_MAX }, (_, i) => `<b class="${i < level ? 'on' : ''}"></b>`).join('')}</div>`);
+        const b = document.createElement('button');
+        if (level >= UPG_MAX) { b.className = 'b-on'; b.textContent = T.max; }
+        else buyBtn(b, upCost(car, u), () => { lv[u]++; });
+        card.appendChild(b); g.appendChild(card);
+      }
+      return;
+    }
+    const cat = shopTab;
+    for (const item of CATS[cat]) {
+      const owned = save.owned[cat].includes(item.id), eq = save.eq[cat] === item.id, locked = cat === 'hats' && save.bosses < item.boss;
+      const card = document.createElement('div'); card.className = 'card' + (eq ? ' eq' : '');
+      const pv = document.createElement('canvas'); pv.width = 240; pv.height = 168; card.appendChild(pv);
+      if (cat === 'islands') drawIslandPreview(pv, item);
+      else drawPreview(pv, cat === 'cars' ? item.id : save.eq.cars, cat === 'hats' ? item.id : save.eq.hats, cat === 'hats');
+      if (locked) { const x = pv.getContext('2d'); x.fillStyle = 'rgba(243,230,204,.75)'; x.fillRect(0, 0, pv.width, pv.height); }
+      addDiv(card, 'nm', item.name);
+      if (cat === 'cars') { addDiv(card, 'ds', `${UPG_ICON[item.sp]} ${T['u_' + item.sp]}`); card.insertAdjacentHTML('beforeend', statBars(item)); }
+      if (cat === 'islands') addDiv(card, 'ds', T['isl_' + item.id] + (item.rich ? ' · ' + T.richer : ''));
+      if (cat === 'hats') addDiv(card, 'ds', T['fr_' + item.id]);
+      const b = document.createElement('button');
+      if (eq) { b.className = 'b-on'; b.textContent = T.equipped; }
+      else if (owned) { b.className = 'b-eq'; b.textContent = T.equip; b.onclick = () => { save.eq[cat] = item.id; persist(); sfx.ui(); renderShop(); }; }
+      else if (locked) { b.className = 'b-lock'; b.textContent = `🔒 ${T.beat}${item.boss}`; }
+      else buyBtn(b, item.cost, () => { save.owned[cat].push(item.id); save.eq[cat] = item.id; });
+      card.appendChild(b); g.appendChild(card);
+    }
+  }
+
+  function drawFruitIcon(g, f, cx, cy, r) { // a generic swirly devil fruit
+    g.save(); g.translate(cx, cy);
+    g.fillStyle = f.a; g.strokeStyle = '#2a1a10'; g.lineWidth = r * 0.07;
+    g.beginPath(); g.arc(0, r * 0.1, r, 0, 7); g.fill(); g.stroke();
+    g.strokeStyle = f.b; g.lineWidth = r * 0.12; g.beginPath();
+    for (let a = 0; a < 14; a += 0.25) { const rad = r * 0.08 * a; g.lineTo(Math.cos(a) * rad * 0.9, r * 0.1 + Math.sin(a) * rad * 0.9); } g.stroke();
+    g.fillStyle = '#3c9a3a'; g.strokeStyle = '#2a1a10'; g.lineWidth = r * 0.05;
+    g.beginPath(); g.ellipse(r * 0.35, -r * 1.0, r * 0.45, r * 0.18, -0.5, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(-r * 0.4, -r * 0.35, r * 0.25, r * 0.15, -0.6, 0, 7); g.fill();
+    g.restore();
+  }
+  function drawPreview(canvas, carId, hatId, zoomHat) {
+    const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, '#9fdcff'); gr.addColorStop(1, '#e8f7ff');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    if (zoomHat) { drawFruitIcon(g, byId('hats', hatId), w / 2, h * 0.52, h * 0.3); return; }
+    g.fillStyle = '#1e8fd6'; g.beginPath(); g.moveTo(0, h);
+    for (let x = 0; x <= w; x += 6) g.lineTo(x, h * 0.78 + Math.sin(x * 0.05) * 4); g.lineTo(w, h); g.fill();
+    g.save(); g.translate(w / 2, h * 0.62); g.scale(w / 5.2, -w / 5.2);
+    drawCar(g, carId, hatId, 0.3);
+    g.restore();
+  }
+  function drawIslandPreview(canvas, isl) {
+    const g = canvas.getContext('2d'), th = THEMES[isl.theme], w = canvas.width, h = canvas.height;
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, th.sky[0]); gr.addColorStop(1, th.sky[1]);
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    if (th.night) { g.fillStyle = '#fff'; for (let i = 0; i < 25; i++) g.fillRect(hash(i) * w, hash(i + 9) * h * 0.5, 2, 2); }
+    g.fillStyle = th.sun; g.beginPath(); g.arc(w * 0.8, h * 0.2, 14, 0, 7); g.fill();
+    g.fillStyle = th.far; g.beginPath(); g.ellipse(w * 0.3, h * 0.5, w * 0.22, h * 0.14, 0, Math.PI, 0); g.fill();
+    const y = (x) => h * 0.68 - Math.sin(x * 0.03 + 1) * 16 * isl.amp - Math.sin(x * 0.12) * 2 * isl.bump;
+    g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 4) g.lineTo(x, y(x)); g.lineTo(w, h); g.closePath(); g.fillStyle = th.sea; g.fill();
+    g.beginPath(); for (let x = 0; x <= w; x += 4) x ? g.lineTo(x, y(x)) : g.moveTo(x, y(x)); g.lineWidth = 6; g.strokeStyle = '#eaf8ff'; g.stroke();
+  }
+
+  function startRace() {
+    unlockAudio();
+    newRace();
+    releaseAll();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space must punch, not re-press a menu button
+    show(null);
+    phase = 'play';
+    send('level_started');
+  }
+
+  function showResult(won) {
+    phase = 'result';
+    if (won) save.bosses++;
+    const stage = save.bosses;
+    const reward = won ? me.coins + 1000 + stage * 250 : Math.round(me.coins * 0.5) + 100; // a lost run still pays a little
+    save.coins += reward;
+    persist();
+    send(won ? 'level_completed' : 'level_failed');
+    $('rTitle').textContent = won ? T.won : T.sunk;
+    $('rSub').textContent = won ? `🏝️ ${island().name} · ${stage}` : `🏝️ ${island().name} · ${Math.round(Math.min(me.best, FINISH))} / ${FINISH} m`;
+    const board = $('rBoard'); board.innerHTML = '';
+    for (const [k, v] of [['📏 ' + T.dist, `${Math.round(Math.min(me.best, FINISH))} m`], ['💀 ' + T.kos, kos], ['🤸 ' + T.flipsL, me.flips]]) {
+      const row = document.createElement('div'); row.className = 'brow';
+      row.innerHTML = '<span></span><span></span>'; row.firstChild.textContent = k; row.lastChild.textContent = v;
+      board.appendChild(row);
+    }
+    $('rCoins').textContent = '+' + fmt(reward);
+    const news = won ? HATS.filter(x => x.boss === stage).map(x => x.name) : [];
+    $('rUnlock').classList.toggle('hidden', !news.length);
+    $('rUnlock').textContent = '🔓 ' + T.unlocked + news.join(', ');
+    $('retryBtn').classList.toggle('hidden', won);
+    $('retryBtn').textContent = T.retry;
+    $('contBtn').textContent = T.cont;
+    show('result');
+    setTimeout(() => sfx.coins(), 250);
+  }
+
+  function toMenu() {
+    phase = 'menu'; me = null; ship = null; foes = []; shots = []; parts = []; popups = []; balls = [];
+    FINISH = 900; genTerrain(save.bosses + 1);
+    demo = newCar(8); camX = demo.x; camY = demo.y;
+    show('menu'); renderMenu();
+  }
+
+  // ---------- Audio ----------
+  // Soft, ASMR-style palette: wooden taps, glass chimes and airy noise, plus a low purring engine. All synthesized.
+  let actx = null, master = null, wet = null, noiseBuf = null, eng = null;
+  function unlockAudio() {
+    try {
+      if (!actx) {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.ratio.value = 3;
+        master = actx.createGain(); master.gain.value = 0.7;
+        const soft = actx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 3200;
+        master.connect(soft).connect(comp).connect(actx.destination);
+        wet = actx.createGain(); wet.gain.value = 0.35;
+        const dl = actx.createDelay(1), fb = actx.createGain(), lp = actx.createBiquadFilter();
+        dl.delayTime.value = 0.19; fb.gain.value = 0.38; lp.type = 'lowpass'; lp.frequency.value = 1800;
+        wet.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(master);
+        noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        const o = actx.createOscillator(), f = actx.createBiquadFilter(), g = actx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = 50; f.type = 'lowpass'; f.frequency.value = 380; g.gain.value = 0;
+        o.connect(f).connect(g).connect(master); o.start();
+        eng = { o, f, g };
+      }
+      if (actx.state === 'suspended' && audioOn && !paused) actx.resume();
+    } catch (e) {}
+  }
+  function engineSound() {
+    if (!eng || !actx) return;
+    const racing = me && phase !== 'result' && phase !== 'match';
+    const c = racing ? me.car : null, inp = readInput();
+    const sp = c ? Math.abs(c.ws * WR) : 0;
+    const t = actx.currentTime;
+    eng.o.frequency.setTargetAtTime(42 + sp * 5 + inp.gas * 14, t, 0.08);
+    eng.f.frequency.setTargetAtTime(260 + sp * 22 + inp.gas * 120, t, 0.1);
+    eng.g.gain.setTargetAtTime(racing && me.crashT <= 0 ? 0.02 + inp.gas * 0.035 : 0, t, 0.12);
+  }
+  const canPlay = () => actx && audioOn && !paused && actx.state === 'running';
+  function out(node, pan, send) {
+    let n = node;
+    if (pan && actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = pan; n.connect(p); n = p; }
+    n.connect(master);
+    if (send) { const s = actx.createGain(); s.gain.value = send; n.connect(s); s.connect(wet); }
+  }
+  function osc(f, peak, dur, o = {}) {
+    if (!canPlay()) return;
+    const t0 = actx.currentTime + (o.delay || 0), v = actx.createOscillator(), g = actx.createGain();
+    v.type = o.type || 'sine'; v.frequency.setValueAtTime(f, t0);
+    if (o.to) v.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + (o.attack || 0.004));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    v.connect(g); out(g, o.pan, o.send);
+    v.start(t0); v.stop(t0 + dur + 0.05);
+  }
+  function hiss(peak, dur, o = {}) {
+    if (!canPlay()) return;
+    const t0 = actx.currentTime + (o.delay || 0), s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; s.loop = true;
+    f.type = o.filter || 'bandpass'; f.frequency.setValueAtTime(o.f || 1500, t0); f.Q.value = o.q || 1;
+    if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + (o.attack || 0.003));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    s.connect(f).connect(g); out(g, o.pan, o.send);
+    s.start(t0, Math.random() * 0.5); s.stop(t0 + dur + 0.05);
+  }
+  const PENTA = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880];
+  let coinN = 0, coinT = 0;
+  const sfx = {
+    coin() { coinN = time - coinT < 0.6 ? coinN + 1 : 0; coinT = time; osc(PENTA[5 + (coinN % 5)], 0.05, 0.4, { send: 0.4 }); },
+    munch() { for (let i = 0; i < 3; i++) hiss(0.08, 0.06, { f: rnd(500, 900), q: 2, delay: i * 0.09 }); osc(330, 0.05, 0.3, { delay: 0.25, to: 440, send: 0.4 }); },
+    fruit() { [0, 2, 4, 7].forEach((k, i) => osc(PENTA[k] * 2, 0.04, 0.6, { delay: i * 0.05, send: 0.6 })); },
+    land(big) { hiss(big ? 0.14 : 0.08, 0.12, { filter: 'lowpass', f: 500 }); osc(big ? 90 : 120, big ? 0.2 : 0.12, 0.2, { to: 55 }); },
+    flip(n) { osc(PENTA[Math.min(4 + n, PENTA.length - 1)], 0.08, 1.0, { send: 0.6 }); osc(PENTA[Math.min(4 + n, PENTA.length - 1)] * 1.5, 0.03, 0.8, { delay: 0.06, send: 0.6 }); },
+    crash() { for (let i = 0; i < 3; i++) { osc(rnd(70, 95), 0.18, 0.25, { delay: i * 0.08, to: 50 }); hiss(0.1, 0.18, { filter: 'lowpass', f: 700, delay: i * 0.08 }); } },
+    tick(n) { hiss(0.05, 0.03, { f: 1200 + n * 40, q: 5 }); },
+    low() { osc(880, 0.035, 0.12, { type: 'triangle' }); },
+    ko(n) { osc(140, 0.18, 0.15, { to: 70 }); hiss(0.1, 0.1, { filter: 'lowpass', f: 900 }); osc(PENTA[Math.min(3 + n, PENTA.length - 1)], 0.06, 0.5, { delay: 0.04, send: 0.5 }); },
+    shot() { hiss(0.04, 0.06, { f: 2500, q: 2, pan: 0.4 }); },
+    thud() { osc(90, 0.2, 0.18, { to: 50 }); hiss(0.08, 0.1, { filter: 'lowpass', f: 600 }); },
+    ui() { osc(420, 0.07, 0.09, { to: 560 }); hiss(0.025, 0.03, { f: 1600, q: 3 }); },
+    buy() { [0, 2, 4].forEach((k, i) => osc(PENTA[k + 2], 0.06, 0.6, { delay: i * 0.07, send: 0.5 })); },
+    first() { osc(523.25, 0.06, 0.9, { send: 0.6 }); osc(783.99, 0.04, 0.9, { delay: 0.08, send: 0.6 }); },
+    go() { osc(392, 0.07, 0.6, { send: 0.5 }); osc(587.33, 0.06, 0.8, { delay: 0.12, send: 0.5 }); },
+    bossIntro() { hiss(0.09, 1.6, { filter: 'lowpass', f: 200, to: 900, attack: 0.6 }); osc(55, 0.16, 1.8, { attack: 0.5, to: 45 }); },
+    whoosh() { hiss(0.08, 0.2, { f: 600, to: 2400, q: 1.2 }); },
+    bossHit(big) { osc(130, 0.22, 0.22, { to: 70, pan: -0.3 }); hiss(0.1, 0.12, { filter: 'lowpass', f: 900, pan: -0.3 }); if (big) osc(659.25, 0.05, 0.5, { send: 0.6 }); },
+    cannon() { osc(80, 0.14, 0.3, { to: 45, pan: -0.4 }); hiss(0.08, 0.25, { filter: 'lowpass', f: 600, pan: -0.4 }); },
+    boom() { osc(65, 0.22, 0.4, { to: 40 }); hiss(0.12, 0.3, { filter: 'lowpass', f: 400 }); },
+    bossDown() {
+      PENTA.forEach((f, i) => osc(f, 0.05, 1.2, { delay: i * 0.07, send: 0.6, pan: i % 2 ? 0.3 : -0.3 }));
+      hiss(0.08, 1.5, { filter: 'lowpass', f: 700, to: 150 });
+    },
+    coins() { for (let i = 0; i < 6; i++) osc(PENTA[7 + (i % 3)], 0.03, 0.35, { delay: i * 0.06, send: 0.4 }); },
+  };
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  function syncAudio() { if (!actx) return; if (audioOn && !paused) actx.resume(); else actx.suspend(); }
+
+  // ---------- Boot ----------
+  async function boot() {
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('blur', releaseAll);
+    holdButton($('gas'), 'gas');
+    holdButton($('brake'), 'brake');
+    $('punch').addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); $('punch').classList.add('on'); doPunch(); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('punch').addEventListener(ev, () => $('punch').classList.remove('on'));
+    const KEYS = { ArrowRight: 'kGas', KeyD: 'kGas', ArrowLeft: 'kBrake', KeyA: 'kBrake', ArrowUp: 'kBack', KeyW: 'kBack', ArrowDown: 'kFwd', KeyS: 'kFwd' };
+    window.addEventListener('keydown', e => {
+      if (KEYS[e.code]) { e.preventDefault(); unlockAudio(); input[KEYS[e.code]] = true; }
+      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); unlockAudio(); doPunch(); }
+    });
+    window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; });
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); doPunch(); }); // tap anywhere to punch
+
+    try {
+      if (window.bridge) { await bridge.initialize(); B = bridge; }
+    } catch (e) { B = null; }
+    if (B) {
+      const lang = String(B.platform.language || 'en').slice(0, 2).toLowerCase();
+      T = STRINGS[lang] || STRINGS.en;
+      B.platform.on(B.EVENT_NAME.PAUSE_STATE_CHANGED, isPaused => { paused = isPaused; if (paused) releaseAll(); syncAudio(); });
+      B.platform.on(B.EVENT_NAME.AUDIO_STATE_CHANGED, isEnabled => { audioOn = isEnabled; syncAudio(); });
+      await load();
+    }
+    $('gas').textContent = T.gas; $('brake').textContent = T.brake; $('punchLbl').textContent = T.punch;
+    // Mouse/keyboard devices play with the arrow keys (HCR on PC); the touch UI comes back the moment someone touches the screen.
+    isPc = !(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    document.body.classList.toggle('pc', isPc);
+    if (isPc) $('punchLbl').textContent = 'SPACE';
+    window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && isPc) { isPc = false; document.body.classList.remove('pc'); $('punchLbl').textContent = T.punch; } }, true);
+    $('keys').innerHTML = `<span class="key"><b>A</b>${T.brake}</span><span class="key"><b>D</b>${T.gas}</span><span class="key"><b>W</b><b>S</b>${T.tilt}</span>`;
+
+    if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
+    $('playBtn').onclick = startRace;
+    $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'upgrades'; show('shop'); renderShop(); };
+    $('shopBack').onclick = () => { show('menu'); renderMenu(); };
+    $('contBtn').onclick = toMenu;
+    $('retryBtn').onclick = () => { toMenu(); startRace(); };
+
+    toMenu();
+    requestAnimationFrame(t => {
+      lastT = t; render();
+      send('game_ready');
+      requestAnimationFrame(frame);
+    });
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
