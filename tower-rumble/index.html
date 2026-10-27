@@ -864,11 +864,11 @@
   const AURA_RGB = { fire: '255,120,30', lightning: '90,170,255', frost: '120,210,255', toxic: '80,220,60', holy: '255,200,60', rainbow: '255,90,200' };
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
-  // Outline of the visible top part: left edge up, over the back corner, right edge down.
+  // Silhouette of the top block only (lower floors differ in size, so a longer rim would float off them).
   function auraOutline(P, tb, yTop, sc) {
-    const drop = sc * 26;
+    const drop = BH * sc, yb = yTop - BH;
     const L = P(tb.x, yTop, tb.z + tb.d), Bk = P(tb.x, yTop, tb.z), R = P(tb.x + tb.w, yTop, tb.z);
-    const pts = [[L[0], L[1] + drop], L, Bk, R, [R[0], R[1] + drop]];
+    const pts = [P(tb.x, yb, tb.z + tb.d), L, Bk, R, P(tb.x + tb.w, yb, tb.z), P(tb.x + tb.w, yb, tb.z + tb.d), P(tb.x, yb, tb.z + tb.d)];
     const segs = []; let total = 0;
     for (let i = 0; i < pts.length - 1; i++) {
       const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], len = Math.hypot(x1 - x0, y1 - y0);
@@ -880,7 +880,7 @@
       const d = u * total; let s = segs[segs.length - 1];
       for (const sg of segs) if (d <= sg.from + sg.len) { s = sg; break; }
       const k = (d - s.from) / s.len, x = s.x0 + (s.x1 - s.x0) * k, y = s.y0 + (s.y1 - s.y0) * k;
-      const fade = Math.max(0, 1 - Math.max(0, y - L[1]) / drop);
+      const fade = s.ny > 0.3 ? 0.6 : 1; // bottom edges a bit calmer
       return { x, y, nx: s.nx, ny: s.ny, fade };
     };
     return { pts, at, total, top: Math.min(L[1], Bk[1], R[1]), drop };
@@ -888,11 +888,9 @@
 
   function strokeOutline(o, color, width, blur) {
     ctx.save();
-    const g = ctx.createLinearGradient(0, o.top, 0, o.top + o.drop * 1.3);
-    g.addColorStop(0, color(1)); g.addColorStop(1, color(0));
-    ctx.strokeStyle = g; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = color(1); ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.shadowColor = color(1); ctx.shadowBlur = blur;
-    ctx.beginPath(); o.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+    ctx.beginPath(); o.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.stroke();
     ctx.restore();
   }
 
@@ -961,9 +959,9 @@
         ctx.strokeStyle = `rgba(140,255,100,${(1 - u) * q.fade})`; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(q.x + q.nx * d, q.y + q.ny * d - u * sc * 2, r, 0, 7); ctx.stroke();
       }
-      for (let i = 0; i < lvl; i++) { // goo dripping down the sides
-        const side = i % 2 ? 0.02 : 0.98, u = (time * 0.5 + i * 0.37) % 1, q = o.at(side);
-        ctx.fillStyle = tint(0.9 * (1 - u)); ctx.beginPath(); ctx.ellipse(q.x + q.nx * 2, q.y - o.drop * (1 - u) * 0.9, sc * 0.3, sc * 0.55, 0, 0, 7); ctx.fill();
+      for (let i = 0; i < lvl; i++) { // goo dripping off the block's bottom edge
+        const u = (time * 0.5 + i * 0.37) % 1, q = o.at(0.62 + 0.36 * hash(i + 40));
+        ctx.fillStyle = tint(0.9 * (1 - u)); ctx.beginPath(); ctx.ellipse(q.x, q.y + u * sc * 4, sc * 0.3, sc * 0.55, 0, 0, 7); ctx.fill();
       }
     } else if (kind === 'holy' || kind === 'rainbow') {
       for (let i = 0; i < n; i++) { // short light rays radiating out of the rim
