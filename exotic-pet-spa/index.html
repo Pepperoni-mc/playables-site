@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Exotic Pet Spa</title>
+<script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
+<style>
+  :root { --ink: #3a2b4f; --gold: #ffc531; --gold-d: #e39a12; --accent: #ff85b3; --accent-d: #e05d90;
+          --green: #46ce86; --green-d: #2aa263; --cream: #fff6ef; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #ffe9f1;
+               font-family: system-ui, "Segoe UI", Roboto, sans-serif; color: var(--ink); }
+  body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  canvas#c { display: block; width: 100vw; height: 100vh; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 16px; overflow-y: auto; }
+  .hidden { display: none !important; }
+  button { font: inherit; border: 0; cursor: pointer; color: inherit; }
+  .pill { background: rgba(255,255,255,.82); border-radius: 999px; padding: 6px 14px 6px 8px;
+          font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 0 rgba(58,43,79,.15); }
+  .coin { width: 20px; height: 20px; border-radius: 50%; flex: none; display: inline-block;
+          background: radial-gradient(circle at 35% 35%, #fff3b0, var(--gold) 45%, var(--gold-d));
+          box-shadow: inset 0 -2px 0 rgba(0,0,0,.15); }
+  .topbar { width: 100%; max-width: 520px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* Menu */
+  #menu { justify-content: space-between; pointer-events: none; }
+  #menu > * { pointer-events: auto; }
+  .title { text-align: center; margin-top: 2vh; }
+  .title h1 { margin: 0; font-size: clamp(36px, 10.5vw, 62px); line-height: .88; font-weight: 900; color: #fff;
+    -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 0 6px 0 var(--ink); }
+  .title .tag { margin-top: 12px; display: inline-block; background: var(--accent); color: #fff; font-weight: 900;
+    padding: 6px 16px; border-radius: 10px; box-shadow: 0 4px 0 var(--accent-d); font-size: 13px; letter-spacing: .5px; }
+  .bottom { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 10px; align-items: center; padding-bottom: 6px; }
+  .play { width: min(360px, 90%); padding: 18px; font-size: 26px; font-weight: 900; color: #fff;
+          background: var(--green); border-radius: 18px; box-shadow: 0 6px 0 var(--green-d); animation: pulse 1.2s infinite; }
+  .play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--green-d); }
+  @keyframes pulse { 50% { transform: scale(1.04); } }
+  .pets { display: flex; gap: 10px; justify-content: center; }
+  .petBtn { background: rgba(255,255,255,.85); border-radius: 16px; padding: 8px; width: 92px;
+            box-shadow: 0 4px 0 rgba(58,43,79,.18); border: 3px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .petBtn.on { border-color: var(--green); }
+  .petBtn canvas { width: 68px; height: 60px; }
+  .petBtn .nm { font-weight: 900; font-size: 13px; }
+  .petBtn .px { font-size: 12px; font-weight: 900; display: flex; align-items: center; gap: 4px; opacity: .8; }
+  .petBtn .px .coin { width: 14px; height: 14px; }
+  .petBtn.poor { filter: grayscale(.5); }
+  .home { color: var(--ink); opacity: .55; font-weight: 800; font-size: 13px; text-decoration: none; padding: 2px 10px; }
+
+  /* In-session HUD */
+  #hud { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; padding: 14px; }
+  #hud .bar { width: min(420px, 92%); background: rgba(255,255,255,.75); border-radius: 999px; height: 14px; overflow: hidden; box-shadow: 0 2px 0 rgba(58,43,79,.15); }
+  #hud .fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .12s linear; }
+  #hud .task { margin-top: 10px; font-weight: 900; font-size: clamp(16px, 4.6vw, 22px); color: #fff;
+               -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-align: center; }
+  #hud .step { margin-top: 2px; font-weight: 800; font-size: 12px; opacity: .6; }
+
+  /* Tool rack: the right tool is already selected, so the first touch needs no decision. */
+  #rack { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; justify-content: center;
+          padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
+  .tool { position: relative; width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,.9);
+          box-shadow: 0 4px 0 rgba(58,43,79,.2); border: 3px solid transparent; padding: 0; flex: none; }
+  .tool canvas { width: 100%; height: 100%; display: block; }
+  .tool.on { border-color: var(--green); transform: translateY(-6px); }
+  .tool.want:not(.on) { animation: want 1s infinite; }
+  @keyframes want { 50% { transform: translateY(-5px) scale(1.06); } }
+  @media (max-height: 620px) { .tool { width: 50px; height: 50px; } }
+
+  #stageDone { position: fixed; inset: 0 0 auto; top: 22%; display: flex; align-items: center; justify-content: center;
+               font-size: clamp(28px, 9vw, 50px); font-weight: 900; color: #fff; pointer-events: none;
+               -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; opacity: 0; }
+  #stageDone.show { animation: pop .9s ease-out; }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; transform: scale(1.1); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05); } }
+
+  /* Result */
+  #result { background: rgba(58,43,79,.92); color: #fff; justify-content: center; gap: 12px; text-align: center; }
+  #result h2 { margin: 0; font-size: clamp(26px, 7.5vw, 40px); font-weight: 900; color: var(--gold);
+               -webkit-text-stroke: 2px #7a4a00; paint-order: stroke fill; }
+  .ba { display: flex; gap: 10px; align-items: flex-end; justify-content: center; }
+  .ba figure { margin: 0; background: rgba(255,255,255,.1); border-radius: 16px; padding: 8px; }
+  .ba figcaption { font-weight: 900; font-size: 12px; opacity: .7; letter-spacing: 1px; margin-top: 4px; }
+  .ba canvas { width: min(38vw, 150px); height: min(38vw, 150px); border-radius: 12px; background: rgba(255,255,255,.08); display: block; }
+  .stars { font-size: clamp(26px, 8vw, 40px); letter-spacing: 4px; height: 1.2em; }
+  .reward { display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 900; justify-content: center; }
+  .reward .coin { width: 30px; height: 30px; }
+  .cont { background: var(--green); color: #fff; font-weight: 900; font-size: 20px; padding: 14px 36px; border-radius: 16px; box-shadow: 0 5px 0 var(--green-d); }
+  .menuBtn { background: transparent; color: #fff; opacity: .75; font-weight: 800; padding: 6px; text-decoration: underline; }
+  .toast { position: fixed; left: 50%; top: 26%; transform: translateX(-50%); background: rgba(58,43,79,.92);
+           color: #fff; font-weight: 800; padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; white-space: nowrap; }
+  .toast.show { animation: toast 1.6s ease-out; }
+  @keyframes toast { 10%, 70% { opacity: 1; } 100% { opacity: 0; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="menu" class="screen">
+  <div class="topbar">
+    <span></span>
+    <div class="pill"><span class="coin"></span><span id="mCoins">0</span></div>
+  </div>
+  <div class="title">
+    <h1>EXOTIC<br>PET SPA</h1>
+    <div class="tag" id="mTag"></div>
+  </div>
+  <div class="bottom">
+    <div class="pets" id="pets"></div>
+    <button class="play" id="playBtn"></button>
+    <a class="home hidden" id="homeLink" href="../">&larr; All games</a>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="bar"><div class="fill" id="hudFill"></div></div>
+  <div class="task" id="hudTask"></div>
+  <div class="step" id="hudStep"></div>
+</div>
+<div id="rack" class="hidden"></div>
+<div id="stageDone"></div>
+
+<div id="result" class="screen hidden">
+  <h2 id="rTitle"></h2>
+  <div class="ba">
+    <figure><canvas id="rBefore" width="320" height="320"></canvas><figcaption id="rBeforeCap"></figcaption></figure>
+    <figure><canvas id="rAfter" width="320" height="320"></canvas><figcaption id="rAfterCap"></figcaption></figure>
+  </div>
+  <div class="stars" id="rStars"></div>
+  <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
+  <button class="cont" id="contBtn"></button>
+  <button class="menuBtn" id="menuBtn"></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Localization ----------
+  const STRINGS = {
+    en: { play: 'START', tag: 'RELAXING PET GROOMING', back: 'Menu', next: 'NEXT CLIENT',
+          knots: 'Pop the tangles!', gills: 'Comb the gills!', wash: 'Scrub the dirt away!', dry: 'Hold to blow dry!', brush: 'Brush the fur!',
+          step: 'Step', of: 'of', nice: 'NICE!', clean: 'SO CLEAN!', fluffy: 'FLUFFY!', shiny: 'SHINY!',
+          before: 'BEFORE', after: 'AFTER', locked: 'Locked', need: 'Not enough coins', bought: 'Unlocked!',
+          perfect: 'PERFECT SPA!', good: 'LOVELY!', ok: 'ALL DONE!', wrong: 'Wrong tool for this!',
+          t_hand: 'Hands', t_comb: 'Comb', t_sponge: 'Sponge', t_dryer: 'Dryer', t_brush: 'Brush' },
+    es: { play: 'EMPEZAR', tag: 'SPA RELAJANTE DE MASCOTAS', back: 'Menú', next: 'SIGUIENTE CLIENTE',
+          knots: '¡Revienta los nudos!', gills: '¡Peina las branquias!', wash: '¡Quita toda la suciedad!', dry: '¡Mantén para secar!', brush: '¡Cepilla el pelo!',
+          step: 'Paso', of: 'de', nice: '¡BIEN!', clean: '¡LIMPIECITO!', fluffy: '¡ESPONJOSO!', shiny: '¡BRILLANTE!',
+          before: 'ANTES', after: 'DESPUÉS', locked: 'Bloqueada', need: 'Te faltan monedas', bought: '¡Desbloqueada!',
+          perfect: '¡SPA PERFECTO!', good: '¡PRECIOSA!', ok: '¡LISTA!', wrong: '¡Esa no sirve para esto!',
+          t_hand: 'Manos', t_comb: 'Peine', t_sponge: 'Esponja', t_dryer: 'Secador', t_brush: 'Cepillo' },
+    pt: { play: 'COMEÇAR', tag: 'SPA RELAXANTE DE BICHINHOS', back: 'Menu', next: 'PRÓXIMO CLIENTE',
+          knots: 'Estoure os nós!', gills: 'Penteie as brânquias!', wash: 'Tire toda a sujeira!', dry: 'Segure para secar!', brush: 'Escove o pelo!',
+          step: 'Passo', of: 'de', nice: 'BOA!', clean: 'LIMPINHO!', fluffy: 'FOFINHO!', shiny: 'BRILHANDO!',
+          before: 'ANTES', after: 'DEPOIS', locked: 'Bloqueado', need: 'Moedas insuficientes', bought: 'Desbloqueado!',
+          perfect: 'SPA PERFEITO!', good: 'LINDO!', ok: 'PRONTO!', wrong: 'Essa não serve pra isso!',
+          t_hand: 'Mãos', t_comb: 'Pente', t_sponge: 'Esponja', t_dryer: 'Secador', t_brush: 'Escova' },
+  };
+  let T = STRINGS.en;
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const $ = (id) => document.getElementById(id);
+  function angDiff(a, b) { let d = a - b; while (d > Math.PI) d -= 6.28318; while (d < -Math.PI) d += 6.28318; return d; }
+
+  // ---------- Tools ----------
+  // One tool per stage. The player may hold any of them, but only the matching
+  // one makes progress; the wrong one gets a head shake, never a penalty.
+  const TOOLS = [
+    { id: 'hand',   stage: 'knots',  label: 't_hand' },
+    { id: 'comb',   stage: 'gills',  label: 't_comb' },
+    { id: 'sponge', stage: 'wash',   label: 't_sponge' },
+    { id: 'dryer',  stage: 'dry',    label: 't_dryer' },
+    { id: 'brush',  stage: 'brush',  label: 't_brush' },
+  ];
+  const toolForStage = (s) => (TOOLS.find(t => t.stage === s) || TOOLS[0]).id;
+
+  // ---------- Pets ----------
+  // Shapes live in a -1..1 local space; `parts` is the silhouette used to scatter dirt and fur.
+  // Every pet owns one exclusive stage, which is the whole point of the roster.
+  const PETS = [
+    {
+      id: 'cat', name: 'Mochi', cost: 0, own: 'knots',
+      fur: '#c9c2d8', fur2: '#efeaf7', shade: '#a79cbd', skin: '#f6c9d4', dirt: '#8a6a4a', dirt2: '#6b4f36',
+      parts: [ { k: 'e', x: 0, y: .36, rx: .64, ry: .46 }, { k: 'c', x: 0, y: -.38, r: .46 } ],
+      knots: [ [-.30, .22], [.32, .30], [-.10, .55], [.14, -.02], [-.42, -.08], [.44, -.02] ],
+      extras: drawCatExtras,
+    },
+    {
+      id: 'axolotl', name: 'Pepita', cost: 200, own: 'gills',
+      fur: '#ffb3d1', fur2: '#ffd9e8', shade: '#f08cb4', skin: '#ff8fbd', dirt: '#6d7f5a', dirt2: '#4e5e3e',
+      parts: [ { k: 'e', x: 0, y: .34, rx: .56, ry: .42 }, { k: 'c', x: 0, y: -.34, r: .52 } ],
+      gills: [ -.9, -.55, -.2, .2, .55, .9 ],
+      extras: drawAxolotlExtras,
+    },
+  ];
+  const petById = (id) => PETS.find(p => p.id === id) || PETS[0];
+
+  // ---------- Save (Bridge storage) ----------
+  let save = { coins: 0, owned: { pets: ['cat'] }, eq: { pets: 'cat' }, sessions: 0, best: 0 };
+  let B = null, paused = false, audioOn = true;
+  const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
+  function persist() { if (B) B.storage.set(['exotic_pet_spa'], [JSON.stringify(save)]).catch(() => {}); }
+  async function load() {
+    if (!B) return;
+    try {
+      const d = await B.storage.get(['exotic_pet_spa']);
+      if (d[0]) {
+        const s = typeof d[0] === 'string' ? JSON.parse(d[0]) : d[0];
+        save = Object.assign(save, s, {
+          owned: Object.assign({}, save.owned, s.owned || {}),
+          eq: Object.assign({}, save.eq, s.eq || {}),
+        });
+        if (!Array.isArray(save.owned.pets) || !save.owned.pets.length) save.owned.pets = ['cat'];
+      }
+    } catch (e) {}
+  }
+
+  // ---------- Canvas ----------
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  }
+  // Portrait-first, and high enough to leave the tool rack its own room.
+  // On the menu the pet sits smaller and lower so it never covers the title.
+  const geom = () => screen === 'menu'
+    ? { cx: W / 2, cy: H * 0.60, s: Math.min(W * 0.25, H * 0.115) }
+    : { cx: W / 2, cy: H * 0.48, s: Math.min(W * 0.42, H * 0.27) };
+
+  // ---------- Effect sprites ----------
+  // Pre-rendered once: gradients and highlights are what make foam and water read
+  // as volume instead of flat dots, and drawing them as images keeps it cheap.
+  const SPR = {};
+  function sprite(size, draw) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    draw(c.getContext('2d'), size);
+    return c;
+  }
+  function buildSprites() {
+    SPR.bubble = sprite(96, (c, n) => {
+      const r = n / 2 - 2, g = c.createRadialGradient(n * 0.38, n * 0.34, r * 0.1, n / 2, n / 2, r);
+      g.addColorStop(0, 'rgba(255,255,255,.98)');
+      g.addColorStop(.55, 'rgba(244,251,255,.72)');
+      g.addColorStop(.88, 'rgba(206,235,250,.46)');
+      g.addColorStop(1, 'rgba(176,220,245,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(n / 2, n / 2, r, 0, 6.2832); c.fill();
+      // rim light along the upper-left edge
+      c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = n * 0.035;
+      c.beginPath(); c.arc(n / 2, n / 2, r * 0.9, 3.5, 5.4); c.stroke();
+      // specular dot
+      c.fillStyle = 'rgba(255,255,255,.95)';
+      c.beginPath(); c.arc(n * 0.36, n * 0.33, r * 0.16, 0, 6.2832); c.fill();
+    });
+    SPR.drop = sprite(96, (c, n) => {
+      // teardrop: round belly, pointed tail upward
+      const g = c.createLinearGradient(n * 0.3, n * 0.2, n * 0.7, n * 0.9);
+      g.addColorStop(0, 'rgba(203,239,255,.95)');
+      g.addColorStop(.5, 'rgba(126,200,239,.95)');
+      g.addColorStop(1, 'rgba(74,160,205,.95)');
+      c.fillStyle = g;
+      c.beginPath();
+      c.moveTo(n / 2, n * 0.06);
+      c.bezierCurveTo(n * 0.80, n * 0.45, n * 0.92, n * 0.70, n / 2, n * 0.95);
+      c.bezierCurveTo(n * 0.08, n * 0.70, n * 0.20, n * 0.45, n / 2, n * 0.06);
+      c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,.9)';
+      c.beginPath(); c.ellipse(n * 0.40, n * 0.58, n * 0.08, n * 0.13, -0.4, 0, 6.2832); c.fill();
+    });
+    SPR.spark = sprite(96, (c, n) => {
+      const g = c.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+      g.addColorStop(0, 'rgba(255,255,230,.95)');
+      g.addColorStop(.35, 'rgba(255,238,150,.45)');
+      g.addColorStop(1, 'rgba(255,230,120,0)');
+      c.fillStyle = g; c.fillRect(0, 0, n, n);
+      c.fillStyle = 'rgba(255,255,255,.95)';
+      c.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4, rr = i % 2 ? n * 0.08 : n * 0.47;
+        const x = n / 2 + Math.cos(a) * rr, y = n / 2 + Math.sin(a) * rr;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.closePath(); c.fill();
+    });
+    SPR.shadow = sprite(128, (c, n) => {
+      const g = c.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+      g.addColorStop(0, 'rgba(58,43,79,.35)');
+      g.addColorStop(1, 'rgba(58,43,79,0)');
+      c.fillStyle = g; c.fillRect(0, 0, n, n);
+    });
+  }
+  const img = (sp, x, y, w, h, alpha, rot) => {
+    ctx.globalAlpha = alpha;
+    if (rot) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+      ctx.drawImage(sp, -w / 2, -h / 2, w, h); ctx.restore();
+    } else ctx.drawImage(sp, x - w / 2, y - h / 2, w, h);
+    ctx.globalAlpha = 1;
+  };
+
+  // ---------- Audio ----------
+  // ASMR palette: wet noise for water and foam, airy noise for the dryer, soft plucks for knots.
+  let actx = null, master = null, wet = null, noiseBuf = null;
+  function unlockAudio() {
+    try {
+      if (!actx) {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.ratio.value = 3;
+        master = actx.createGain(); master.gain.value = 0.7;
+        const soft = actx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 3400;
+        master.connect(soft).connect(comp).connect(actx.destination);
+        wet = actx.createGain(); wet.gain.value = 0.3;
+        const dl = actx.createDelay(1), fb = actx.createGain(), lp = actx.createBiquadFilter();
+        dl.delayTime.value = 0.17; fb.gain.value = 0.34; lp.type = 'lowpass'; lp.frequency.value = 1900;
+        wet.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(master);
+        noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (actx.state === 'suspended' && audioOn && !paused) actx.resume();
+    } catch (e) {}
+  }
+  const canPlay = () => actx && audioOn && !paused && actx.state === 'running';
+  function out(node, pan, sendAmt) {
+    let n = node;
+    if (pan && actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = pan; n.connect(p); n = p; }
+    n.connect(master);
+    if (sendAmt) { const s = actx.createGain(); s.gain.value = sendAmt; n.connect(s); s.connect(wet); }
+  }
+  function osc(f, peak, dur, o = {}) {
+    if (!canPlay()) return;
+    const t0 = actx.currentTime + (o.delay || 0), v = actx.createOscillator(), g = actx.createGain();
+    v.type = o.type || 'sine'; v.frequency.setValueAtTime(f, t0);
+    if (o.to) v.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + (o.attack || 0.004));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    v.connect(g); out(g, o.pan, o.send);
+    v.start(t0); v.stop(t0 + dur + 0.05);
+  }
+  function hiss(peak, dur, o = {}) {
+    if (!canPlay()) return;
+    const t0 = actx.currentTime + (o.delay || 0), s = actx.createBufferSource(),
+          f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; s.loop = true;
+    f.type = o.filter || 'bandpass'; f.frequency.setValueAtTime(o.f || 1500, t0); f.Q.value = o.q || 1;
+    if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + (o.attack || 0.003));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    s.connect(f).connect(g); out(g, o.pan, o.send);
+    s.start(t0, Math.random() * 0.5); s.stop(t0 + dur + 0.05);
+  }
+  // Held tools (the dryer) need a loop we can open and close with the finger.
+  function loopNoise(o = {}) {
+    if (!canPlay()) return null;
+    const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    s.buffer = noiseBuf; s.loop = true;
+    f.type = o.filter || 'bandpass'; f.frequency.value = o.f || 900; f.Q.value = o.q || 0.8;
+    g.gain.setValueAtTime(0.0001, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(o.peak || 0.09, actx.currentTime + (o.attack || 0.12));
+    s.connect(f).connect(g); out(g, 0, o.send || 0);
+    s.start(0);
+    return {
+      filter: f,
+      stop() {
+        try {
+          const t = actx.currentTime;
+          g.gain.cancelScheduledValues(t);
+          g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+          s.stop(t + 0.2);
+        } catch (e) {}
+      },
+    };
+  }
+  const PENTA = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880];
+  const sfx = {
+    knot(i) { osc(PENTA[Math.min(i, 9)], 0.08, 0.5, { send: 0.5 }); hiss(0.05, 0.07, { f: 1400, q: 2.5 }); },
+    scrub(speed) { hiss(0.05 + 0.05 * speed, 0.09, { f: rnd(700, 1500), q: 1.4, pan: rnd(-.3, .3) }); },
+    bubble() { osc(rnd(600, 1100), 0.025, 0.14, { to: rnd(1200, 1900), send: 0.4 }); },
+    comb() { hiss(0.06, 0.13, { f: 1200, to: 2600, q: 1.8 }); },
+    brush() { hiss(0.055, 0.16, { f: 900, to: 1800, q: 1.1, pan: rnd(-.25, .25) }); },
+    stage() { [0, 2, 4].forEach((k, i) => osc(PENTA[k + 3], 0.06, 0.8, { delay: i * 0.08, send: 0.6 })); },
+    sparkle() { for (let i = 0; i < 5; i++) osc(PENTA[5 + (i % 5)], 0.03, 0.5, { delay: i * 0.05, send: 0.6 }); },
+    coins() { for (let i = 0; i < 6; i++) osc(PENTA[7 + (i % 3)], 0.03, 0.35, { delay: i * 0.06, send: 0.4 }); },
+    ui() { osc(430, 0.06, 0.09, { to: 580 }); hiss(0.02, 0.03, { f: 1600, q: 3 }); },
+    buy() { [0, 3, 5, 7].forEach((k, i) => osc(PENTA[k], 0.06, 0.7, { delay: i * 0.07, send: 0.55 })); },
+    purr() { osc(68, 0.07, 1.1, { type: 'triangle', to: 58 }); hiss(0.025, 1.0, { filter: 'lowpass', f: 320, attack: 0.3 }); },
+    nope() { osc(300, 0.06, 0.16, { to: 190, type: 'triangle' }); osc(240, 0.05, 0.2, { to: 150, delay: 0.1, type: 'triangle' }); },
+  };
+  const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+  function syncAudio() { if (!actx) return; if (audioOn && !paused) actx.resume(); else actx.suspend(); }
+
+  // ---------- Session state ----------
+  let screen = 'menu';
+  let pet = PETS[0];
+  let st = null;            // live grooming state
+  let beforeSnap = null;    // deep copy of `st` as the pet arrived
+  let stageIdx = 0, stageList = [], stageStars = [];
+  let lastProgress = 0, stalled = 0, locked = false;
+  let tool = 'hand';
+  let time = 0, lastT = 0;
+  let drip = [], foam = [], spark = [], lather = [];
+  let ptr = null, ptrPrev = null, ptrSpeed = 0, holdTool = null, pendDx = 0, pendDy = 0;
+  let menuState = null;
+
+  function insidePet(p, x, y) {
+    for (const q of p.parts) {
+      if (q.k === 'e') { const dx = (x - q.x) / q.rx, dy = (y - q.y) / q.ry; if (dx * dx + dy * dy <= 1) return true; }
+      else { const dx = x - q.x, dy = y - q.y; if (dx * dx + dy * dy <= q.r * q.r) return true; }
+    }
+    return false;
+  }
+  function scatter(p, n, rMin, rMax) {
+    const out = [];
+    let guard = 0;
+    while (out.length < n && guard++ < n * 60) {
+      const x = rnd(-1, 1), y = rnd(-1, 1);
+      if (!insidePet(p, x, y)) continue;
+      // lumpy outline: dirt made of smooth ovals never reads as dirt
+      const lobes = [];
+      for (let k = 0; k < 7; k++) lobes.push(rnd(0.62, 1.25));
+      out.push({ x, y, r: rnd(rMin, rMax), a: rnd(0, 6.28), alive: 1, lobes });
+    }
+    return out;
+  }
+
+  function newSession() {
+    st = {
+      dirt: scatter(pet, 46, .055, .105),
+      wetness: 0,
+      wet: [],
+      tufts: scatter(pet, 26, .06, .09).map(t => ({ ...t, ang: rnd(-1.2, 1.2), tgt: Math.atan2(t.y - .1, t.x) })),
+      knots: (pet.knots || []).map(([x, y]) => ({ x, y, alive: 1, pop: 0 })),
+      gills: (pet.gills || []).map(a => ({ a, done: 0 })),
+      mood: -0.8, blink: 0, nextBlink: rnd(1.5, 4),
+      shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
+    };
+    beforeSnap = snapshot(st);
+    stageList = [pet.own, 'wash', 'dry', 'brush'];
+    stageStars = []; stageIdx = 0; lastProgress = 0; stalled = 0; locked = false;
+    drip = []; foam = []; spark = []; lather = [];
+    tool = toolForStage(stageList[0]);
+  }
+  // The before/after shot is just the arrival state kept aside and drawn again later.
+  function snapshot(s) {
+    return {
+      dirt: s.dirt.map(d => ({ ...d })), wetness: 0, wet: [],
+      tufts: s.tufts.map(t => ({ ...t })), knots: s.knots.map(k => ({ ...k })),
+      gills: s.gills.map(g => ({ ...g })), mood: -0.8, blink: 0, nextBlink: 9,
+      shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
+    };
+  }
+
+  // ---------- Stage progress ----------
+  function progress() {
+    if (!st) return 0;
+    const k = stageList[stageIdx];
+    if (k === 'knots') return st.knots.length ? st.knots.filter(x => !x.alive).length / st.knots.length : 1;
+    if (k === 'gills') return st.gills.length ? st.gills.reduce((a, g) => a + g.done, 0) / st.gills.length : 1;
+    if (k === 'wash') return st.dirt.length ? st.dirt.filter(d => d.alive <= 0).length / st.dirt.length : 1;
+    if (k === 'dry') return 1 - st.wetness;
+    if (k === 'brush') {
+      const al = st.tufts.reduce((a, t) => a + (1 - Math.min(Math.abs(angDiff(t.ang, t.tgt)) / 1.2, 1)), 0);
+      return al / st.tufts.length;
+    }
+    return 0;
+  }
+
+  function advanceStage() {
+    stageStars.push(clamp(progress(), 0, 1));
+    sfx.stage(); buzz(18);
+    flashStage([T.nice, T.clean, T.fluffy, T.shiny][Math.min(stageIdx, 3)]);
+    st.mood = Math.min(1, st.mood + 0.6);
+    for (let i = 0; i < 16; i++) spark.push({ x: rnd(-.8, .8), y: rnd(-.8, .8), t: 0, life: rnd(.5, 1.1), rot: rnd(0, 6.28) });
+    stageIdx++;
+    lastProgress = 0; stalled = 0;
+    if (stageIdx >= stageList.length) { locked = true; setTimeout(finish, 900); return; }
+    if (stageList[stageIdx] === 'dry') {
+      // Washing leaves the pet soaked: that is where the dryer stage gets its work.
+      st.wetness = 1;
+      st.wet = scatter(pet, 34, .05, .09);
+    }
+    tool = toolForStage(stageList[stageIdx]);
+    renderRack(); renderHud();
+  }
+
+  function finish() {
+    const avg = stageStars.reduce((a, b) => a + b, 0) / Math.max(stageStars.length, 1);
+    const stars = clamp(Math.round(avg * 5), 1, 5);
+    const coins = Math.round(20 + avg * 80);
+    save.coins += coins; save.sessions++; save.best = Math.max(save.best || 0, stars);
+    persist(); send('level_completed');
+    sfx.sparkle(); setTimeout(() => sfx.coins(), 300);
+    $('rTitle').textContent = stars >= 5 ? T.perfect : stars >= 3 ? T.good : T.ok;
+    $('rStars').textContent = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    $('rCoins').textContent = coins;
+    $('rBeforeCap').textContent = T.before;
+    $('rAfterCap').textContent = T.after;
+    drawCard($('rBefore'), beforeSnap);
+    drawCard($('rAfter'), st);
+    show('result');
+  }
+  // Small square portrait used by the before/after cards and the pet picker.
+  function drawCard(canvas, state) {
+    const c = canvas.getContext('2d');
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    drawPet(c, pet, state, { cx: canvas.width / 2, cy: canvas.height * 0.56, s: canvas.width * 0.32 }, 0, true);
+  }
+
+  // ---------- Pet drawing ----------
+  function blob(c, g, x, y, rx, ry, rot) {
+    c.save(); c.translate(g.cx + x * g.s, g.cy + y * g.s); c.rotate(rot || 0);
+    c.beginPath(); c.ellipse(0, 0, rx * g.s, ry * g.s, 0, 0, 6.2832); c.fill(); c.restore();
+  }
+  // Closed lumpy path: used for dirt so its edge never looks machine-made.
+  function lumpy(c, g, x, y, r, lobes, rot) {
+    const n = lobes.length;
+    c.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const i0 = i % n, i1 = (i + 1) % n;
+      const a0 = rot + i0 / n * 6.2832, a1 = rot + i1 / n * 6.2832;
+      const r0 = r * lobes[i0], r1 = r * lobes[i1];
+      const x0 = g.cx + (x + Math.cos(a0) * r0) * g.s, y0 = g.cy + (y + Math.sin(a0) * r0 * 0.82) * g.s;
+      const x1 = g.cx + (x + Math.cos(a1) * r1) * g.s, y1 = g.cy + (y + Math.sin(a1) * r1 * 0.82) * g.s;
+      if (i === 0) c.moveTo(x0, y0);
+      c.quadraticCurveTo((x0 + x1) / 2 + (y1 - y0) * 0.12, (y0 + y1) / 2 - (x1 - x0) * 0.12, x1, y1);
+    }
+    c.closePath();
+  }
+
+  function drawCatExtras(c, p, s, g, t, back) {
+    const sh = Math.sin(t * 34) * s.shiver * 0.02;
+    if (back) {
+      const sw = Math.sin(t * 1.6) * 0.18 + 0.1;
+      c.strokeStyle = p.shade; c.lineWidth = 0.17 * g.s; c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(g.cx + 0.48 * g.s, g.cy + 0.55 * g.s);
+      c.quadraticCurveTo(g.cx + (0.95 + sw) * g.s, g.cy + (0.42 - sw) * g.s,
+                         g.cx + (0.80 + sw) * g.s, g.cy + (-0.05 - sw) * g.s);
+      c.stroke();
+      // Ears go behind the head so the head's edge hides their base; drawing them
+      // on top made them look like stickers floating over the skull.
+      [-1, 1].forEach(d => {
+        const bx = d * 0.32, by = -0.62 + sh;
+        c.fillStyle = p.shade;
+        c.beginPath();
+        c.moveTo(g.cx + (bx - d * 0.19) * g.s, g.cy + (by + 0.20) * g.s);
+        c.quadraticCurveTo(g.cx + (bx + d * 0.04) * g.s, g.cy + (by - 0.34) * g.s,
+                           g.cx + (bx + d * 0.26) * g.s, g.cy + (by + 0.14) * g.s);
+        c.closePath(); c.fill();
+        c.fillStyle = p.skin;
+        c.beginPath();
+        c.moveTo(g.cx + (bx - d * 0.08) * g.s, g.cy + (by + 0.15) * g.s);
+        c.quadraticCurveTo(g.cx + (bx + d * 0.04) * g.s, g.cy + (by - 0.19) * g.s,
+                           g.cx + (bx + d * 0.17) * g.s, g.cy + (by + 0.11) * g.s);
+        c.closePath(); c.fill();
+      });
+      return;
+    }
+    c.strokeStyle = 'rgba(58,43,79,.35)'; c.lineWidth = 0.014 * g.s;
+    [-1, 1].forEach(d => { for (let i = 0; i < 2; i++) {
+      c.beginPath();
+      c.moveTo(g.cx + d * 0.16 * g.s, g.cy + (-0.18 + i * 0.07) * g.s);
+      c.lineTo(g.cx + d * 0.54 * g.s, g.cy + (-0.26 + i * 0.13) * g.s);
+      c.stroke();
+    } });
+  }
+
+  function drawAxolotlExtras(c, p, s, g, t, back) {
+    if (back) {
+      s.gills.forEach(gl => {
+        const side = gl.a < 0 ? -1 : 1, base = Math.abs(gl.a);
+        const ax = side * 0.42, ay = -0.46 + (base - 0.2) * 0.30;
+        const droop = (1 - gl.done) * 0.26;
+        c.strokeStyle = p.skin; c.lineWidth = 0.075 * g.s; c.lineCap = 'round';
+        for (let k = -1; k <= 1; k++) {
+          const sp = k * 0.17;
+          c.beginPath();
+          c.moveTo(g.cx + ax * g.s, g.cy + ay * g.s);
+          c.quadraticCurveTo(
+            g.cx + (ax + side * 0.30) * g.s, g.cy + (ay + sp * 0.6 + droop) * g.s,
+            g.cx + (ax + side * 0.56) * g.s, g.cy + (ay + sp + droop * 1.4) * g.s);
+          c.stroke();
+        }
+      });
+      c.fillStyle = p.skin;
+      const sw = Math.sin(t * 2.2) * 0.1;
+      c.beginPath();
+      c.moveTo(g.cx + 0.42 * g.s, g.cy + 0.50 * g.s);
+      c.quadraticCurveTo(g.cx + 0.95 * g.s, g.cy + (0.60 + sw) * g.s, g.cx + 0.98 * g.s, g.cy + (0.18 + sw) * g.s);
+      c.quadraticCurveTo(g.cx + 0.72 * g.s, g.cy + 0.34 * g.s, g.cx + 0.44 * g.s, g.cy + 0.30 * g.s);
+      c.closePath(); c.fill();
+      return;
+    }
+    c.fillStyle = p.fur2;
+    blob(c, g, 0, -0.76, 0.12, 0.06, 0);
+  }
+
+  function drawPet(c, p, s, g, t, flat) {
+    const breath = flat ? 0 : Math.sin(t * 1.9) * 0.012;
+    const sh = flat ? 0 : Math.sin(t * 32) * s.shiver * 0.015 + Math.sin(t * 19) * s.shake * 0.035;
+    const puff = 1 + s.puff * 0.07;
+
+    c.save();
+    c.translate(sh * g.s, 0);
+
+    if (p.extras) p.extras(c, p, s, g, t, true);
+
+    const bp = p.parts[0], hp = p.parts[1];
+    // body with a soft vertical shade for volume
+    const bg = c.createLinearGradient(0, g.cy + (bp.y - bp.ry) * g.s, 0, g.cy + (bp.y + bp.ry) * g.s);
+    bg.addColorStop(0, p.fur2); bg.addColorStop(.45, p.fur); bg.addColorStop(1, p.shade);
+    c.fillStyle = bg;
+    blob(c, g, bp.x, bp.y + breath, bp.rx * puff, bp.ry * puff, 0);
+    c.fillStyle = p.fur2;
+    blob(c, g, bp.x, bp.y + 0.10 + breath, bp.rx * 0.62, bp.ry * 0.62, 0);
+    c.fillStyle = p.fur;
+    [-1, 1].forEach(d => blob(c, g, d * 0.30, bp.y + bp.ry * 0.92, 0.16, 0.10, 0));
+
+    const hg = c.createLinearGradient(0, g.cy + (hp.y - hp.r) * g.s, 0, g.cy + (hp.y + hp.r) * g.s);
+    hg.addColorStop(0, p.fur2); hg.addColorStop(.5, p.fur); hg.addColorStop(1, p.shade);
+    c.fillStyle = hg;
+    blob(c, g, hp.x, hp.y + breath * 1.4, hp.r * puff, hp.r * 0.92 * puff, 0);
+
+    if (p.extras) p.extras(c, p, s, g, t, false);
+
+    // fur tufts: messy until brushed, and pushed by the dryer's wind
+    if (s.tufts) {
+      c.strokeStyle = p.fur2; c.lineCap = 'round';
+      s.tufts.forEach(tf => {
+        const d = Math.abs(angDiff(tf.ang, tf.tgt));
+        if (d < 0.14 && s.wind < 0.05) return;
+        const a = tf.ang + s.wind * 0.5;
+        c.lineWidth = 0.03 * g.s;
+        c.globalAlpha = clamp(Math.max(d, s.wind * 0.6), 0, 1);
+        c.beginPath();
+        const x0 = g.cx + tf.x * g.s, y0 = g.cy + tf.y * g.s;
+        c.moveTo(x0, y0);
+        c.quadraticCurveTo(x0 + Math.cos(a) * tf.r * g.s, y0 + Math.sin(a) * tf.r * g.s,
+                           x0 + Math.cos(a + 0.5) * tf.r * 1.7 * g.s, y0 + Math.sin(a + 0.5) * tf.r * 1.7 * g.s);
+        c.stroke();
+      });
+      c.globalAlpha = 1;
+    }
+
+    // everything below is clipped to the silhouette so it never bleeds outside
+    c.save();
+    c.beginPath();
+    p.parts.forEach(q => {
+      if (q.k === 'e') c.ellipse(g.cx + q.x * g.s, g.cy + (q.y + breath) * g.s, q.rx * g.s * puff, q.ry * g.s * puff, 0, 0, 6.2832);
+      else c.ellipse(g.cx + q.x * g.s, g.cy + (q.y + breath) * g.s, q.r * g.s * puff, q.r * 0.92 * g.s * puff, 0, 0, 6.2832);
+    });
+    c.clip();
+
+    if (s.dirt) s.dirt.forEach(d => {
+      if (d.alive <= 0) return;
+      c.globalAlpha = 0.82 * d.alive;
+      c.fillStyle = p.dirt;
+      lumpy(c, g, d.x, d.y, d.r, d.lobes, d.a); c.fill();
+      c.globalAlpha = 0.55 * d.alive;
+      c.fillStyle = p.dirt2;
+      lumpy(c, g, d.x + d.r * 0.12, d.y + d.r * 0.14, d.r * 0.55, d.lobes, d.a + 1.1); c.fill();
+      // crumbs around the patch sell it as grime rather than paint
+      c.globalAlpha = 0.5 * d.alive;
+      for (let k = 0; k < 3; k++) {
+        const a = d.a + k * 2.1;
+        blob(c, g, d.x + Math.cos(a) * d.r * 1.25, d.y + Math.sin(a) * d.r * 1.0, d.r * 0.12, d.r * 0.09, a);
+      }
+      c.globalAlpha = 1;
+    });
+
+    if (s.wetness > 0.02) {
+      c.globalAlpha = 0.16 * s.wetness;
+      c.fillStyle = '#7ec8ef';
+      p.parts.forEach(q => {
+        if (q.k === 'e') blob(c, g, q.x, q.y, q.rx, q.ry, 0);
+        else blob(c, g, q.x, q.y, q.r, q.r * 0.92, 0);
+      });
+      c.globalAlpha = 1;
+    }
+    // Beads of water, not paint: mostly transparent, with a bright rim and a
+    // specular dot so the shape reads as a droplet sitting on the fur.
+    if (s.wet) s.wet.forEach(w => {
+      if (w.alive <= 0) return;
+      c.globalAlpha = 0.30 * w.alive;
+      c.fillStyle = '#6cc6ec';
+      lumpy(c, g, w.x, w.y, w.r, w.lobes, w.a); c.fill();
+      c.globalAlpha = 0.55 * w.alive;
+      c.strokeStyle = '#eafaff'; c.lineWidth = 0.012 * g.s;
+      lumpy(c, g, w.x, w.y, w.r * 0.92, w.lobes, w.a); c.stroke();
+      c.globalAlpha = 0.8 * w.alive;
+      c.fillStyle = '#ffffff';
+      blob(c, g, w.x - w.r * 0.30, w.y - w.r * 0.34, w.r * 0.22, w.r * 0.14, w.a);
+      c.globalAlpha = 1;
+    });
+    c.restore();
+
+    // knots sit above the fur so they read as targets
+    if (s.knots) s.knots.forEach((k, i) => {
+      if (!k.alive) {
+        if (k.pop > 0) {
+          c.globalAlpha = k.pop; c.strokeStyle = '#ffffff'; c.lineWidth = 0.03 * g.s;
+          c.beginPath(); c.arc(g.cx + k.x * g.s, g.cy + k.y * g.s, (1 - k.pop) * 0.3 * g.s, 0, 6.2832); c.stroke();
+          c.globalAlpha = 1;
+        }
+        return;
+      }
+      const w = flat ? 1 : 1 + Math.sin(t * 5 + i) * 0.06;
+      c.fillStyle = '#8d7c99';
+      blob(c, g, k.x, k.y, 0.105 * w, 0.095 * w, i);
+      c.strokeStyle = '#64556f'; c.lineWidth = 0.022 * g.s;
+      for (let a = 0; a < 3; a++) {
+        c.beginPath();
+        c.arc(g.cx + k.x * g.s, g.cy + k.y * g.s, (0.035 + a * 0.026) * g.s, i + a, i + a + 2.4);
+        c.stroke();
+      }
+    });
+
+    drawFace(c, p, s, g, t, flat);
+
+    if (s.shine > 0.02 && SPR.spark) {
+      [[-.34, -.52], [.36, -.46], [.12, .20]].forEach(([x, y], i) => {
+        const k = (0.12 + Math.sin(t * 3 + i * 2) * 0.03) * g.s;
+        c.globalAlpha = s.shine;
+        c.drawImage(SPR.spark, g.cx + x * g.s - k, g.cy + y * g.s - k, k * 2, k * 2);
+        c.globalAlpha = 1;
+      });
+    }
+    c.restore();
+  }
+
+  function drawFace(c, p, s, g, t, flat) {
+    const hp = p.parts[1];
+    const breath = flat ? 0 : Math.sin(t * 1.9) * 0.012;
+    const ey = hp.y + 0.06 + breath * 1.4, ex = 0.20;
+    const bliss = clamp(s.mood, 0, 1);
+    const open = flat ? 1 : clamp(1 - s.blink * 3, 0.05, 1) * (1 - bliss * 0.55);
+
+    [-1, 1].forEach(d => {
+      const x = g.cx + d * ex * g.s, y = g.cy + ey * g.s;
+      if (open < 0.16) {
+        c.strokeStyle = '#3a2b4f'; c.lineWidth = 0.028 * g.s; c.lineCap = 'round';
+        c.beginPath(); c.arc(x, y, 0.085 * g.s, 3.5, 5.9); c.stroke();
+        return;
+      }
+      c.fillStyle = '#fff';
+      c.beginPath(); c.ellipse(x, y, 0.10 * g.s, 0.11 * open * g.s, 0, 0, 6.2832); c.fill();
+      const eg = c.createRadialGradient(x - 0.02 * g.s, y - 0.03 * g.s, 0.005 * g.s, x, y, 0.08 * g.s);
+      eg.addColorStop(0, '#5b4a73'); eg.addColorStop(1, '#241a33');
+      c.fillStyle = eg;
+      c.beginPath(); c.ellipse(x, y + 0.008 * g.s, 0.066 * g.s, 0.075 * open * g.s, 0, 0, 6.2832); c.fill();
+      c.fillStyle = '#fff';
+      c.beginPath(); c.arc(x - 0.026 * g.s, y - 0.034 * g.s, 0.026 * g.s, 0, 6.2832); c.fill();
+      c.globalAlpha = 0.55;
+      c.beginPath(); c.arc(x + 0.028 * g.s, y + 0.030 * g.s, 0.013 * g.s, 0, 6.2832); c.fill();
+      c.globalAlpha = 1;
+    });
+
+    c.globalAlpha = 0.35 + bliss * 0.3;
+    c.fillStyle = p.skin;
+    [-1, 1].forEach(d => blob(c, g, d * 0.33, ey + 0.10, 0.075, 0.045, 0));
+    c.globalAlpha = 1;
+
+    const my = ey + 0.17;
+    c.fillStyle = '#3a2b4f';
+    blob(c, g, 0, my - 0.02, 0.030, 0.022, 0);
+    c.strokeStyle = '#3a2b4f'; c.lineWidth = 0.022 * g.s; c.lineCap = 'round';
+    const curve = lerp(-0.045, 0.055, (s.mood + 1) / 2);
+    c.beginPath();
+    c.moveTo(g.cx - 0.075 * g.s, g.cy + my * g.s);
+    c.quadraticCurveTo(g.cx, g.cy + (my + curve) * g.s, g.cx + 0.075 * g.s, g.cy + my * g.s);
+    c.stroke();
+  }
+
+  // ---------- Scene and effects ----------
+  function drawScene() {
+    const g = geom();
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#ffe8f2'); sky.addColorStop(.6, '#ffd7e7'); sky.addColorStop(1, '#f7c7de');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+
+    const fy = g.cy + g.s * 0.95;
+    ctx.fillStyle = '#f9e6f2'; ctx.fillRect(0, fy, W, H - fy);
+    ctx.strokeStyle = 'rgba(58,43,79,.06)'; ctx.lineWidth = 2;
+    for (let x = -H; x < W + H; x += g.s * 0.5) {
+      ctx.beginPath(); ctx.moveTo(x, fy); ctx.lineTo(x + (H - fy) * 0.4, H); ctx.stroke();
+    }
+    // background bubbles drifting up
+    if (SPR.bubble) for (let i = 0; i < 8; i++) {
+      const bx = (i * 131 + 40) % Math.max(W, 1);
+      const by = H - ((time * 26 + i * 150) % (H + 140));
+      const r = 9 + (i % 3) * 7;
+      img(SPR.bubble, bx, by, r * 2, r * 2, 0.4);
+    }
+    // tub
+    ctx.fillStyle = 'rgba(58,43,79,.07)';
+    ctx.beginPath(); ctx.ellipse(g.cx, g.cy + g.s * 0.92, g.s * 0.90, g.s * 0.24, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(g.cx, g.cy + g.s * 0.88, g.s * 0.86, g.s * 0.22, 0, 0, 6.2832); ctx.fill();
+    const tg = ctx.createLinearGradient(0, g.cy + g.s * 0.72, 0, g.cy + g.s * 1.0);
+    tg.addColorStop(0, '#d7f0fb'); tg.addColorStop(1, '#eaf8fe');
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.ellipse(g.cx, g.cy + g.s * 0.86, g.s * 0.74, g.s * 0.16, 0, 0, 6.2832); ctx.fill();
+    // contact shadow under the pet
+    if (SPR.shadow) img(SPR.shadow, g.cx, g.cy + g.s * 0.80, g.s * 1.5, g.s * 0.5, 0.75);
+  }
+
+  function drawFX() {
+    const g = geom();
+    // lather clings to the pet where it was scrubbed
+    if (SPR.bubble) lather.forEach(l => {
+      const a = clamp(l.a, 0, 1) * 0.95;
+      l.cl.forEach(([ox, oy, k]) => {
+        const r = l.r * k * g.s;
+        img(SPR.bubble, g.cx + (l.x + ox * l.r) * g.s, g.cy + (l.y + oy * l.r) * g.s, r * 2, r * 2, a);
+      });
+    });
+    // airborne foam from the sponge
+    if (SPR.bubble) foam.forEach(f => {
+      const k = clamp(1 - f.t / f.life, 0, 1);
+      const r = f.r * (1 + (1 - k) * 0.5) * g.s;
+      img(SPR.bubble, g.cx + f.x * g.s, g.cy + (f.y - (1 - k) * 0.12) * g.s, r * 2, r * 2, k * 0.95);
+    });
+    // droplets flung off by the dryer, stretched along their velocity
+    if (SPR.drop) drip.forEach(d => {
+      const k = clamp(1 - d.t / d.life, 0, 1);
+      const rot = Math.atan2(d.vy, d.vx) - Math.PI / 2;
+      const len = 0.075 * (1 + Math.hypot(d.vx, d.vy) * 0.5);
+      ctx.globalAlpha = k * 0.6;
+      ctx.strokeStyle = '#9ddcf5'; ctx.lineWidth = 0.012 * g.s; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(g.cx + d.x * g.s, g.cy + d.y * g.s);
+      ctx.lineTo(g.cx + (d.x - d.vx * 0.07) * g.s, g.cy + (d.y - d.vy * 0.07) * g.s);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      img(SPR.drop, g.cx + d.x * g.s, g.cy + d.y * g.s, len * 0.7 * g.s, len * g.s, k, rot);
+    });
+    if (SPR.spark) spark.forEach(s => {
+      const k = clamp(1 - s.t / s.life, 0, 1);
+      const r = 0.085 * k * g.s;
+      img(SPR.spark, g.cx + s.x * g.s, g.cy + s.y * g.s, r * 2, r * 2, k, s.rot + s.t * 2);
+    });
+  }
+
+  function drawTool() {
+    if (!ptr || screen !== 'play' || locked) return;
+    const g = geom();
+    const x = g.cx + ptr.x * g.s, y = g.cy + ptr.y * g.s;
+    ctx.save();
+    ctx.translate(x, y);
+    // The dryer aims at the pet, so the air always blows onto it instead of away.
+    if (tool === 'dryer') {
+      const d = Math.hypot(ptr.x, ptr.y);
+      ctx.rotate(d > 0.05 ? Math.atan2(-ptr.y, -ptr.x) + Math.PI : 0);
+    }
+    const ink = '#3a2b4f', lw = 0.022 * g.s;
+    if (tool === 'sponge') {
+      ctx.fillStyle = '#ffd86a'; ctx.strokeStyle = ink; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.roundRect(-0.14 * g.s, -0.10 * g.s, 0.28 * g.s, 0.20 * g.s, 0.06 * g.s);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.55)';
+      ctx.beginPath(); ctx.roundRect(-0.14 * g.s, -0.10 * g.s, 0.28 * g.s, 0.07 * g.s, 0.05 * g.s); ctx.fill();
+      ctx.fillStyle = 'rgba(58,43,79,.18)';
+      for (let i = 0; i < 5; i++) ctx.beginPath(), ctx.arc(rnd(-.1, .1) * g.s, rnd(-.02, .07) * g.s, 0.012 * g.s, 0, 6.2832), ctx.fill();
+    } else if (tool === 'dryer') {
+      // A big, visible air cone: the old one was a thin sliver, which is why
+      // the dryer felt like nothing was coming out.
+      const swirl = ctx.createLinearGradient(-0.95 * g.s, 0, -0.05 * g.s, 0);
+      swirl.addColorStop(0, 'rgba(255,255,255,0)');
+      swirl.addColorStop(.55, 'rgba(240,252,255,.42)');
+      swirl.addColorStop(1, 'rgba(255,255,255,.80)');
+      ctx.fillStyle = swirl;
+      ctx.beginPath();
+      ctx.moveTo(-0.05 * g.s, -0.09 * g.s);
+      ctx.quadraticCurveTo(-0.55 * g.s, -0.44 * g.s, -0.95 * g.s, -0.40 * g.s);
+      ctx.lineTo(-0.95 * g.s, 0.40 * g.s);
+      ctx.quadraticCurveTo(-0.55 * g.s, 0.44 * g.s, -0.05 * g.s, 0.11 * g.s);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const ph = (time * 2.2 + i * 0.25) % 1;
+        const px = -0.10 * g.s - ph * 0.80 * g.s, amp = (0.07 + ph * 0.30) * g.s;
+        ctx.globalAlpha = (1 - ph) * 0.85;
+        ctx.lineWidth = (0.020 - ph * 0.008) * g.s;
+        ctx.beginPath();
+        ctx.moveTo(px, -amp);
+        ctx.quadraticCurveTo(px - 0.14 * g.s, 0, px, amp);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#8fd4f5'; ctx.strokeStyle = ink; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.roundRect(-0.07 * g.s, -0.06 * g.s, 0.24 * g.s, 0.13 * g.s, 0.05 * g.s);
+      ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(0.05 * g.s, 0.05 * g.s, 0.07 * g.s, 0.13 * g.s, 0.03 * g.s);
+      ctx.fill(); ctx.stroke();
+    } else if (tool === 'brush' || tool === 'comb') {
+      ctx.fillStyle = tool === 'brush' ? '#ff9fc4' : '#b8e3ff'; ctx.strokeStyle = ink; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.roundRect(-0.13 * g.s, -0.07 * g.s, 0.26 * g.s, 0.13 * g.s, 0.05 * g.s);
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = ink; ctx.lineWidth = 0.013 * g.s;
+      for (let i = -4; i <= 4; i++) {
+        ctx.beginPath(); ctx.moveTo(i * 0.028 * g.s, 0.06 * g.s); ctx.lineTo(i * 0.028 * g.s, 0.15 * g.s); ctx.stroke();
+      }
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 0.02 * g.s;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(0, 0, (0.10 + Math.sin(time * 6) * 0.012) * g.s, 0, 6.2832); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    const g = geom();
+    if (g.s < 1) return;                 // a 0-sized window would spin the tile loop
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawScene();
+    drawPet(ctx, pet, st || menuState, g, time, false);
+    drawFX();
+    drawTool();
+  }
+
+  // A calm, clean pet idles on the menu so the first frame already sells the fantasy.
+  function makeMenuState() {
+    menuState = {
+      dirt: [], wetness: 0, wet: [], tufts: [], knots: [],
+      gills: (petById('axolotl').gills || []).map(a => ({ a, done: 1 })),
+      mood: 0.8, blink: 0, nextBlink: rnd(1.5, 4), shiver: 0, puff: 1, shine: 1, wind: 0, shake: 0,
+    };
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    time += dt;
+    const s = st || menuState;
+    if (s) {
+      s.nextBlink -= dt;
+      if (s.nextBlink <= 0) { s.blink = 0.16; s.nextBlink = rnd(2, 5); }
+      if (s.blink > 0) s.blink = Math.max(0, s.blink - dt);
+      s.shiver = Math.max(0, s.shiver - dt * 2.5);
+      s.shake = Math.max(0, s.shake - dt * 2);
+      if (st) {
+        const k = stageList[stageIdx] || '';
+        s.puff = lerp(s.puff, k === 'brush' || stageIdx >= stageList.length ? 1 : 0, dt * 2);
+        s.shine = lerp(s.shine, stageIdx >= stageList.length ? 1 : 0, dt * 1.5);
+        s.mood = lerp(s.mood, -0.8 + 1.6 * (stageIdx / stageList.length), dt * 1.2);
+        s.wind = lerp(s.wind, (ptr && tool === 'dryer' && k === 'dry') ? 1 : 0, dt * 6);
+        s.knots.forEach(n => { if (!n.alive && n.pop > 0) n.pop = Math.max(0, n.pop - dt * 2.5); });
+      }
+    }
+    foam.forEach(f => f.t += dt); foam = foam.filter(f => f.t < f.life);
+    spark.forEach(p => p.t += dt); spark = spark.filter(p => p.t < p.life);
+    drip.forEach(d => { d.t += dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vy += dt * 1.8; });
+    drip = drip.filter(d => d.t < d.life);
+    // lather builds while washing and rinses off once the stage is done
+    const washing = st && stageList[stageIdx] === 'wash';
+    lather.forEach(l => { l.a = clamp(l.a + (washing ? dt * 1.5 : -dt * 1.1), 0, 1); });
+    lather = lather.filter(l => l.a > 0.01);
+
+    if (screen !== 'play' || locked || !st) return;
+
+    // The finger does its work here, once per frame, so holding still still counts.
+    if (ptr) {
+      ptrSpeed = Math.hypot(pendDx, pendDy);
+      apply(dt, pendDx, pendDy);
+      pendDx = pendDy = 0;
+    } else ptrSpeed = 0;
+
+    const p = progress();
+    // Watchdog: never let a stubborn last speck trap the player. It needs real
+    // progress first, so standing still just to look around costs nothing.
+    if (p > lastProgress + 0.001) { lastProgress = p; stalled = 0; } else stalled += dt;
+    if (p >= 0.97 || (p >= 0.9 && stalled > 2.5) || (p >= 0.6 && stalled > 6)) advanceStage();
+    renderHud();
+  }
+
+  // ---------- Input ----------
+  function toLocal(e) {
+    const g = geom();
+    return { x: (e.clientX - g.cx) / g.s, y: (e.clientY - g.cy) / g.s };
+  }
+  function wantedTool() { return toolForStage(stageList[stageIdx]); }
+  function openHold() {
+    if (tool === 'dryer' && !holdTool) holdTool = loopNoise({ f: 1100, q: 0.7, peak: 0.10, send: 0.15 });
+  }
+  function onDown(e) {
+    unlockAudio();
+    if (screen !== 'play' || locked) return;
+    try { cv.setPointerCapture && cv.setPointerCapture(e.pointerId); } catch (err) {}
+    ptr = toLocal(e); ptrPrev = { ...ptr }; ptrSpeed = 0; pendDx = pendDy = 0;
+    if (tool !== wantedTool()) { refuse(); return; }
+    openHold();
+  }
+  // Movement only accumulates here; the work happens once per frame so that
+  // held tools (the dryer) keep working while the finger sits still.
+  function onMove(e) {
+    if (screen !== 'play' || locked || !ptr) return;
+    ptrPrev = ptr; ptr = toLocal(e);
+    pendDx += ptr.x - ptrPrev.x; pendDy += ptr.y - ptrPrev.y;
+  }
+  function onUp() { ptr = null; ptrSpeed = 0; pendDx = pendDy = 0; releaseHold(); }
+  function releaseHold() { if (holdTool) { holdTool.stop(); holdTool = null; } }
+
+  let refuseCd = 0;
+  function refuse() {
+    if (!st || refuseCd > time) return;
+    refuseCd = time + 1.2;
+    st.shake = 1; st.mood = Math.max(-1, st.mood - 0.25);
+    sfx.nope(); buzz(10); toast(T.wrong);
+  }
+
+  let scrubAcc = 0, brushAcc = 0;
+  function apply(dt, dx = 0, dy = 0) {
+    if (!st || !ptr) return;
+    const k = stageList[stageIdx];
+    if (tool !== toolForStage(k)) { refuse(); return; }
+    const R = 0.20;
+
+    if (k === 'knots') {
+      st.knots.forEach(n => {
+        if (!n.alive) return;
+        if (Math.hypot(n.x - ptr.x, n.y - ptr.y) < 0.16) {
+          n.alive = 0; n.pop = 1;
+          sfx.knot(st.knots.filter(x => !x.alive).length);
+          buzz(12); st.shiver = 0.4;
+          for (let j = 0; j < 6; j++)
+            foam.push({ x: n.x + rnd(-.08, .08), y: n.y + rnd(-.08, .08), r: rnd(.02, .05), t: 0, life: rnd(.3, .6) });
+        }
+      });
+      return;
+    }
+
+    if (k === 'gills') {
+      st.gills.forEach(gl => {
+        if (gl.done >= 1) return;
+        const side = gl.a < 0 ? -1 : 1, base = Math.abs(gl.a);
+        const ax = side * 0.42, ay = -0.46 + (base - 0.2) * 0.30;
+        if (Math.hypot(ax - ptr.x, ay - ptr.y) < 0.34 && ptrSpeed > 0.004) {
+          const was = gl.done;
+          gl.done = clamp(gl.done + ptrSpeed * 1.6, 0, 1);
+          if (Math.floor(was * 3) !== Math.floor(gl.done * 3)) { sfx.comb(); buzz(8); }
+        }
+      });
+      return;
+    }
+
+    if (k === 'wash') {
+      let hit = 0;
+      st.dirt.forEach(d => {
+        if (d.alive <= 0) return;
+        if (Math.hypot(d.x - ptr.x, d.y - ptr.y) < R) {
+          d.alive = Math.max(0, d.alive - (0.5 + ptrSpeed * 14) * dt * 3.2);
+          hit++;
+        }
+      });
+      scrubAcc += ptrSpeed;
+      if (scrubAcc > 0.09) { scrubAcc = 0; sfx.scrub(clamp(ptrSpeed * 20, 0, 1)); if (Math.random() < .5) sfx.bubble(); buzz(5); }
+      if (lather.length < 46 && insidePet(pet, ptr.x, ptr.y) && Math.random() < 0.5) {
+        const cl = [];
+        for (let j = 0; j < 4; j++) cl.push([rnd(-.6, .6), rnd(-.6, .6), rnd(.5, 1)]);
+        lather.push({ x: ptr.x, y: ptr.y, r: rnd(.07, .11), a: 0.1, cl });
+      }
+      if (hit && foam.length < 60) {
+        for (let j = 0; j < 2; j++)
+          foam.push({ x: ptr.x + rnd(-.1, .1), y: ptr.y + rnd(-.1, .1), r: rnd(.03, .07), t: 0, life: rnd(.5, 1.0) });
+      }
+      return;
+    }
+
+    if (k === 'dry') {
+      if (holdTool && holdTool.filter) {
+        try { holdTool.filter.frequency.value = 900 + Math.min(ptrSpeed * 6000, 900); } catch (e) {}
+      }
+      let any = 0;
+      st.wet.forEach(w => {
+        if (w.alive <= 0) return;
+        if (Math.hypot(w.x - ptr.x, w.y - ptr.y) < R * 1.15) { w.alive = Math.max(0, w.alive - dt * 2.4); any++; }
+      });
+      st.wetness = st.wet.length ? st.wet.reduce((a, w) => a + Math.max(w.alive, 0), 0) / st.wet.length : 0;
+      if (any && drip.length < 46 && Math.random() < 0.6) {
+        drip.push({ x: ptr.x, y: ptr.y, vx: rnd(0.4, 1.3), vy: rnd(-0.7, 0.1), t: 0, life: rnd(.5, .9) });
+      }
+      if (any) st.puff = clamp(st.puff + dt * 0.6, 0, 1);
+      return;
+    }
+
+    if (k === 'brush') {
+      const dragAng = Math.atan2(dy, dx);
+      let moved = 0;
+      st.tufts.forEach(tf => {
+        if (Math.hypot(tf.x - ptr.x, tf.y - ptr.y) > R) return;
+        const d = angDiff(tf.ang, tf.tgt);
+        if (Math.abs(d) < 0.05) return;
+        // brushing roughly along the tuft's target direction settles it faster
+        const align = 1 - Math.min(Math.abs(angDiff(dragAng, tf.tgt)) / 3.14159, 1) * 0.5;
+        tf.ang -= d * clamp(ptrSpeed * 9 * align, 0, 0.45);
+        moved++;
+      });
+      brushAcc += ptrSpeed;
+      if (brushAcc > 0.11) { brushAcc = 0; sfx.brush(); buzz(4); if (Math.random() < .25) sfx.purr(); }
+      if (moved) st.mood = Math.min(1, st.mood + dt * 0.4);
+      return;
+    }
+  }
+
+  // ---------- Screens ----------
+  function show(name) {
+    screen = name;
+    $('menu').classList.toggle('hidden', name !== 'menu');
+    $('hud').classList.toggle('hidden', name !== 'play');
+    $('rack').classList.toggle('hidden', name !== 'play');
+    $('result').classList.toggle('hidden', name !== 'result');
+  }
+  function flashStage(txt) {
+    const el = $('stageDone');
+    el.textContent = txt;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  function renderHud() {
+    if (screen !== 'play') return;
+    const k = stageList[stageIdx] || 'brush';
+    $('hudFill').style.width = (clamp(progress(), 0, 1) * 100).toFixed(1) + '%';
+    $('hudTask').textContent = T[k] || '';
+    $('hudStep').textContent = T.step + ' ' + Math.min(stageIdx + 1, stageList.length) + ' ' + T.of + ' ' + stageList.length;
+  }
+  // Tool icons are drawn with code, like everything else.
+  function drawToolIcon(c, id) {
+    const n = c.canvas.width, u = n / 100;
+    c.clearRect(0, 0, n, n);
+    c.lineJoin = 'round'; c.lineCap = 'round';
+    c.strokeStyle = '#3a2b4f'; c.lineWidth = 5 * u;
+    if (id === 'hand') {
+      // pinching fingers: thumb below, two fingers above, with a knot between them
+      c.fillStyle = '#ffd3bf';
+      c.beginPath(); c.roundRect(30 * u, 46 * u, 44 * u, 34 * u, 14 * u); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(36 * u, 22 * u, 13 * u, 32 * u, 6 * u); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(53 * u, 28 * u, 13 * u, 28 * u, 6 * u); c.fill(); c.stroke();
+      c.fillStyle = '#8d7c99';
+      c.beginPath(); c.arc(24 * u, 32 * u, 13 * u, 0, 6.2832); c.fill(); c.stroke();
+    } else if (id === 'comb') {
+      c.fillStyle = '#b8e3ff';
+      c.beginPath(); c.roundRect(18 * u, 24 * u, 64 * u, 20 * u, 8 * u); c.fill(); c.stroke();
+      for (let i = 0; i < 6; i++) {
+        c.beginPath(); c.moveTo((24 + i * 11) * u, 46 * u); c.lineTo((24 + i * 11) * u, 76 * u); c.stroke();
+      }
+    } else if (id === 'sponge') {
+      c.fillStyle = '#ffd86a';
+      c.beginPath(); c.roundRect(16 * u, 30 * u, 68 * u, 44 * u, 14 * u); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.65)';
+      c.beginPath(); c.roundRect(16 * u, 30 * u, 68 * u, 16 * u, 12 * u); c.fill();
+      c.fillStyle = 'rgba(58,43,79,.22)';
+      [[34, 58], [52, 52], [66, 62]].forEach(([x, y]) => { c.beginPath(); c.arc(x * u, y * u, 4 * u, 0, 6.2832); c.fill(); });
+    } else if (id === 'dryer') {
+      c.fillStyle = '#8fd4f5';
+      c.beginPath(); c.roundRect(28 * u, 24 * u, 54 * u, 30 * u, 12 * u); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(44 * u, 52 * u, 18 * u, 28 * u, 7 * u); c.fill(); c.stroke();
+      c.strokeStyle = '#3a2b4f'; c.lineWidth = 4 * u;
+      [34, 44].forEach((r, i) => { c.beginPath(); c.arc(26 * u, 39 * u, r * u, 2.4, 3.9); c.stroke(); });
+    } else {
+      c.fillStyle = '#ff9fc4';
+      c.beginPath(); c.roundRect(18 * u, 22 * u, 64 * u, 24 * u, 10 * u); c.fill(); c.stroke();
+      c.lineWidth = 4 * u;
+      for (let i = 0; i < 7; i++) {
+        c.beginPath(); c.moveTo((23 + i * 9.5) * u, 48 * u); c.lineTo((23 + i * 9.5) * u, 74 * u); c.stroke();
+      }
+    }
+  }
+  function renderRack() {
+    const box = $('rack');
+    const want = stageList.length ? wantedTool() : 'hand';
+    box.innerHTML = '';
+    TOOLS.forEach(tl => {
+      const b = document.createElement('button');
+      b.className = 'tool' + (tool === tl.id ? ' on' : '') + (want === tl.id ? ' want' : '');
+      b.title = T[tl.label] || tl.id;
+      b.setAttribute('aria-label', b.title);
+      const c = document.createElement('canvas');
+      c.width = c.height = 120;
+      b.appendChild(c);
+      box.appendChild(b);
+      drawToolIcon(c.getContext('2d'), tl.id);
+      b.onclick = () => {
+        unlockAudio();
+        tool = tl.id; releaseHold(); sfx.ui();
+        if (tool !== wantedTool()) refuse();
+        renderRack();
+      };
+    });
+  }
+  function renderMenu() {
+    $('mCoins').textContent = save.coins;
+    $('mTag').textContent = T.tag;
+    $('playBtn').textContent = T.play;
+    const box = $('pets');
+    box.innerHTML = '';
+    PETS.forEach(p => {
+      const owned = save.owned.pets.includes(p.id);
+      const b = document.createElement('button');
+      b.className = 'petBtn' + (save.eq.pets === p.id ? ' on' : '')
+                  + (!owned && save.coins < p.cost ? ' poor' : '');
+      const cvs = document.createElement('canvas');
+      cvs.width = 136; cvs.height = 120;
+      b.appendChild(cvs);
+      const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = owned ? p.name : T.locked;
+      b.appendChild(nm);
+      if (!owned) {
+        const px = document.createElement('div'); px.className = 'px';
+        px.innerHTML = '<span class="coin"></span>' + p.cost;
+        b.appendChild(px);
+      }
+      box.appendChild(b);
+      const c = cvs.getContext('2d');
+      const demo = {
+        dirt: [], wetness: 0, wet: [], tufts: [], knots: [],
+        gills: (p.gills || []).map(a => ({ a, done: 1 })),
+        mood: 0.7, blink: 0, nextBlink: 9, shiver: 0, puff: 1, shine: owned ? 0.8 : 0, wind: 0, shake: 0,
+      };
+      if (!owned) c.globalAlpha = 0.45;
+      drawPet(c, p, demo, { cx: cvs.width / 2, cy: cvs.height * 0.58, s: cvs.width * 0.30 }, 0, true);
+      c.globalAlpha = 1;
+
+      b.onclick = () => {
+        unlockAudio();
+        if (owned) { save.eq.pets = p.id; pet = p; persist(); sfx.ui(); renderMenu(); return; }
+        if (save.coins < p.cost) { toast(T.need); sfx.ui(); return; }
+        save.coins -= p.cost; save.owned.pets.push(p.id); save.eq.pets = p.id; pet = p;
+        persist(); sfx.buy(); toast(T.bought); renderMenu();
+      };
+    });
+  }
+
+  function startSession() {
+    unlockAudio();
+    pet = petById(save.eq.pets);
+    newSession();
+    show('play');
+    renderRack(); renderHud();
+    send('level_started');
+    sfx.ui();
+  }
+  function toMenu() {
+    pet = petById(save.eq.pets);
+    st = null; releaseHold();
+    show('menu'); renderMenu();
+  }
+
+  // ---------- Loop ----------
+  function frame(t) {
+    const dt = Math.min((t - lastT) / 1000, 0.05);
+    lastT = t;
+    if (!paused) { update(dt); render(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Boot ----------
+  async function boot() {
+    resize();
+    buildSprites();
+    makeMenuState();
+    window.addEventListener('resize', resize);
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); onDown(e); });
+    cv.addEventListener('pointermove', e => { e.preventDefault(); onMove(e); });
+    cv.addEventListener('pointerup', onUp);
+    cv.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onUp);
+
+    try {
+      if (window.bridge) { await bridge.initialize(); B = bridge; }
+    } catch (e) { B = null; }
+    if (B) {
+      const lang = String(B.platform.language || 'en').slice(0, 2).toLowerCase();
+      T = STRINGS[lang] || STRINGS.en;
+      B.platform.on(B.EVENT_NAME.PAUSE_STATE_CHANGED, isPaused => { paused = isPaused; if (paused) onUp(); syncAudio(); });
+      B.platform.on(B.EVENT_NAME.AUDIO_STATE_CHANGED, isEnabled => { audioOn = isEnabled; syncAudio(); });
+      await load();
+    }
+
+    if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
+    pet = petById(save.eq.pets);
+    $('playBtn').onclick = startSession;
+    $('contBtn').onclick = startSession;
+    $('menuBtn').onclick = toMenu;
+    $('contBtn').textContent = T.next;
+    $('menuBtn').textContent = T.back;
+
+    toMenu();
+    requestAnimationFrame(t => {
+      lastT = t; render();
+      send('game_ready');
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // @test-hook
+
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -81,27 +81,25 @@
   .unlock { background: var(--accent); border-radius: 12px; padding: 8px 14px; font-weight: 800; }
   .cont { background: var(--green); color: #fff; font-weight: 900; font-size: 20px; padding: 14px 40px; border-radius: 16px; box-shadow: 0 5px 0 #22924c; }
 
-  /* Touch controls: analog stick (left), pedals + punch (right) */
+  /* Touch controls like Hill Climb Racing: BRAKE pedal bottom-left, GAS pedal bottom-right, punch above gas.
+     In the air the pedals tilt the vehicle (HCR style); tapping anywhere else on the screen punches. */
   #ctl { position: fixed; inset: 0; pointer-events: none; }
-  #stick { position: absolute; left: max(16px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 128px; height: 128px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,.10) 40%, rgba(255,255,255,.22) 70%); border: 3px solid rgba(255,255,255,.45); pointer-events: auto; touch-action: none; }
-  #stick .ar { position: absolute; color: rgba(255,255,255,.75); font-weight: 900; font-size: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
-  #knob { position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff, #e8e2d2 55%, #b8ab8e); box-shadow: 0 4px 10px rgba(0,0,0,.35); border: 3px solid #5a4630; }
-  #stickLbl { position: absolute; left: 0; right: 0; bottom: -18px; text-align: center; color: #fff; font-weight: 900; font-size: 11px; opacity: .8; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
   .pedal { position: absolute; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; color: #fff; font-weight: 900; font-size: 13px; letter-spacing: .5px;
     border-radius: 16px; pointer-events: auto; touch-action: none; text-shadow: 0 1px 2px rgba(0,0,0,.4);
     background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 6px, transparent 6px 14px); }
-  .pedal.on { transform: translateY(4px) scale(.97); filter: brightness(1.15); }
-  #gas { right: max(14px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); width: 88px; height: 132px; background-color: #34b862; box-shadow: 0 6px 0 #1f7a3e, 0 8px 16px rgba(0,0,0,.3); }
-  #brake { right: calc(max(14px, env(safe-area-inset-right)) + 100px); bottom: max(22px, env(safe-area-inset-bottom)); width: 74px; height: 96px; background-color: #d9433f; box-shadow: 0 6px 0 #8f2522, 0 8px 16px rgba(0,0,0,.3); }
-  #punch { position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: calc(max(22px, env(safe-area-inset-bottom)) + 150px); width: 80px; height: 80px; border-radius: 50%;
+  .pedal { transition: transform .06s, filter .06s; }
+  .pedal.on { transform: translateY(5px) scale(.95); filter: brightness(1.25) drop-shadow(0 0 12px rgba(255,255,255,.55)); }
+  #gas { right: max(14px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom)); width: 104px; height: 150px; background-color: #34b862; box-shadow: 0 6px 0 #1f7a3e, 0 8px 16px rgba(0,0,0,.3); }
+  #brake { left: max(14px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 96px; height: 130px; background-color: #d9433f; box-shadow: 0 6px 0 #8f2522, 0 8px 16px rgba(0,0,0,.3); }
+  #punch { position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: calc(max(22px, env(safe-area-inset-bottom)) + 172px); width: 88px; height: 88px; border-radius: 50%;
     pointer-events: auto; touch-action: none; font-size: 34px; display: flex; align-items: center; justify-content: center; border: 4px solid #fff;
     box-shadow: 0 5px 0 #8a3515, 0 8px 16px rgba(0,0,0,.35); background: conic-gradient(#ff8a2b var(--p, 360deg), #6b5a4a 0); }
-  #punch.on { transform: scale(.92); }
+  #punch.on { transform: scale(.9); }
+  #punch.ready { animation: ready .55s ease-in-out infinite; }
+  @keyframes ready { 50% { transform: scale(1.1); box-shadow: 0 5px 0 #8a3515, 0 0 0 10px rgba(255,138,43,.4); } }
   #punch .pl { position: absolute; bottom: -18px; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-  /* PC: keyboard like Hill Climb Racing, so the touch stick and pedals hide and a key legend shows */
-  body.pc #stick, body.pc #gas, body.pc #brake { display: none; }
+  /* PC: keyboard like Hill Climb Racing, so the pedals hide and a key legend shows */
+  body.pc #gas, body.pc #brake { display: none; }
   #keys { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: none; gap: 8px; color: #fff; font-weight: 800; font-size: 13px; }
   body.pc #keys { display: flex; }
   .key { background: rgba(15,20,40,.72); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
@@ -125,9 +123,6 @@
 <canvas id="c"></canvas>
 
 <div id="ctl" class="hidden">
-  <div id="stick"><span class="ar" style="left:10px;top:50%;margin-top:-11px">⟲</span><span class="ar" style="right:10px;top:50%;margin-top:-11px">⟳</span>
-    <span class="ar" style="left:50%;top:6px;margin-left:-6px">▲</span><span class="ar" style="left:50%;bottom:6px;margin-left:-6px">▼</span>
-    <div id="knob"></div><div id="stickLbl"></div></div>
   <div id="brake" class="pedal"></div>
   <div id="gas" class="pedal"></div>
   <div id="punch" class="hidden">👊<span class="pl" id="punchLbl"></span></div>
@@ -178,7 +173,7 @@
           finding: 'Finding pirates...', you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: 'PUNCH', crash: 'CRASH!', outMeat: 'OUT OF MEAT!',
           backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'ISLAND CLEARED!', bossIn2: 'THE ADMIRAL ATTACKS!',
           won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
-          passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tilt with the stick',
+          passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tap the screen to punch!',
           ctlHintPc: 'Hold D to drive · W / S to tilt', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distance', flipsL: 'Flips', foesHint: 'PUNCH THEM OR RUN THEM OVER!',
           speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Meat', richer: 'richer coins',
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
@@ -189,7 +184,7 @@
           finding: 'Buscando piratas...', you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: 'GOLPE', crash: '¡CHOQUE!', outMeat: '¡SIN CARNE!',
           backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ISLA SUPERADA!', bossIn2: '¡ATACA EL ALMIRANTE!',
           won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
-          passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · inclina con la palanca',
+          passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · ¡toca la pantalla para golpear!',
           ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL', kos: 'KOs', dist: 'Distancia', flipsL: 'Mortales', foesHint: '¡GOLPÉALOS O ATROPÉLLALOS!',
           speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Carne', richer: 'monedas más valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
@@ -200,7 +195,7 @@
           finding: 'Procurando piratas...', you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: 'SOCO', crash: 'BATEU!', outMeat: 'SEM CARNE!',
           backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'ILHA CONCLUÍDA!', bossIn2: 'O ALMIRANTE ATACA!',
           won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
-          passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · incline com a alavanca',
+          passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · toque na tela para socar!',
           ctlHintPc: 'Segure D para andar · W / S para inclinar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distância', flipsL: 'Mortais', foesHint: 'SOQUE OU ATROPELE!',
           speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Carne', richer: 'moedas mais valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
@@ -414,14 +409,12 @@
   let me = null, foes = [], shots = [], ship = null, feed = [], popups = [], parts = [], pickups = [], balls = [];
   let introT = 0, winT = 0, shake = 0, time = 0, lastT = 0, paused = false, audioOn = true, elapsed = 0, nextFoeX = 2, kos = 0, combo = 0, comboT = 0;
   let camX = 0, camY = 0, camK = 0.38, ppm = 30, demo = null;
-  const input = { gas: false, brake: false, joyX: 0, joyY: 0, kGas: false, kBrake: false, kBack: false, kFwd: false };
+  const input = { gas: false, brake: false, kGas: false, kBrake: false, kBack: false, kFwd: false };
 
   function readInput() {
-    const stickGas = clamp((-input.joyY - 0.3) / 0.6, 0, 1);
-    const gas = Math.max(input.gas || input.kGas ? 1 : 0, stickGas);
-    const brake = !gas && (input.brake || input.kBrake || input.joyY > 0.55);
-    const jx = Math.abs(input.joyX) < 0.12 ? 0 : input.joyX;
-    const lean = clamp(-jx + (input.kBack ? 1 : 0) - (input.kFwd ? 1 : 0), -1, 1);
+    const gas = input.gas || input.kGas ? 1 : 0;
+    const brake = !gas && (input.brake || input.kBrake);
+    const lean = clamp((input.kBack ? 1 : 0) - (input.kFwd ? 1 : 0), -1, 1);
     return { gas, brake, lean, autoTilt: !isPc };
   }
 
@@ -470,10 +463,12 @@
     const f = { type, x, y: hAt(x), hp: FOES[type].hp, t: rnd(0, 6), fireT: rnd(0.8, 2), dead: false, vx: 0, vy: 0, spin: 0, a: 0, flash: 0, bumpT: 0 };
     if (type === 'gull') f.y = hAt(x) + rnd(5, 6.5);
     foes.push(f);
+    if ((type === 'grunt' || type === 'brute') && Math.random() < 0.3) foes.push({ ...f, x: f.x + 2.4, y: hAt(f.x + 2.4), t: rnd(0, 6), fireT: rnd(1, 2.5) }); // they come in pairs sometimes
   }
   function koFoe(f, power) {
     f.dead = true; f.deadT = f.t; f.vx = power; f.vy = rnd(6, 10); f.spin = rnd(-12, -6);
-    kos++; combo = comboT > 0 ? combo + 1 : 1; comboT = 2.2;
+    kos++; combo = comboT > 0 ? combo + 1 : 1; comboT = 2.2; comboPop = 1;
+    hitStop = Math.max(hitStop, combo > 2 ? 0.07 : 0.045); zoomKick = Math.max(zoomKick, 0.05 + Math.min(combo, 5) * 0.01);
     const v = FOES[f.type].coins * Math.min(combo, 3);
     me.coins += v;
     popup(combo > 1 ? `KO x${combo} +${fmt(v)}` : `KO! +${v}`, '#ffd23f');
@@ -506,7 +501,7 @@
       const dx = f.x - c.x, def = FOES[f.type];
       if (!me.hintShown && dx < 14) { me.hintShown = true; popup('👊 ' + T.foesHint, '#ff8a2b'); }
       if (f.type === 'grunt' || f.type === 'brute') { f.x -= (f.type === 'grunt' ? 1.3 : 0.8) * dt; f.y = hAt(f.x); }
-      else if (f.type === 'gull') { f.x -= 3 * dt; f.y += (hAt(f.x) + 5.5 + Math.sin(f.t * 2) * 0.6 - f.y) * Math.min(1, dt * 2); }
+      else if (f.type === 'gull') { f.x -= 3 * dt; const dive = dx > -2 && dx < 9 ? 2.6 : 5.5; f.y += (hAt(f.x) + dive + Math.sin(f.t * 2) * 0.6 - f.y) * Math.min(1, dt * (dive < 5 ? 3.5 : 2)); } // dives at you
       if (f.type === 'grunt' && dx > 5 && dx < 20 && (f.fireT -= dt) <= 0) { // rifle shot aimed at you
         f.fireT = rnd(2.2, 3.6);
         const sx = f.x - 0.8, sy = f.y + 1.1, ex = c.x - sx, ey = c.y + 0.3 - sy, d = Math.hypot(ex, ey) || 1;
@@ -567,7 +562,7 @@
     me.meat = Math.max(0, me.meat - 10);
     popup(T.crash, '#ff5d73');
     shake = 12; sfx.crash(); buzz([30, 40, 30]);
-    ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.1, true); puff('dust', me.car.x, me.car.y, 8, { r: 0.8, spd: 3 });
+    ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.1, true); zoomKick = Math.max(zoomKick, 0.05); hitStop = 0.06; puff('dust', me.car.x, me.car.y, 8, { r: 0.8, spd: 3 });
     for (let i = 0; i < 14; i++) parts.push({ x: me.car.x, y: me.car.y + 1, vx: rnd(-4, 4), vy: rnd(2, 8), t: 0, life: rnd(0.5, 1), c: i % 2 ? '#ffd23f' : '#fff', r: rnd(0.08, 0.16) });
   }
   function respawn() {
@@ -599,6 +594,12 @@
     if (me.noProgT > 12 && me.crashT <= 0) { placeCar(c, me.progX + 10); me.progX = c.x; me.noProgT = 0; me.mercy = Math.min(3, me.mercy + 1); }
     const prevAir = c.air;
     for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, inp, st);
+    me.squash = (me.squash || 0) * Math.exp(-dt * 8);
+    if (prevAir > 0.35 && c.air === 0 && me.crashT <= 0) { // landing: squash, camera dip, dust and a buzz scaled by the fall
+      me.squash = Math.min(0.3, prevAir * 0.16); camDip = Math.min(0.6, prevAir * 0.3);
+      puff('dust', c.x, hAt(c.x) + 0.1, Math.min(10, 3 + Math.round(prevAir * 4)), { r: 0.7, spd: 3 }); buzz(Math.min(45, 10 + Math.round(prevAir * 20)));
+    }
+    if (c.ground && inp.gas && Math.abs(c.vx) > 3 && Math.random() < 0.3) puff('dust', c.x - AX * Math.cos(c.a), hAt(c.x - AX) + 0.15, 1, { r: 0.45, spd: 1, vx: -2.5, life: 0.6 });
     if (me.crashT <= 0) {
       me.meat = Math.max(0, me.meat - dt * (0.3 + inp.gas * 0.75));
       if (empty && !me.outShown) { me.outShown = true; popup('🍖 ' + T.outMeat, '#ff8a2b'); }
@@ -673,7 +674,7 @@
   function doPunch() {
     if ((phase !== 'play' && phase !== 'boss') || !me || me.punchCD > 0 || me.punchT >= 0 || me.crashT > 0) return;
     me.punchTgt = punchTarget();
-    me.punchT = 0; me.punchCD = PUNCH_CD; sfx.whoosh();
+    me.punchT = 0; me.punchCD = PUNCH_CD; sfx.whoosh(); buzz(8);
   }
   function hitShip(dmg, big) {
     if (!ship || ship.hp <= 0) return;
@@ -684,6 +685,7 @@
     puff('star', sx, sy, big ? 6 : 3, { spd: 6, r: 0.5 });
     ono(big ? 'hit' : 'ko', sx + 1, sy + 1.5, big ? '#ff8a2b' : '#ffd23f', big ? 1.4 : 1, big);
     if (big) impact(sx, sy, 0.1);
+    hitStop = Math.max(hitStop, big ? 0.09 : 0.03); zoomKick = Math.max(zoomKick, big ? 0.08 : 0.03);
     if (ship.hp <= 0) shipDefeated();
   }
   function updateShip(dt) {
@@ -727,6 +729,7 @@
     phase = 'win'; winT = 2.6;
     puff('fire', ship.x, ship.y + 2.5, 22, { spd: 8, spread: 4, r: 1, life: 1 }); puff('smoke', ship.x, ship.y + 3, 24, { spd: 5, spread: 4, r: 1.5, life: 1.4 }); puff('star', ship.x + 3, ship.y + 5, 8, { spd: 9, r: 0.6 });
     ono('hit', ship.x + 3, ship.y + 7, '#ffc531', 1.7, true); impact(ship.x + 2, ship.y + 4, 0.15);
+    hitStop = 0.22; zoomKick = 0.14;
     shake = 18; sfx.bossDown(); buzz([20, 30, 20, 30, 60]);
     send('level_completed');
   }
@@ -741,7 +744,9 @@
     const base = Math.max(22, Math.min(W / 10.5, H / 15));
     const sp = Math.hypot(c.vx, c.vy);
     const target = base * (1 - Math.min(0.18, sp * 0.008)) * (bossCam ? 0.62 : 1);
-    ppm += (target - ppm) * Math.min(1, dt * 2);
+    ppm += (target * (1 + zoomKick) - ppm) * Math.min(1, dt * (zoomKick > 0.01 ? 12 : 2));
+    zoomKick *= Math.exp(-dt * 5);
+    camDip *= Math.exp(-dt * 9);
     camK += ((bossCam ? 0.7 : 0.36) - camK) * Math.min(1, dt * 2);
     camX += (c.x + clamp(c.vx * 0.25, -2, 4) - camX) * Math.min(1, dt * 6);
     camY += (c.y + 1 - camY) * Math.min(1, dt * 4);
@@ -777,7 +782,7 @@
     popups = popups.filter(p => p.t < 1.2);
     for (const f of feed) f.t += dt;
     feed = feed.filter(f => f.t < 4);
-    impactT -= dt; focusT -= dt;
+    impactT -= dt; focusT -= dt; comboPop = Math.max(0, comboPop - dt * 5);
     for (const o of fxt) o.t += dt;
     fxt = fxt.filter(o => o.t < 0.9);
     for (const p of parts) { if (p.kind === 'smoke' || p.kind === 'fire') { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 1 - 2 * dt; p.vy += 2.5 * dt; continue; } if (p.kind === 'star' || p.kind === 'dust') { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= (p.kind === 'dust' ? 3 : 10) * dt; continue; } p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy -= 14 * dt; }
@@ -823,6 +828,7 @@
     if (parts.length > 280) parts.splice(0, parts.length - 280);
   }
   let fxt = [], impactT = 0, impactAt = null, impactSeed = 0, focusT = 0;
+  let hitStop = 0, zoomKick = 0, camDip = 0, comboPop = 0; // game feel: freeze frames, camera punch-ins, landing dip
   const ONO = { ko: ['BAM!', 'POW!', 'WHAM!', 'BONK!'], boom: ['BOOM!', 'KABOOM!'], crash: ['CRASH!', 'CLONK!'], flip: ['WHOOSH!', 'WOOO!'], hit: ['DOOON!', 'KA-POW!'], ouch: ['OUCH!', 'OOF!'], splash: ['SPLASH!'] };
   function ono(kind, x, y, col, size, burst) {
     const list = ONO[kind];
@@ -1227,6 +1233,7 @@
   function drawWorldCar(x, y, a, carId, hatId, wr, alpha, o) {
     ctx.save(); ctx.globalAlpha = alpha;
     ctx.translate(sxOf(x), syOf(y)); ctx.scale(ppm, -ppm); ctx.rotate(a);
+    if (o && o.squash) { ctx.translate(0, -0.95); ctx.scale(1 + o.squash * 0.5, 1 - o.squash); ctx.translate(0, 0.95); } // squash on landing
     drawCar(ctx, carId, hatId, wr, o);
     ctx.restore();
   }
@@ -1414,7 +1421,7 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     drawBackground();
     const sx = shake ? rnd(-shake, shake) : 0, sy = shake ? rnd(-shake, shake) : 0;
-    ctx.save(); ctx.translate(sx, sy);
+    ctx.save(); ctx.translate(sx, sy + camDip * ppm);
     drawTerrain();
     if (me) {
       drawPickups();
@@ -1439,7 +1446,7 @@
           for (let i = 0; i < 4; i++) { const a = time * 3 + i * Math.PI / 2; ctx.beginPath(); ctx.arc(rx, ry, r, a, a + 1.0); ctx.stroke(); }
         }
       }
-      const o = { mood: me.crashT > 0 ? 'dizzy' : me.punchT >= 0 ? 'shout' : c.air > 0.35 ? 'wow' : 'grin' };
+      const o = { mood: me.crashT > 0 ? 'dizzy' : me.punchT >= 0 ? 'shout' : c.air > 0.35 ? 'wow' : 'grin', squash: me.squash };
       if (me.punchT >= 0) {
         const q = punchPoint(me.punchTgt);
         o.punchA = Math.atan2(q.y - (c.y + 0.6), q.x - c.x) - c.a;
@@ -1501,6 +1508,18 @@
     ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(W - 12 - cw, y, cw, 30 * sc, 15 * sc); ctx.fill();
     ctx.fillStyle = '#ffc531'; ctx.beginPath(); ctx.arc(W - 12 - cw + 16 * sc, y + 15 * sc, 9 * sc, 0, 7); ctx.fill();
     txt(ct, W - 22, y + 16 * sc, 15 * sc, '#fff', 'right');
+    if (combo > 1 && comboT > 0 && (phase === 'play' || phase === 'boss')) { // pulsing combo meter that drains
+      const cx = W - 16, cy = y + 38 * sc, pop = 1 + comboPop * 0.5, ctext = `x${combo}`;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.08); ctx.scale(pop, pop);
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
+      ctx.font = `${34 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 7 * sc; ctx.strokeStyle = '#1b1530';
+      ctx.strokeText(ctext, 0, 0); ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; ctx.fillText(ctext, 0, 0);
+      ctx.font = `${13 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 4 * sc;
+      ctx.strokeText('COMBO', 0, 36 * sc); ctx.fillStyle = '#fff'; ctx.fillText('COMBO', 0, 36 * sc);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(15,20,40,.6)'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc, 7 * sc, 4); ctx.fill();
+      ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc * clamp(comboT / 2.2, 0, 1), 7 * sc, 4); ctx.fill();
+    }
     // meat gauge
     const my = y + 40 * sc, st = carStats(), k = me.meat / st.tank;
     ctx.font = `${16 * sc}px system-ui`; ctx.textAlign = 'left'; ctx.fillText('🍖', 12, my + 8 * sc);
@@ -1534,8 +1553,9 @@
   }
 
   function frame(t) {
-    const dt = Math.min((t - lastT) / 1000 || 0, 0.05);
+    let dt = Math.min((t - lastT) / 1000 || 0, 0.05);
     lastT = t;
+    if (hitStop > 0) { hitStop -= dt; dt *= 0.06; } // freeze frame on big hits
     if (!paused) update(dt);
     render();
     engineSound();
@@ -1554,8 +1574,7 @@
       const p = Math.round(360 * (1 - clamp(me.punchCD / PUNCH_CD, 0, 1)));
       if (p !== lastPunchP) { lastPunchP = p; $('punch').style.setProperty('--p', p + 'deg'); }
     }
-    const ks = $('knob').style;
-    ks.transform = `translate(${input.joyX * 36}px, ${input.joyY * 36}px)`;
+    $('punch').classList.toggle('ready', !!(showPunch && me.punchCD <= 0 && me.punchT < 0 && punchTarget()));
     $('gas').classList.toggle('on', input.gas || input.kGas);
     $('brake').classList.toggle('on', input.brake || input.kBrake);
   }
@@ -1565,21 +1584,7 @@
     el.addEventListener('pointerdown', down);
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
   }
-  function setupStick() {
-    const el = $('stick');
-    let id = null;
-    const move = (e) => {
-      const r = el.getBoundingClientRect(), R = r.width / 2;
-      let dx = (e.clientX - (r.left + R)) / (R * 0.75), dy = (e.clientY - (r.top + R)) / (R * 0.75);
-      const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; }
-      input.joyX = dx; input.joyY = dy;
-    };
-    const end = (e) => { if (e.pointerId !== id) return; id = null; input.joyX = 0; input.joyY = 0; };
-    el.addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); id = e.pointerId; try { el.setPointerCapture(id); } catch (_) {} move(e); });
-    el.addEventListener('pointermove', (e) => { if (e.pointerId === id) move(e); });
-    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end); el.addEventListener('lostpointercapture', end);
-  }
-  function releaseAll() { input.gas = input.brake = input.kGas = input.kBrake = input.kBack = input.kFwd = false; input.joyX = input.joyY = 0; }
+  function releaseAll() { input.gas = input.brake = input.kGas = input.kBrake = input.kBack = input.kFwd = false; }
 
   // ---------- Screens ----------
   const screens = ['menu', 'shop', 'result'];
@@ -1834,14 +1839,13 @@
     holdButton($('brake'), 'brake');
     $('punch').addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); $('punch').classList.add('on'); doPunch(); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('punch').addEventListener(ev, () => $('punch').classList.remove('on'));
-    setupStick();
     const KEYS = { ArrowRight: 'kGas', KeyD: 'kGas', ArrowLeft: 'kBrake', KeyA: 'kBrake', ArrowUp: 'kBack', KeyW: 'kBack', ArrowDown: 'kFwd', KeyS: 'kFwd' };
     window.addEventListener('keydown', e => {
       if (KEYS[e.code]) { e.preventDefault(); unlockAudio(); input[KEYS[e.code]] = true; }
       if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); unlockAudio(); doPunch(); }
     });
     window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; });
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); });
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); doPunch(); }); // tap anywhere to punch
 
     try {
       if (window.bridge) { await bridge.initialize(); B = bridge; }
@@ -1853,7 +1857,7 @@
       B.platform.on(B.EVENT_NAME.AUDIO_STATE_CHANGED, isEnabled => { audioOn = isEnabled; syncAudio(); });
       await load();
     }
-    $('gas').textContent = T.gas; $('brake').textContent = T.brake; $('stickLbl').textContent = T.tilt; $('punchLbl').textContent = T.punch;
+    $('gas').textContent = T.gas; $('brake').textContent = T.brake; $('punchLbl').textContent = T.punch;
     // Mouse/keyboard devices play with the arrow keys (HCR on PC); the touch UI comes back the moment someone touches the screen.
     isPc = !(window.matchMedia && matchMedia('(pointer: coarse)').matches);
     document.body.classList.toggle('pc', isPc);
