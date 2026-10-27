@@ -50,14 +50,14 @@
   // Add a new game here when it lands in the repo (newest first).
   const GAMES = [
     { dir: 'horde-hero', name: 'Horde Hero', status: 'wip', label: 'In progress',
-      desc: 'Roguelike auto-battler: your hero fights hordes alone with up to 3 stacked weapons. Tap the special, pick upgrades between waves and beat the final boss to open a new world.' },
+      desc: 'Roguelike auto-battler: dodge hordes with the joystick while your weapons fight on their own. Die, buy weapons and upgrades, and come back stronger to beat the boss.' },
     { dir: 'pirate-hill-rush', name: 'Pirate Hill Rush', status: 'wip', label: 'In progress',
       desc: 'Hill Climb Racing with a straw-hat pirate: punch or run over endless marines, then beat the Admiral warship at the end of each island. 5 vehicles with their own upgrades, 5 islands.' },
     { dir: 'tower-rumble', name: 'Tower Rumble', status: 'wip', label: 'In progress',
       desc: 'Stack blocks 1v1 against simulated players in a 30-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
   // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
-  const BUILD = 'a60f5ff';
+  const BUILD = 'b9cad04';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');
