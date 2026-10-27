@@ -44,6 +44,7 @@
   .petBtn .nm { font-weight: 900; font-size: 13px; }
   .petBtn .px { font-size: 12px; font-weight: 900; display: flex; align-items: center; gap: 4px; opacity: .8; }
   .petBtn .px .coin { width: 14px; height: 14px; }
+  .petBtn .px.tip { color: var(--green-d); opacity: 1; }
   .petBtn.poor { filter: grayscale(.5); }
   .home { color: var(--ink); opacity: .55; font-weight: 800; font-size: 13px; text-decoration: none; padding: 2px 10px; }
 
@@ -56,15 +57,17 @@
   #hud .step { margin-top: 2px; font-weight: 800; font-size: 12px; opacity: .6; }
 
   /* Tool rack: the right tool is already selected, so the first touch needs no decision. */
-  #rack { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; justify-content: center;
-          padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
-  .tool { position: relative; width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,.9);
-          box-shadow: 0 4px 0 rgba(58,43,79,.2); border: 3px solid transparent; padding: 0; flex: none; }
+  #rack { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 6px; justify-content: center;
+          padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); }
+  /* Seven tools have to fit a phone, so they shrink with the viewport. */
+  .tool { position: relative; width: min(58px, 12.4vw); height: min(58px, 12.4vw); border-radius: 14px;
+          background: rgba(255,255,255,.9); box-shadow: 0 4px 0 rgba(58,43,79,.2);
+          border: 3px solid transparent; padding: 0; flex: none; }
   .tool canvas { width: 100%; height: 100%; display: block; }
   .tool.on { border-color: var(--green); transform: translateY(-6px); }
   .tool.want:not(.on) { animation: want 1s infinite; }
   @keyframes want { 50% { transform: translateY(-5px) scale(1.06); } }
-  @media (max-height: 620px) { .tool { width: 50px; height: 50px; } }
+  @media (max-height: 620px) { .tool { width: min(46px, 11vw); height: min(46px, 11vw); } }
 
   #stageDone { position: fixed; inset: 0 0 auto; top: 22%; display: flex; align-items: center; justify-content: center;
                font-size: clamp(28px, 9vw, 50px); font-weight: 900; color: #fff; pointer-events: none;
@@ -140,6 +143,8 @@
     en: { play: 'START', tag: 'RELAXING PET GROOMING', back: 'Menu', next: 'NEXT CLIENT',
           knots: 'Pop the tangles!', gills: 'Comb the gills!', leaves: 'Pluck the leaves, gently!',
           sand: 'Sweep the sand out of the ears!', suckers: 'Hold on each sucker!',
+          splinter: 'Hold still, pull the bug out!', nails: 'Trim the claws!',
+          t_tweezers: 'Tweezers', t_clippers: 'Clippers', tip: 'tip',
           wash: 'Scrub the dirt away!', dry: 'Hold to blow dry!', brush: 'Brush the fur!',
           step: 'Step', of: 'of', nice: 'NICE!', clean: 'SO CLEAN!', fluffy: 'FLUFFY!', shiny: 'SHINY!',
           before: 'BEFORE', after: 'AFTER', locked: 'Locked', need: 'Not enough coins', bought: 'Unlocked!',
@@ -148,6 +153,8 @@
     es: { play: 'EMPEZAR', tag: 'SPA RELAJANTE DE MASCOTAS', back: 'Menú', next: 'SIGUIENTE CLIENTE',
           knots: '¡Revienta los nudos!', gills: '¡Peina las branquias!', leaves: '¡Quita las hojas, con cuidado!',
           sand: '¡Saca la arena de las orejas!', suckers: '¡Mantén en cada ventosa!',
+          splinter: '¡Aguanta, saca el bicho!', nails: '¡Córtale las uñas!',
+          t_tweezers: 'Pinzas', t_clippers: 'Cortaúñas', tip: 'propina',
           wash: '¡Quita toda la suciedad!', dry: '¡Mantén para secar!', brush: '¡Cepilla el pelo!',
           step: 'Paso', of: 'de', nice: '¡BIEN!', clean: '¡LIMPIECITO!', fluffy: '¡ESPONJOSO!', shiny: '¡BRILLANTE!',
           before: 'ANTES', after: 'DESPUÉS', locked: 'Bloqueada', need: 'Te faltan monedas', bought: '¡Desbloqueada!',
@@ -156,6 +163,8 @@
     pt: { play: 'COMEÇAR', tag: 'SPA RELAXANTE DE BICHINHOS', back: 'Menu', next: 'PRÓXIMO CLIENTE',
           knots: 'Estoure os nós!', gills: 'Penteie as brânquias!', leaves: 'Tire as folhas, com cuidado!',
           sand: 'Tire a areia das orelhas!', suckers: 'Segure em cada ventosa!',
+          splinter: 'Segure firme, tire o bicho!', nails: 'Corte as unhas!',
+          t_tweezers: 'Pinça', t_clippers: 'Cortador', tip: 'gorjeta',
           wash: 'Tire toda a sujeira!', dry: 'Segure para secar!', brush: 'Escove o pelo!',
           step: 'Passo', of: 'de', nice: 'BOA!', clean: 'LIMPINHO!', fluffy: 'FOFINHO!', shiny: 'BRILHANDO!',
           before: 'ANTES', after: 'DEPOIS', locked: 'Bloqueado', need: 'Moedas insuficientes', bought: 'Desbloqueado!',
@@ -174,11 +183,13 @@
   // One tool per stage. The player may hold any of them, but only the matching
   // one makes progress; the wrong one gets a head shake, never a penalty.
   const TOOLS = [
-    { id: 'hand',   label: 't_hand' },
-    { id: 'comb',   label: 't_comb' },
-    { id: 'sponge', label: 't_sponge' },
-    { id: 'dryer',  label: 't_dryer' },
-    { id: 'brush',  label: 't_brush' },
+    { id: 'hand',     label: 't_hand' },
+    { id: 'tweezers', label: 't_tweezers' },
+    { id: 'clippers', label: 't_clippers' },
+    { id: 'comb',     label: 't_comb' },
+    { id: 'sponge',   label: 't_sponge' },
+    { id: 'dryer',    label: 't_dryer' },
+    { id: 'brush',    label: 't_brush' },
   ];
   // Several pet stages share a tool; what differs is the gesture, not the object.
   const STAGE_TOOL = {
@@ -186,8 +197,16 @@
     gills: 'comb', sand: 'comb',
     suckers: 'sponge', wash: 'sponge',
     dry: 'dryer', brush: 'brush',
+    splinter: 'tweezers', nails: 'clippers',
   };
   const toolForStage = (s) => STAGE_TOOL[s] || 'hand';
+  // Ailments are drawn from a pool that grows with experience, so no two clients
+  // arrive the same way. This is what keeps a session from being a fixed routine.
+  const AILMENTS = [
+    { id: 'splinter', after: 1 },
+    { id: 'nails',    after: 3 },
+  ];
+  const unlockedAilments = () => AILMENTS.filter(a => (save.sessions || 0) >= a.after);
 
   // ---------- Pets ----------
   // Shapes live in a -1..1 local space; `parts` is the silhouette used to scatter dirt and fur.
@@ -196,7 +215,7 @@
   // so one progress rule covers every pet while the gesture stays per-stage.
   const PETS = [
     {
-      id: 'cat', name: 'Mochi', cost: 0, own: 'knots',
+      id: 'cat', name: 'Mochi', cost: 0, pay: 1, own: 'knots',
       fur: '#c9c2d8', fur2: '#efeaf7', shade: '#a79cbd', skin: '#f6c9d4', dirt: '#8a6a4a', dirt2: '#6b4f36',
       parts: [ { k: 'e', x: 0, y: .36, rx: .64, ry: .46 }, { k: 'c', x: 0, y: -.38, r: .46 } ],
       spots: () => [[-.30, .22], [.32, .30], [-.10, .55], [.14, -.02], [-.42, -.08], [.44, -.02]]
@@ -204,7 +223,7 @@
       extras: drawCatExtras, spotArt: drawCatSpots,
     },
     {
-      id: 'axolotl', name: 'Pepita', cost: 200, own: 'gills',
+      id: 'axolotl', name: 'Pepita', cost: 200, pay: 1.8, own: 'gills',
       fur: '#ffb3d1', fur2: '#ffd9e8', shade: '#f08cb4', skin: '#ff8fbd', dirt: '#6d7f5a', dirt2: '#4e5e3e',
       parts: [ { k: 'e', x: 0, y: .34, rx: .56, ry: .42 }, { k: 'c', x: 0, y: -.34, r: .52 } ],
       spots: () => [-.9, -.55, -.2, .2, .55, .9].map(a => {
@@ -214,7 +233,7 @@
       extras: drawAxolotlExtras,
     },
     {
-      id: 'hedgehog', name: 'Pincho', cost: 450, own: 'leaves',
+      id: 'hedgehog', name: 'Pincho', cost: 450, pay: 2.8, own: 'leaves',
       fur: '#c8a07a', fur2: '#f0dcc6', shade: '#a07c58', skin: '#f3bfae', dirt: '#6f5a3e', dirt2: '#51402b',
       parts: [ { k: 'e', x: 0, y: .30, rx: .66, ry: .48 }, { k: 'c', x: 0, y: -.34, r: .44 } ],
       spots: () => [[-.40, -.02], [-.02, -.22], [.38, -.06], [.20, .30], [-.26, .34]]
@@ -222,7 +241,7 @@
       extras: drawHedgehogExtras, spotArt: drawHedgehogSpots,
     },
     {
-      id: 'fennec', name: 'Dune', cost: 800, own: 'sand',
+      id: 'fennec', name: 'Dune', cost: 800, pay: 4.2, own: 'sand',
       fur: '#f2d7a8', fur2: '#fdf0d8', shade: '#d9b67e', skin: '#f6c3b4', dirt: '#8a7450', dirt2: '#675537',
       parts: [ { k: 'e', x: 0, y: .36, rx: .58, ry: .44 }, { k: 'c', x: 0, y: -.34, r: .44 } ],
       spots: () => {
@@ -235,7 +254,7 @@
       extras: drawFennecExtras, spotArt: drawFennecSpots,
     },
     {
-      id: 'octopus', name: 'Tinta', cost: 1400, own: 'suckers',
+      id: 'octopus', name: 'Tinta', cost: 1400, pay: 6.5, own: 'suckers',
       fur: '#b79ae8', fur2: '#ded0fa', shade: '#9377cd', skin: '#f3b6d8', dirt: '#5c6f6a', dirt2: '#3f4f4b',
       parts: [ { k: 'e', x: 0, y: .34, rx: .50, ry: .34 }, { k: 'c', x: 0, y: -.32, r: .52 } ],
       spots: () => {
@@ -448,6 +467,13 @@
     buy() { [0, 3, 5, 7].forEach((k, i) => osc(PENTA[k], 0.06, 0.7, { delay: i * 0.07, send: 0.55 })); },
     purr() { osc(68, 0.07, 1.1, { type: 'triangle', to: 58 }); hiss(0.025, 1.0, { filter: 'lowpass', f: 320, attack: 0.3 }); },
     nope() { osc(300, 0.06, 0.16, { to: 190, type: 'triangle' }); osc(240, 0.05, 0.2, { to: 150, delay: 0.1, type: 'triangle' }); },
+    tug() { hiss(0.03, 0.08, { f: 400, q: 2.5 }); },
+    relief() {                                  // the critter lets go, the pet sighs
+      osc(180, 0.08, 0.3, { to: 520, send: 0.5 });
+      hiss(0.05, 0.45, { filter: 'lowpass', f: 900, to: 300, attack: 0.1 });
+      [5, 7, 9].forEach((k, i) => osc(PENTA[k], 0.05, 0.7, { delay: 0.12 + i * 0.07, send: 0.6 }));
+    },
+    clip() { hiss(0.07, 0.04, { f: 2600, q: 6 }); osc(900, 0.05, 0.07, { to: 1500 }); },
   };
   const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
   function syncAudio() { if (!actx) return; if (audioOn && !paused) actx.resume(); else actx.suspend(); }
@@ -486,18 +512,67 @@
     return out;
   }
 
+  // Tufts sit ON the silhouette pointing outwards, so unbrushed fur reads as a
+  // spiky halo around the whole pet. Scattered tufts inside the body were
+  // invisible, which made brushing feel like it did nothing.
+  function edgeTufts(p, n) {
+    const out = [];
+    p.parts.forEach((q, qi) => {
+      const rx = q.k === 'e' ? q.rx : q.r, ry = q.k === 'e' ? q.ry : q.r * 0.92;
+      const count = Math.round(n * (qi === 0 ? 0.58 : 0.42));
+      for (let i = 0; i < count; i++) {
+        const a = i / count * 6.2832 + rnd(-.05, .05);
+        const x = q.x + Math.cos(a) * rx, y = q.y + Math.sin(a) * ry;
+        // skip the seam where body and head overlap
+        const other = p.parts[1 - qi];
+        if (other) {
+          const orx = other.k === 'e' ? other.rx : other.r, ory = other.k === 'e' ? other.ry : other.r * 0.92;
+          const dx = (x - other.x) / (orx * 0.92), dy = (y - other.y) / (ory * 0.92);
+          if (dx * dx + dy * dy < 1) continue;
+        }
+        const tgt = Math.atan2(Math.sin(a) / ry, Math.cos(a) / rx);   // outward normal
+        // Every tuft starts clearly out of place: a tuft that spawns near its
+        // target is already "brushed", which made the arriving pet look half-tidy.
+        const off = rnd(0.85, 1.5) * (Math.random() < .5 ? 1 : -1);
+        out.push({ x, y, r: rnd(.10, .17), tgt, ang: tgt + off });
+      }
+    });
+    return out;
+  }
+
+  const pawY = (p) => p.parts[0].y + p.parts[0].ry * 0.92;
+  function makeCure(ail, p) {
+    const y = pawY(p);
+    if (ail === 'splinter') {
+      // one little critter clinging to a paw: hold the tweezers on it
+      const side = Math.random() < .5 ? -1 : 1;
+      return [{ x: side * 0.30, y: y - 0.02, done: 0, pop: 0, kind: 'bug', wig: rnd(0, 6.28) }];
+    }
+    // three claws per front paw
+    const out = [];
+    [-1, 1].forEach(side => [-1, 0, 1].forEach(i => {
+      out.push({ x: side * 0.30 + i * 0.055, y: y + 0.06, done: 0, pop: 0, kind: 'nail' });
+    }));
+    return out;
+  }
+
   function newSession() {
     st = {
       dirt: scatter(pet, 46, .055, .105),
       wetness: 0,
       wet: [],
-      tufts: scatter(pet, 26, .06, .09).map(t => ({ ...t, ang: rnd(-1.2, 1.2), tgt: Math.atan2(t.y - .1, t.x) })),
+      tufts: edgeTufts(pet, 40),
       own: pet.spots(),
       mood: -0.8, blink: 0, nextBlink: rnd(1.5, 4),
       shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
     };
+    // One random ailment per client, once any are unlocked.
+    const pool = unlockedAilments();
+    const ail = pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;
+    st.ail = ail;
+    st.cure = ail ? makeCure(ail, pet) : [];
     beforeSnap = snapshot(st);
-    stageList = [pet.own, 'wash', 'dry', 'brush'];
+    stageList = ail ? [pet.own, ail, 'wash', 'dry', 'brush'] : [pet.own, 'wash', 'dry', 'brush'];
     stageStars = []; stageIdx = 0; lastProgress = 0; stalled = 0; locked = false;
     drip = []; foam = []; spark = []; lather = [];
     tool = toolForStage(stageList[0]);
@@ -507,6 +582,7 @@
     return {
       dirt: s.dirt.map(d => ({ ...d })), wetness: 0, wet: [],
       tufts: s.tufts.map(t => ({ ...t })), own: s.own.map(o => ({ ...o })),
+      ail: s.ail, cure: (s.cure || []).map(o => ({ ...o })),
       mood: -0.8, blink: 0, nextBlink: 9,
       shiver: 0, puff: 0, shine: 0, wind: 0, shake: 0,
     };
@@ -517,6 +593,7 @@
     if (!st) return 0;
     const k = stageList[stageIdx];
     if (k === pet.own) return st.own.length ? st.own.reduce((a, o) => a + o.done, 0) / st.own.length : 1;
+    if (k === 'splinter' || k === 'nails') return st.cure.length ? st.cure.reduce((a, o) => a + o.done, 0) / st.cure.length : 1;
     if (k === 'wash') return st.dirt.length ? st.dirt.filter(d => d.alive <= 0).length / st.dirt.length : 1;
     if (k === 'dry') return 1 - st.wetness;
     if (k === 'brush') {
@@ -547,7 +624,10 @@
   function finish() {
     const avg = stageStars.reduce((a, b) => a + b, 0) / Math.max(stageStars.length, 1);
     const stars = clamp(Math.round(avg * 5), 1, 5);
-    const coins = Math.round(20 + avg * 80);
+    // Rarer clients tip far better, so unlocking one pays for the next.
+    // A cured ailment is extra on top: the hard work is worth more.
+    const base = Math.round(20 + avg * 80);
+    const coins = Math.round(base * (pet.pay || 1)) + (st.ail ? 25 : 0);
     save.coins += coins; save.sessions++; save.best = Math.max(save.best || 0, stars);
     persist(); send('level_completed');
     sfx.sparkle(); setTimeout(() => sfx.coins(), 300);
@@ -826,21 +906,31 @@
 
     if (p.extras) p.extras(c, p, s, g, t, false);
 
-    // fur tufts: messy until brushed, and pushed by the dryer's wind
+    // Fur spikes along the silhouette: long and wild when matted, short and
+    // flat once brushed. Drawn in the shade colour so they read on light fur.
     if (s.tufts) {
-      c.strokeStyle = p.fur2; c.lineCap = 'round';
+      c.lineCap = 'round';
       s.tufts.forEach(tf => {
         const d = Math.abs(angDiff(tf.ang, tf.tgt));
-        if (d < 0.14 && s.wind < 0.05) return;
-        const a = tf.ang + s.wind * 0.5;
-        c.lineWidth = 0.03 * g.s;
-        c.globalAlpha = clamp(Math.max(d, s.wind * 0.6), 0, 1);
-        c.beginPath();
+        const mess = clamp(d / 1.5, 0, 1);
+        const a = tf.ang + s.wind * 0.6;
+        const len = tf.r * (0.34 + mess * 1.25) * (1 + s.wind * 0.35);
         const x0 = g.cx + tf.x * g.s, y0 = g.cy + tf.y * g.s;
+        const bend = mess * 0.9;
+        c.strokeStyle = p.shade;
+        c.lineWidth = (0.034 - mess * 0.008) * g.s;
+        c.beginPath();
         c.moveTo(x0, y0);
-        c.quadraticCurveTo(x0 + Math.cos(a) * tf.r * g.s, y0 + Math.sin(a) * tf.r * g.s,
-                           x0 + Math.cos(a + 0.5) * tf.r * 1.7 * g.s, y0 + Math.sin(a + 0.5) * tf.r * 1.7 * g.s);
+        c.quadraticCurveTo(
+          x0 + Math.cos(a) * len * 0.55 * g.s, y0 + Math.sin(a) * len * 0.55 * g.s,
+          x0 + Math.cos(a + bend) * len * g.s, y0 + Math.sin(a + bend) * len * g.s);
         c.stroke();
+        // a lighter core keeps the spikes from reading as hair-thin lines
+        if (mess > 0.25) {
+          c.strokeStyle = p.fur2;
+          c.lineWidth = 0.013 * g.s;
+          c.stroke();
+        }
       });
       c.globalAlpha = 1;
     }
@@ -899,6 +989,7 @@
 
     // Own-stage targets sit above the fur so they always read as the thing to touch.
     if (s.own && s.own.length && p.spotArt) p.spotArt(c, p, s, g, t, flat);
+    if (s.cure && s.cure.length) drawCure(c, p, s, g, t, flat);
     if (s.own) s.own.forEach(o => {
       if (o.pop > 0) {
         c.globalAlpha = o.pop; c.strokeStyle = '#ffffff'; c.lineWidth = 0.03 * g.s;
@@ -918,6 +1009,47 @@
       });
     }
     c.restore();
+  }
+
+  // Ailments are pet-independent, so one routine draws them all.
+  function drawCure(c, p, s, g, t, flat) {
+    s.cure.forEach(o => {
+      if (o.kind === 'nail') {
+        if (o.done >= 1) return;
+        c.fillStyle = '#efe6d4'; c.strokeStyle = '#8d7c6a'; c.lineWidth = 0.010 * g.s;
+        c.beginPath();
+        c.moveTo(g.cx + o.x * g.s, g.cy + (o.y - 0.03) * g.s);
+        c.quadraticCurveTo(g.cx + (o.x + 0.03) * g.s, g.cy + (o.y + 0.05) * g.s,
+                           g.cx + (o.x - 0.005) * g.s, g.cy + (o.y + 0.10) * g.s);
+        c.quadraticCurveTo(g.cx + (o.x - 0.02) * g.s, g.cy + (o.y + 0.04) * g.s,
+                           g.cx + o.x * g.s, g.cy + (o.y - 0.03) * g.s);
+        c.closePath(); c.fill(); c.stroke();
+        return;
+      }
+      if (o.done >= 1) return;
+      // a tick-like critter, wriggling less as it comes free
+      const wig = flat ? 0 : Math.sin(t * 9 + o.wig) * 0.012 * (1 - o.done);
+      const lift = o.done * 0.07;
+      const x = o.x + wig, y = o.y - lift;
+      c.fillStyle = '#4e4336';
+      blob(c, g, x, y, 0.055, 0.042, 0.3);
+      c.fillStyle = '#6b5c49';
+      blob(c, g, x - 0.03, y - 0.015, 0.025, 0.020, 0.3);
+      c.strokeStyle = '#4e4336'; c.lineWidth = 0.011 * g.s; c.lineCap = 'round';
+      [-1, 1].forEach(d => { for (let i = 0; i < 3; i++) {
+        const a = d * (0.6 + i * 0.5);
+        c.beginPath();
+        c.moveTo(g.cx + x * g.s, g.cy + y * g.s);
+        c.lineTo(g.cx + (x + Math.cos(a) * 0.075) * g.s, g.cy + (y + Math.sin(a) * 0.055) * g.s);
+        c.stroke();
+      } });
+      if (o.done > 0) {
+        c.strokeStyle = '#ffffff'; c.lineWidth = 0.016 * g.s;
+        c.beginPath();
+        c.arc(g.cx + x * g.s, g.cy + y * g.s, 0.095 * g.s, -1.57, -1.57 + o.done * 6.2832);
+        c.stroke();
+      }
+    });
   }
 
   function drawFace(c, p, s, g, t, flat) {
@@ -1093,6 +1225,22 @@
       ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.roundRect(0.05 * g.s, 0.05 * g.s, 0.07 * g.s, 0.13 * g.s, 0.03 * g.s);
       ctx.fill(); ctx.stroke();
+    } else if (tool === 'tweezers') {
+      ctx.fillStyle = '#d8dee6'; ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.7;
+      [-1, 1].forEach(d => {
+        ctx.beginPath();
+        ctx.moveTo(d * 0.03 * g.s, -0.24 * g.s);
+        ctx.lineTo(d * 0.10 * g.s, 0.02 * g.s);
+        ctx.lineTo(d * 0.04 * g.s, 0.08 * g.s);
+        ctx.lineTo(0, 0.02 * g.s);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      });
+    } else if (tool === 'clippers') {
+      ctx.fillStyle = '#cfe3f5'; ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.7;
+      ctx.beginPath(); ctx.roundRect(-0.14 * g.s, -0.02 * g.s, 0.28 * g.s, 0.09 * g.s, 0.04 * g.s);
+      ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(-0.10 * g.s, -0.16 * g.s, 0.20 * g.s, 0.08 * g.s, 0.035 * g.s);
+      ctx.fill(); ctx.stroke();
     } else if (tool === 'brush' || tool === 'comb') {
       ctx.fillStyle = tool === 'brush' ? '#ff9fc4' : '#b8e3ff'; ctx.strokeStyle = ink; ctx.lineWidth = lw;
       ctx.beginPath(); ctx.roundRect(-0.13 * g.s, -0.07 * g.s, 0.26 * g.s, 0.13 * g.s, 0.05 * g.s);
@@ -1252,6 +1400,38 @@
       return;
     }
 
+    if (k === 'splinter') {
+      // hold steady to ease the critter out; it wriggles and the pet winces
+      st.cure.forEach(o => {
+        if (o.done >= 1) return;
+        if (Math.hypot(o.x - ptr.x, o.y - ptr.y) < 0.18) {
+          const was = o.done;
+          o.done = clamp(o.done + dt * 0.8, 0, 1);
+          st.shiver = 0.5;
+          if (was < 1 && o.done >= 1) {
+            o.pop = 1; sfx.relief(); buzz(24);
+            st.mood = Math.min(1, st.mood + 0.5);
+            for (let j = 0; j < 10; j++)
+              spark.push({ x: o.x + rnd(-.1, .1), y: o.y + rnd(-.1, .1), t: 0, life: rnd(.4, .9), rot: rnd(0, 6.28) });
+          } else if (Math.random() < 0.12) sfx.tug();
+        }
+      });
+      return;
+    }
+
+    if (k === 'nails') {
+      st.cure.forEach(o => {
+        if (o.done >= 1) return;
+        if (Math.hypot(o.x - ptr.x, o.y - ptr.y) < 0.10) {
+          o.done = 1; o.pop = 1;
+          sfx.clip(); buzz(14); st.shiver = 0.3;
+          for (let j = 0; j < 4; j++)
+            foam.push({ x: o.x + rnd(-.04, .04), y: o.y, r: rnd(.015, .03), t: 0, life: rnd(.3, .5) });
+        }
+      });
+      return;
+    }
+
     if (k === 'suckers') {
       // hold the sponge on each sucker: slow and deliberate, eight times over
       st.own.forEach(o => {
@@ -1366,6 +1546,24 @@
       c.beginPath(); c.roundRect(53 * u, 28 * u, 13 * u, 28 * u, 6 * u); c.fill(); c.stroke();
       c.fillStyle = '#8d7c99';
       c.beginPath(); c.arc(24 * u, 32 * u, 13 * u, 0, 6.2832); c.fill(); c.stroke();
+    } else if (id === 'tweezers') {
+      c.fillStyle = '#d8dee6';
+      [-1, 1].forEach(d => {
+        c.beginPath();
+        c.moveTo((50 + d * 5) * u, 16 * u);
+        c.lineTo((50 + d * 17) * u, 70 * u);
+        c.lineTo((50 + d * 9) * u, 82 * u);
+        c.lineTo((50 + d * 2) * u, 70 * u);
+        c.closePath(); c.fill(); c.stroke();
+      });
+      c.fillStyle = '#4e4336';
+      c.beginPath(); c.arc(50 * u, 88 * u, 7 * u, 0, 6.2832); c.fill();
+    } else if (id === 'clippers') {
+      c.fillStyle = '#cfe3f5';
+      c.beginPath(); c.roundRect(20 * u, 54 * u, 60 * u, 20 * u, 9 * u); c.fill(); c.stroke();
+      c.beginPath(); c.roundRect(28 * u, 24 * u, 44 * u, 18 * u, 8 * u); c.fill(); c.stroke();
+      c.strokeStyle = '#3a2b4f'; c.lineWidth = 5 * u;
+      c.beginPath(); c.moveTo(50 * u, 42 * u); c.lineTo(50 * u, 54 * u); c.stroke();
     } else if (id === 'comb') {
       c.fillStyle = '#b8e3ff';
       c.beginPath(); c.roundRect(18 * u, 24 * u, 64 * u, 20 * u, 8 * u); c.fill(); c.stroke();
@@ -1432,11 +1630,13 @@
       b.appendChild(cvs);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = owned ? p.name : T.locked;
       b.appendChild(nm);
-      if (!owned) {
-        const px = document.createElement('div'); px.className = 'px';
-        px.innerHTML = '<span class="coin"></span>' + p.cost;
-        b.appendChild(px);
-      }
+      const px = document.createElement('div'); px.className = 'px';
+      // Owned pets show what they tip, so the point of a rarer client is obvious.
+      px.innerHTML = owned
+        ? '<span class="coin"></span>&times;' + (p.pay || 1)
+        : '<span class="coin"></span>' + p.cost;
+      if (owned) px.classList.add('tip');
+      b.appendChild(px);
       box.appendChild(b);
       const c = cvs.getContext('2d');
       const demo = {

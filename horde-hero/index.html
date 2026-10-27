@@ -211,30 +211,30 @@
   // HERO_MAX_SPEED keeps the hero below the fastest monsters (wraith 160) whatever the upgrades.
   const HERO_HP = 100, HERO_R = 14, HERO_SPEED = 150, HERO_MAX_SPEED = 156;
   // The map is a disc of radius MAP_R; enemies spawn on a ring of VIEW_R around the hero, just off-screen.
-  const MAP_R = 640, VIEW_R = 230, HP_PER_WAVE = 0.45;
+  const MAP_R = 640, VIEW_R = 230, HP_PER_WAVE = 0.65;
   // Fraction of an enemy's gold value paid per kill (fractions carry over between kills).
-  const GOLD_PER_KILL = 0.45;
+  const GOLD_PER_KILL = 0.7;
   // Permanent shop upgrades per level: they carry the 'die, buy, come back stronger' loop.
   const UP_HP = 20, UP_DMG = 0.12, UP_SPD = 0.06, UP_COST_GROWTH = 1.35;
   const CAPS = { enemies: 120, projectiles: 200, particles: 300, popups: 40 };
   const WEAPONS = [
-    { id: 'sword', family: 'sword', cd: 0.7, dmg: 20, color: '#f4f1ff' },
-    { id: 'whirl', family: 'sword', cd: 0, dmg: 20, color: '#bfe3ff' },
-    { id: 'bow', family: 'bow', cd: 0.5, dmg: 22, color: '#9be15d' },
-    { id: 'fan', family: 'bow', cd: 1.2, dmg: 17, color: '#ffd166' },
-    { id: 'fire', family: 'magic', cd: 1.2, dmg: 34, color: '#ff7b2e' },
-    { id: 'storm', family: 'magic', cd: 1.0, dmg: 30, color: '#5fd0ff' },
+    { id: 'sword', family: 'sword', cd: 0.7, dmg: 17, color: '#f4f1ff' },
+    { id: 'whirl', family: 'sword', cd: 0, dmg: 38, color: '#bfe3ff' },
+    { id: 'bow', family: 'bow', cd: 0.5, dmg: 20, color: '#9be15d' },
+    { id: 'fan', family: 'bow', cd: 1.1, dmg: 35, color: '#ffd166' },
+    { id: 'fire', family: 'magic', cd: 0.75, dmg: 60, color: '#ff7b2e' },
+    { id: 'storm', family: 'magic', cd: 1.0, dmg: 38, color: '#5fd0ff' },
   ];
   const WEAPON_IDS = WEAPONS.map(w => w.id);
   // Gold price in the shop; the sword is free.
   const WEAPON_PRICES = { sword: 0, bow: 50, fire: 70, whirl: 85, fan: 105, storm: 130 };
   const weaponById = (id) => WEAPONS.find(w => w.id === id);
   const WORLDS = [
-    { id: 'forest', hpMul: 1.15, spawnMul: 1, enemies: ['slime', 'goblin', 'wolf'], boss: 'troll',
+    { id: 'forest', hpMul: 0.8, spawnMul: 1, enemies: ['slime', 'goblin', 'wolf'], boss: 'troll',
       palette: { ground: '#7fcf5a', ground2: '#5fb347', edge: '#3d8a3a', deco: '#ffe066' } },
-    { id: 'cave', hpMul: 0.69, spawnMul: 0.95, enemies: ['bat', 'spider', 'golem'], boss: 'wyrm',
+    { id: 'cave', hpMul: 1.05, spawnMul: 1, enemies: ['bat', 'spider', 'golem'], boss: 'wyrm',
       palette: { ground: '#6d5bb8', ground2: '#56479c', edge: '#2f2766', deco: '#5ef0d2' } },
-    { id: 'castle', hpMul: 1, spawnMul: 0.9, enemies: ['skeleton', 'knight', 'wraith'], boss: 'king',
+    { id: 'castle', hpMul: 0.95, spawnMul: 0.95, enemies: ['skeleton', 'knight', 'wraith'], boss: 'king',
       palette: { ground: '#c9876a', ground2: '#b06f55', edge: '#6e2f3a', deco: '#ffc531' } },
   ];
   // hp, speed (units/s), contact dmg, radius, gold
@@ -333,7 +333,9 @@
   }
 
   // ---------- Enemies & waves ----------
-  const spawnRate = (wave, world) => (1.3 + 0.25 * (wave - 1)) * world.spawnMul;
+  // Tuned against a skilled dodger: the hordes must be dense enough that dodging alone isn't enough.
+  const SPAWN_BASE = 1.4, SPAWN_PER_WAVE = 0.55, ENEMY_DMG_MUL = 1.6;
+  const spawnRate = (wave, world) => (SPAWN_BASE + SPAWN_PER_WAVE * (wave - 1)) * world.spawnMul;
   // A spawn point around the hero that stays inside the map: try the angle, then the opposite one, then clamp.
   function spawnPoint(angle, dist) {
     const h = run.hero, lim = MAP_R - 20;
@@ -349,7 +351,7 @@
     const d = ENEMIES[id], world = WORLDS[run.world];
     const hp = d.hp * world.hpMul * (1 + HP_PER_WAVE * (run.wave - 1));
     const [sx, sy] = spawnPoint(angle, dist);
-    const e = { id, x: sx, y: sy, hp, maxHp: hp, speed: d.speed, dmg: d.dmg, r: d.r, gold: d.gold,
+    const e = { id, x: sx, y: sy, hp, maxHp: hp, speed: d.speed, dmg: d.dmg * ENEMY_DMG_MUL, r: d.r, gold: d.gold,
       hitT: 0, slowT: 0, flash: 0, whirlT: 0, seed: rng() * 10, born: run.t };
     run.enemies.push(e);
     return e;
@@ -740,7 +742,7 @@
 
   // ---------- Boss ----------
   const BOSSES = {
-    troll: { hp: 2000, r: 46, slam: 22, summon: 'goblin', windup: 3 },
+    troll: { hp: 2100, r: 46, slam: 22, summon: 'goblin', windup: 3 },
     wyrm: { hp: 2100, r: 50, slam: 30, summon: 'bat', windup: 2.6 },
     king: { hp: 3200, r: 48, slam: 40, summon: 'skeleton', windup: 2.2 },
   };
@@ -765,6 +767,9 @@
     const spd = b.age >= BOSS_ENRAGE ? BOSS_ENRAGE_SPEED : BOSS_SPEED;
     if (b.age >= BOSS_ENRAGE && !b.enraged) { b.enraged = true; popup(b.x, b.y - b.r - 12, T.enraged, '#ff5d75', true); }
     if (dist > stop) { const s = Math.min(dist - stop, spd * dt); b.x -= dx / dist * s; b.y -= dy / dist * s; }
+    // Being caught by the boss hurts, so a weak hero can't outlast it just by dodging slams.
+    b.hitT = Math.max(0, (b.hitT || 0) - dt);
+    if (Math.hypot(b.x - h.x, b.y - h.y) <= stop + 1 && b.hitT <= 0) { b.hitT = 0.8; hurtHero(Math.round(d.slam * 0.5)); }
     if (!run.noSpawn) {
       b.summonT += dt;
       if (b.summonT >= 8) {
