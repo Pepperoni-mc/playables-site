@@ -775,7 +775,7 @@
     drawWorldBg(me ? floorsOf(me.tower) : demo ? floorsOf(demo) : 0);
     ctx.save(); ctx.translate(sx, sy);
     if (phase === 'menu' || phase === 'match' || phase === 'result' && !me) {
-      if (demo) { const P = drawTower(demo, W / 2, H * 0.68, S * 0.75); drawAura(save.eq.auras, auraLv(save.eq.auras), W / 2, P(0, floorsOf(demo) * BH, 0)[1], 8.66 * S * 0.75, S * 0.75); }
+      if (demo) { const P = drawTower(demo, W / 2, H * 0.68, S * 0.75); drawAura(save.eq.auras, auraLv(save.eq.auras), P, topOf(demo), floorsOf(demo) * BH, S * 0.75); }
     } else if (me) {
       const bossMode = phase === 'boss' || phase === 'win' || phase === 'bossIntro' || (phase === 'lose' && boss);
       const mx = W / 2, sc = S * 0.85, my = H * 0.62, ly = H * 0.44;
@@ -789,13 +789,13 @@
         } else if (foe.jolt) ox += foe.jolt * 10;
         const P = drawTower(foe.tower, ox, oy, fs);
         anchors.foe = P(0, floorsOf(foe.tower) * BH, 0);
-        if (!bossMode && foe.aura) drawAura(foe.aura.kind, foe.aura.lvl, ox, anchors.foe[1], 8.66 * fs, fs);
+        if (!bossMode && foe.aura) drawAura(foe.aura.kind, foe.aura.lvl, P, topOf(foe.tower), floorsOf(foe.tower) * BH, fs);
         if (bossMode) drawBossFace(P, fs);
         else label(lx, ly, foe.name, foe.avatar, floorsOf(foe.tower), false);
       }
       const PM = drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
       anchors.me = PM(0, floorsOf(me.tower) * BH + BH, 0);
-      drawAura(save.eq.auras, auraLv(save.eq.auras), mx, anchors.me[1], 8.66 * sc, sc);
+      drawAura(save.eq.auras, auraLv(save.eq.auras), PM, topOf(me.tower), floorsOf(me.tower) * BH, sc);
       drawShotsAndEffects();
       label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
       if (phase === 'play' || phase === 'bossIntro') { // VS badge between the two towers
@@ -860,93 +860,123 @@
   }
 
   // ---------- Auras ----------
-  const AURA_RGB = { fire: '255,120,30', lightning: '110,190,255', frost: '160,230,255', toxic: '120,255,90', holy: '255,215,90', rainbow: '255,255,255' };
+  // Auras hug the tower's silhouette: a glowing rim plus effects that grow outward from the edge.
+  const AURA_RGB = { fire: '255,120,30', lightning: '90,170,255', frost: '120,210,255', toxic: '80,220,60', holy: '255,200,60', rainbow: '255,90,200' };
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-  // x: tower center, top: screen y of the tower top, hw: half the tower's screen width, sc: tower scale.
-  function drawAura(kind, lvl, x, top, hw, sc) {
-    if (!kind || kind === 'none' || !lvl) return;
-    const k = 0.55 + lvl * 0.22, hgt = Math.min(H - top, sc * 70), rgb = AURA_RGB[kind];
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const gy = top + hgt * 0.25, gr = hw * (1.5 + lvl * 0.3);
-    const g = ctx.createRadialGradient(x, gy, hw * 0.2, x, gy, gr);
-    const glow = kind === 'rainbow' ? `hsla(${(time * 90) % 360},100%,60%,` : `rgba(${rgb},`;
-    g.addColorStop(0, glow + (0.22 * k) + ')'); g.addColorStop(1, glow + '0)');
-    ctx.fillStyle = g; ctx.fillRect(x - gr, gy - gr, gr * 2, gr * 2);
 
+  // Outline of the visible top part: left edge up, over the back corner, right edge down.
+  function auraOutline(P, tb, yTop, sc) {
+    const drop = sc * 26;
+    const L = P(tb.x, yTop, tb.z + tb.d), Bk = P(tb.x, yTop, tb.z), R = P(tb.x + tb.w, yTop, tb.z);
+    const pts = [[L[0], L[1] + drop], L, Bk, R, [R[0], R[1] + drop]];
+    const segs = []; let total = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], len = Math.hypot(x1 - x0, y1 - y0);
+      // outward normal: left for the left edge, right for the right edge, up-out for the top edges
+      const nx = (y1 - y0) / len, ny = -(x1 - x0) / len;
+      segs.push({ x0, y0, x1, y1, len, nx, ny, from: total }); total += len;
+    }
+    const at = (u) => { // point, outward normal and "fade" (0 at the bottom ends, 1 on top) at arc position u in 0..1
+      const d = u * total; let s = segs[segs.length - 1];
+      for (const sg of segs) if (d <= sg.from + sg.len) { s = sg; break; }
+      const k = (d - s.from) / s.len, x = s.x0 + (s.x1 - s.x0) * k, y = s.y0 + (s.y1 - s.y0) * k;
+      const fade = Math.max(0, 1 - Math.max(0, y - L[1]) / drop);
+      return { x, y, nx: s.nx, ny: s.ny, fade };
+    };
+    return { pts, at, total, top: Math.min(L[1], Bk[1], R[1]), drop };
+  }
+
+  function strokeOutline(o, color, width, blur) {
+    ctx.save();
+    const g = ctx.createLinearGradient(0, o.top, 0, o.top + o.drop * 1.3);
+    g.addColorStop(0, color(1)); g.addColorStop(1, color(0));
+    ctx.strokeStyle = g; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.shadowColor = color(1); ctx.shadowBlur = blur;
+    ctx.beginPath(); o.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();
+    ctx.restore();
+  }
+
+  // P: the tower's projector, tb: its top block, yTop: world y of the tower top, sc: tower scale.
+  function drawAura(kind, lvl, P, tb, yTop, sc) {
+    if (!kind || kind === 'none' || !lvl || !tb) return;
+    const o = auraOutline(P, tb, yTop, sc), rgb = AURA_RGB[kind], k = 0.5 + lvl * 0.2;
+    const tint = (a) => kind === 'rainbow' ? `hsla(${(time * 90) % 360},100%,60%,${a})` : `rgba(${rgb},${a})`;
+    ctx.save();
+    // rim: soft colored glow + bright core
+    strokeOutline(o, (f) => tint(0.75 * f * k), 3 + lvl, 10 + lvl * 4);
+    strokeOutline(o, (f) => `rgba(255,255,255,${0.9 * f})`, 1.2, 0);
+
+    const n = 10 + lvl * 6;
     if (kind === 'fire') {
-      const n = 6 + lvl * 4;
-      for (let i = 0; i < n; i++) { // flame tongues licking up the sides and over the top
-        const side = i % 2 ? -1 : 1, a = hash(i), crown = i % 3 === 0;
-        const px = crown ? x + (a - 0.5) * hw * 1.6 : x + side * hw * (0.9 + 0.15 * Math.sin(time * 3 + i));
-        const py = crown ? top + sc * 2 : top + sc * 4 + a * hgt * 0.7;
-        const fh = sc * (3 + lvl * 1.3) * (0.6 + 0.4 * Math.sin(time * 9 + i * 1.7)) * (crown ? 1.5 : 1);
-        const fw = sc * (1.2 + lvl * 0.25), sway = Math.sin(time * 6 + i) * fw * 0.8;
-        const fg = ctx.createLinearGradient(0, py, 0, py - fh);
-        fg.addColorStop(0, 'rgba(255,240,160,.85)'); fg.addColorStop(0.5, 'rgba(255,130,20,.6)'); fg.addColorStop(1, 'rgba(255,40,0,0)');
-        ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(px - fw, py);
-        ctx.quadraticCurveTo(px - fw, py - fh * 0.55, px + sway, py - fh);
-        ctx.quadraticCurveTo(px + fw, py - fh * 0.55, px + fw, py); ctx.closePath(); ctx.fill();
+      for (let i = 0; i < n; i++) { // flames grow out of the rim and lean upward
+        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+        const fl = sc * (1.3 + lvl * 0.6) * (0.55 + 0.45 * Math.sin(time * 10 + i * 2.1)) * q.fade;
+        let dx = q.nx * 0.5, dy = q.ny * 0.5 - 1; const dl = Math.hypot(dx, dy); dx /= dl; dy /= dl;
+        const sway = Math.sin(time * 7 + i) * 0.35, w = sc * (0.35 + lvl * 0.06);
+        const tx = q.x + (dx + sway * -dy) * fl, ty = q.y + (dy + sway * dx) * fl;
+        const fg = ctx.createLinearGradient(q.x, q.y, tx, ty);
+        fg.addColorStop(0, 'rgba(255,235,140,.95)'); fg.addColorStop(0.45, 'rgba(255,120,20,.85)'); fg.addColorStop(1, 'rgba(220,30,0,0)');
+        ctx.fillStyle = fg; ctx.beginPath();
+        ctx.moveTo(q.x - dy * w, q.y + dx * w);
+        ctx.quadraticCurveTo(q.x + dx * fl * 0.5 - dy * w, q.y + dy * fl * 0.5 + dx * w, tx, ty);
+        ctx.quadraticCurveTo(q.x + dx * fl * 0.5 + dy * w, q.y + dy * fl * 0.5 - dx * w, q.x + dy * w, q.y - dx * w);
+        ctx.closePath(); ctx.fill();
       }
-      if (lvl >= 3) for (let i = 0; i < lvl * 6; i++) { // embers
-        const u = (time * 0.5 + hash(i + 50)) % 1, ex = x + (hash(i + 7) - 0.5) * hw * 2.6 + Math.sin(time * 2 + i) * 6;
-        ctx.fillStyle = `rgba(255,${160 + (i % 4) * 20},60,${1 - u})`; ctx.fillRect(ex, top + hgt * 0.5 - u * hgt * 1.1, 2.5, 2.5);
+      if (lvl >= 3) for (let i = 0; i < lvl * 4; i++) { // embers drifting up off the rim
+        const u = (time * 0.7 + hash(i + 50)) % 1, q = o.at(hash(i + 9));
+        ctx.fillStyle = `rgba(255,${150 + (i % 4) * 20},40,${(1 - u) * q.fade})`;
+        ctx.fillRect(q.x + q.nx * sc + Math.sin(time * 3 + i) * 3, q.y - u * sc * 8, 2.5, 2.5);
       }
     } else if (kind === 'lightning') {
-      const bolts = lvl + 1, tick = Math.floor(time * 14);
-      for (let i = 0; i < bolts; i++) {
-        const r = (j) => hash(tick * 13 + i * 7 + j);
-        const side = r(0) < 0.5 ? -1 : 1;
-        let bx = x + side * hw * (0.3 + r(1) * 0.7), by = top + r(2) * hgt * 0.6;
-        const ex = x + side * hw * (1.4 + r(3) * 0.8), ey = by - sc * (4 + r(4) * 8);
-        for (const [col, w] of [[`rgba(${rgb},.45)`, 5 + lvl], ['rgba(255,255,255,.95)', 1.6]]) {
-          ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(bx, by);
-          for (let s = 1; s <= 5; s++) ctx.lineTo(lerp(bx, ex, s / 5) + (r(10 + s) - 0.5) * sc * 3, lerp(by, ey, s / 5) + (r(20 + s) - 0.5) * sc * 3);
+      const tick = Math.floor(time * 16);
+      for (let i = 0; i < lvl + 1; i++) { // arcs crawling along the edge
+        const r = (j) => hash(tick * 17 + i * 5 + j), u0 = r(0) * 0.85, u1 = u0 + 0.06 + r(1) * 0.12;
+        for (const [col, w] of [[tint(0.6), 3 + lvl * 0.6], ['rgba(255,255,255,.95)', 1.3]]) {
+          ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineJoin = 'round'; ctx.beginPath();
+          for (let s = 0; s <= 6; s++) {
+            const q = o.at(Math.min(1, u0 + (u1 - u0) * s / 6)), off = (s % 2 ? 1 : 0.2) * sc * (0.6 + r(10 + s) * (0.8 + lvl * 0.25));
+            const x = q.x + q.nx * off, y = q.y + q.ny * off; s ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          }
           ctx.stroke();
         }
       }
-      if (lvl >= 3) { // orbiting sparks around the top
-        for (let i = 0; i < lvl * 2; i++) {
-          const a = time * 3 + i * Math.PI * 2 / (lvl * 2);
-          ctx.fillStyle = 'rgba(220,240,255,.9)'; ctx.beginPath();
-          ctx.arc(x + Math.cos(a) * hw * 1.3, top + sc * 2 + Math.sin(a) * hw * 0.45, 2 + lvl * 0.4, 0, 7); ctx.fill();
-        }
+      for (const u of [0.25, 0.5, 0.75]) { // sparks at the corners
+        const q = o.at(u), a = Math.abs(Math.sin(time * 9 + u * 10));
+        ctx.fillStyle = `rgba(230,245,255,${a})`; ctx.beginPath(); ctx.arc(q.x, q.y, 1.5 + lvl * 0.5 * a, 0, 7); ctx.fill();
       }
     } else if (kind === 'frost') {
-      const n = 6 + lvl * 4;
-      for (let i = 0; i < n; i++) { // ice shards orbiting the tower
-        const a = time * (0.8 + hash(i) * 0.6) + i * 2.4, y = top + hash(i + 3) * hgt * 0.8;
-        const px = x + Math.cos(a) * hw * 1.4, py = y + Math.sin(a) * hw * 0.35, s = sc * (0.6 + lvl * 0.15);
-        ctx.fillStyle = `rgba(200,245,255,${Math.sin(a) > 0 ? 0.9 : 0.4})`;
-        ctx.beginPath(); ctx.moveTo(px, py - s * 1.8); ctx.lineTo(px + s, py); ctx.lineTo(px, py + s * 1.8); ctx.lineTo(px - s, py); ctx.closePath(); ctx.fill();
+      for (let i = 0; i < n; i++) { // ice spikes pointing out of the rim
+        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+        const len = sc * (0.6 + lvl * 0.3) * (0.6 + 0.4 * hash(i)) * q.fade, w = sc * 0.3;
+        ctx.fillStyle = `rgba(215,245,255,${0.9 * q.fade})`; ctx.strokeStyle = tint(0.8); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(q.x + q.ny * w, q.y - q.nx * w); ctx.lineTo(q.x + q.nx * len, q.y + q.ny * len); ctx.lineTo(q.x - q.ny * w, q.y + q.nx * w);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
       }
-      if (lvl >= 3) for (let i = 0; i < lvl * 5; i++) { const u = (time * 0.3 + hash(i + 90)) % 1;
-        ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - u)})`; ctx.fillRect(x + (hash(i + 30) - 0.5) * hw * 3, top - sc * 6 + u * hgt, 2, 2); }
+      if (lvl >= 3) for (let i = 0; i < lvl * 3; i++) { const q = o.at(hash(i + 30)), tw = Math.abs(Math.sin(time * 2 + i));
+        ctx.fillStyle = `rgba(255,255,255,${tw * q.fade})`; ctx.fillRect(q.x + q.nx * sc * 1.5 - 1, q.y + q.ny * sc * 1.5 - 3, 2, 6); ctx.fillRect(q.x + q.nx * sc * 1.5 - 3, q.y + q.ny * sc * 1.5 - 1, 6, 2); }
     } else if (kind === 'toxic') {
-      for (let i = 0; i < 5 + lvl * 4; i++) { // rising bubbles
-        const u = (time * (0.35 + hash(i) * 0.3) + hash(i + 11)) % 1, r = sc * (0.5 + hash(i + 5) * (0.5 + lvl * 0.2));
-        const bx = x + (hash(i + 2) - 0.5) * hw * 2.4 + Math.sin(time * 3 + i) * sc;
-        ctx.strokeStyle = `rgba(150,255,110,${1 - u})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(bx, top + hgt * 0.7 - u * hgt * 1.1, r, 0, 7); ctx.stroke();
+      for (let i = 0; i < 4 + lvl * 3; i++) { // bubbles popping off the rim
+        const u = (time * (0.6 + hash(i) * 0.5) + hash(i + 11)) % 1, q = o.at(hash(i + 3));
+        const r = sc * (0.25 + hash(i + 5) * (0.3 + lvl * 0.1)), d = u * sc * (1.5 + lvl * 0.4);
+        ctx.strokeStyle = `rgba(140,255,100,${(1 - u) * q.fade})`; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(q.x + q.nx * d, q.y + q.ny * d - u * sc * 2, r, 0, 7); ctx.stroke();
       }
-      if (lvl >= 3) for (let s = -1; s <= 1; s += 2) { // dripping goo
-        const u = (time * 0.6 + (s > 0 ? 0.5 : 0)) % 1;
-        ctx.fillStyle = 'rgba(120,255,90,.8)'; ctx.beginPath(); ctx.ellipse(x + s * hw * 0.95, top + sc * 3 + u * hgt * 0.6, sc * 0.6, sc * 1.1, 0, 0, 7); ctx.fill();
+      for (let i = 0; i < lvl; i++) { // goo dripping down the sides
+        const side = i % 2 ? 0.02 : 0.98, u = (time * 0.5 + i * 0.37) % 1, q = o.at(side);
+        ctx.fillStyle = tint(0.9 * (1 - u)); ctx.beginPath(); ctx.ellipse(q.x + q.nx * 2, q.y - o.drop * (1 - u) * 0.9, sc * 0.3, sc * 0.55, 0, 0, 7); ctx.fill();
       }
     } else if (kind === 'holy' || kind === 'rainbow') {
-      const rays = 4 + lvl * 2, cy = top - sc * 2;
-      for (let i = 0; i < rays; i++) { // slow-turning light rays from the tower top
-        const a = time * 0.4 + i * Math.PI * 2 / rays, len = hw * (1.6 + lvl * 0.35), w = 0.08;
-        ctx.fillStyle = kind === 'holy' ? 'rgba(255,225,120,.22)' : `hsla(${(i * 360 / rays + time * 80) % 360},100%,65%,.25)`;
-        ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + Math.cos(a - w) * len, cy + Math.sin(a - w) * len * 0.6);
-        ctx.lineTo(x + Math.cos(a + w) * len, cy + Math.sin(a + w) * len * 0.6); ctx.closePath(); ctx.fill();
+      for (let i = 0; i < n; i++) { // short light rays radiating out of the rim
+        const q = o.at((i + 0.5) / n); if (q.fade <= 0.05) continue;
+        const len = sc * (0.8 + lvl * 0.4) * (0.6 + 0.4 * Math.sin(time * 4 + i * 1.3)) * q.fade;
+        ctx.strokeStyle = kind === 'holy' ? `rgba(255,215,90,${0.85 * q.fade})` : `hsla(${(i * 25 + time * 120) % 360},100%,60%,${0.9 * q.fade})`;
+        ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath();
+        ctx.moveTo(q.x + q.nx * 2, q.y + q.ny * 2); ctx.lineTo(q.x + q.nx * len, q.y + q.ny * len); ctx.stroke();
       }
-      ctx.lineWidth = 2 + lvl * 0.5; // halo
-      ctx.strokeStyle = kind === 'holy' ? 'rgba(255,230,140,.9)' : `hsla(${(time * 120) % 360},100%,70%,.9)`;
-      ctx.beginPath(); ctx.ellipse(x, cy - sc * (3 + Math.sin(time * 2)), hw * 0.55, hw * 0.16, 0, 0, 7); ctx.stroke();
-      for (let i = 0; i < lvl * 5; i++) { // sparkles
-        const tw = Math.abs(Math.sin(time * 3 + i * 1.3)), sx = x + (hash(i + 70) - 0.5) * hw * 3, sy = top + (hash(i + 80) - 0.3) * hgt * 0.8;
-        ctx.fillStyle = kind === 'holy' ? `rgba(255,240,180,${tw})` : `hsla(${(i * 47 + time * 100) % 360},100%,75%,${tw})`;
-        ctx.fillRect(sx - 1, sy - 3, 2, 6); ctx.fillRect(sx - 3, sy - 1, 6, 2);
+      if (kind === 'holy') { // halo floating over the tower
+        const [hx] = P(tb.x + tb.w / 2, yTop, tb.z + tb.d / 2), hy = o.top - sc * (2.5 + Math.sin(time * 2) * 0.4);
+        ctx.strokeStyle = 'rgba(255,205,60,.95)'; ctx.lineWidth = 2 + lvl * 0.5; ctx.shadowColor = 'rgba(255,220,120,1)'; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.ellipse(hx, hy, sc * (2.5 + lvl * 0.3), sc * 0.8, 0, 0, 7); ctx.stroke(); ctx.shadowBlur = 0;
       }
     }
     ctx.restore();
@@ -1203,7 +1233,7 @@
     try {
       if (world) drawWorldBg(0); else { ctx.fillStyle = '#eef0fa'; ctx.fillRect(0, 0, W, H); }
       const P = drawTower(t, W / 2, H * 0.32, H / 26);
-      if (aura) drawAura(aura, auraLevel, W / 2, P(0, floorsOf(t) * BH, 0)[1], 8.66 * H / 26, H / 26);
+      if (aura) drawAura(aura, auraLevel, P, topOf(t), floorsOf(t) * BH, H / 26);
       if (locked) { ctx.fillStyle = 'rgba(233,236,248,.75)'; ctx.fillRect(0, 0, W, H); }
     } finally {
       W = keepW; H = keepH; ctx = keepCtx; save.eq.worlds = keepEq;
