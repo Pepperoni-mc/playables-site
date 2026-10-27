@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playables</title>
+<style>
+  :root {
+    --bg: #14112a; --panel: #1f1b3d; --ink: #f4f2ff; --muted: #a9a3cc; --line: #2e2858;
+    --green: #36c46b; --gold: #ffc531; --gray: #5b5680;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+  header { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+  h1 { margin: 0; font-size: clamp(34px, 7vw, 52px); font-weight: 900; letter-spacing: -.5px; }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  header a { color: var(--muted); font-weight: 700; text-decoration: none; border: 1px solid var(--line); padding: 8px 14px; border-radius: 10px; }
+  header a:hover { color: var(--ink); border-color: var(--gray); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; transition: transform .15s, border-color .15s; }
+  .card:hover { transform: translateY(-3px); border-color: var(--gray); }
+  .cover { aspect-ratio: 16 / 9; background: #0d0b1d center / cover no-repeat; }
+  .body { padding: 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .name { font-size: 20px; font-weight: 900; }
+  .chip { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip.wip { background: rgba(255,197,49,.15); color: var(--gold); }
+  .chip.proto { background: rgba(169,163,204,.15); color: var(--muted); }
+  .chip.live { background: rgba(54,196,107,.15); color: var(--green); }
+  .desc { color: var(--muted); font-size: 14px; line-height: 1.45; flex: 1; }
+  .play { display: block; text-align: center; background: var(--green); color: #fff; font-weight: 900; text-decoration: none; padding: 12px; border-radius: 12px; }
+  .play:hover { filter: brightness(1.08); }
+  footer { margin-top: 36px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Playables</h1>
+      <p>Every game we've built so far. Tap a card to play it in the browser.</p>
+    </div>
+    <a href="https://github.com/Pepperoni-mc/playables">GitHub repo →</a>
+  </header>
+  <main class="grid" id="grid"></main>
+  <footer>Progress saves per browser. These builds run without Playgama, so ads and cloud saves are off.</footer>
+</div>
+<script>
+  // Add a new game here when it lands in the repo (newest first).
+  const GAMES = [
+    { dir: 'tower-rumble', name: 'Tower Rumble', status: 'wip', label: 'In progress',
+      desc: 'Stack blocks 1v1 against simulated players in a 60-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
+    { dir: 'snake-rumble', name: 'Snake Rumble', status: 'proto', label: 'Prototype',
+      desc: 'Snake.io-style arena with 9 simulated players. Finish #1, then bite the boss to death. Skins unlock per boss.' },
+    { dir: 'tap-tower', name: 'Tap Tower', status: 'proto', label: 'Prototype',
+      desc: 'The original one-tap stacker: drop each block on the one below. Perfect drops keep your tower wide.' },
+  ];
+  const grid = document.getElementById('grid');
+  for (const g of GAMES) {
+    const a = document.createElement('article');
+    a.className = 'card';
+    a.innerHTML = `
+      <a class="cover" href="${g.dir}/" style="background-image:url('${g.dir}/covers/cover-landscape.png')" aria-label="Play ${g.name}"></a>
+      <div class="body">
+        <div class="row"><span class="name"></span><span class="chip ${g.status}">${g.label}</span></div>
+        <div class="desc"></div>
+        <a class="play" href="${g.dir}/">▶ Play</a>
+      </div>`;
+    a.querySelector('.name').textContent = g.name;
+    a.querySelector('.desc').textContent = g.desc;
+    grid.appendChild(a);
+  }
+</script>
+</body>
+</html>
