@@ -186,7 +186,7 @@
           backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'YOU ARE #1!', bossIn2: 'THE ADMIRAL ATTACKS!',
           won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
           passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tilt with the stick',
-          ctlHintPc: 'Hold → to drive · ← → also tilt in the air', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT',
+          ctlHintPc: 'Hold D to drive · W / S to tilt', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT',
           speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Meat', richer: 'richer coins',
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
           u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Meat tank', u_tank_d: 'Carry more meat',
@@ -197,7 +197,7 @@
           backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ERES EL #1!', bossIn2: '¡ATACA EL ALMIRANTE!',
           won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
           passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · inclina con la palanca',
-          ctlHintPc: 'Mantén → para avanzar · ← → también giran en el aire', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL',
+          ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL',
           speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Carne', richer: 'monedas más valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
           u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque de carne', u_tank_d: 'Lleva más carne',
@@ -208,7 +208,7 @@
           backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'VOCÊ É O #1!', bossIn2: 'O ALMIRANTE ATACA!',
           won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
           passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · incline com a alavanca',
-          ctlHintPc: 'Segure → para andar · ← → também giram no ar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT',
+          ctlHintPc: 'Segure D para andar · W / S para inclinar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT',
           speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Carne', richer: 'moedas mais valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
           u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque de carne', u_tank_d: 'Leva mais carne',
@@ -405,7 +405,7 @@
       if (contact(c.x + rx, c.y + ry).d < HEAD_R * 0.8) c.head = true; }
     const air = ground === 0 && body === 0;
     let lean = inp.lean || 0;
-    if (air) lean += (inp.gas > 0 ? 0.9 : 0) - (inp.brake ? 0.9 : 0);
+    if (air && inp.autoTilt !== false) lean += (inp.gas > 0 ? 0.9 : 0) - (inp.brake ? 0.9 : 0); // HCR pedals tilt in the air; on PC W/S do it
     else if (inp.gas > 0) tq += 1.2 * inp.gas; // engine reaction lifts the nose a little
     tq += clamp(lean, -1, 1) * (air ? st.airT : 3);
     const stab = st.stab + (inp.mercy || 0);
@@ -434,7 +434,7 @@
     const brake = !gas && (input.brake || input.kBrake || input.joyY > 0.55);
     const jx = Math.abs(input.joyX) < 0.12 ? 0 : input.joyX;
     const lean = clamp(-jx + (input.kBack ? 1 : 0) - (input.kFwd ? 1 : 0), -1, 1);
-    return { gas, brake, lean };
+    return { gas, brake, lean, autoTilt: !isPc };
   }
 
   // HCR-style coin values: 5 -> 25 -> 100 the further you go; on pricier islands some groups jump a tier (up to 500).
@@ -1465,7 +1465,7 @@
     document.body.classList.toggle('pc', isPc);
     if (isPc) $('punchLbl').textContent = 'SPACE';
     window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && isPc) { isPc = false; document.body.classList.remove('pc'); $('punchLbl').textContent = T.punch; } }, true);
-    $('keys').innerHTML = `<span class="key"><b>←</b>${T.brake}</span><span class="key"><b>→</b>${T.gas}</span><span class="key"><b>↑ ↓</b>${T.tilt}</span>`;
+    $('keys').innerHTML = `<span class="key"><b>A</b>${T.brake}</span><span class="key"><b>D</b>${T.gas}</span><span class="key"><b>W</b><b>S</b>${T.tilt}</span>`;
 
     if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
     $('playBtn').onclick = startMatchmaking;
