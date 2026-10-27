@@ -52,16 +52,18 @@
     { dir: 'tower-rumble', name: 'Tower Rumble', status: 'wip', label: 'In progress',
       desc: 'Stack blocks 1v1 against simulated players in a 60-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
+  // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
+  const BUILD = '211f854';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');
     a.className = 'card';
     a.innerHTML = `
-      <a class="cover" href="${g.dir}/" style="background-image:url('${g.dir}/covers/cover-landscape.png')" aria-label="Play ${g.name}"></a>
+      <a class="cover" href="${g.dir}/" style="background-image:url('${g.dir}/covers/cover-landscape.png?v=${BUILD}')" aria-label="Play ${g.name}"></a>
       <div class="body">
         <div class="row"><span class="name"></span><span class="chip ${g.status}">${g.label}</span></div>
         <div class="desc"></div>
-        <a class="play" href="${g.dir}/">▶ Play</a>
+        <a class="play" href="${g.dir}/?v=${BUILD}">▶ Play</a>
       </div>`;
     a.querySelector('.name').textContent = g.name;
     a.querySelector('.desc').textContent = g.desc;
