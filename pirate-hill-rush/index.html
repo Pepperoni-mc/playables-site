@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Pirate Hill Rush</title>
+<title>Hill Rush</title>
 <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
 <style>
   :root { --ink: #2a1d12; --gold: #ffc531; --gold-d: #e39a12; --accent: #2f7bd8; --green: #36c46b; --red: #e8364f; --sea: #0f3a63; }
@@ -117,6 +117,9 @@
   .vhead { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 8px 12px 8px 8px; box-shadow: 0 4px 0 #d6c39c; }
   .vhead canvas { width: 140px; height: 98px; border-radius: 10px; flex: none; }
   .vhead .nm { font-weight: 900; font-size: 20px; margin-bottom: 6px; }
+  .retry { background: var(--green); color: #fff; font-weight: 900; font-size: 22px; padding: 16px 48px; border-radius: 16px; box-shadow: 0 5px 0 #22924c; animation: pulse 1.2s infinite; }
+  #result .cont { background: #2a3550; box-shadow: 0 5px 0 #141a2a; font-size: 16px; padding: 10px 30px; }
+  #punch { display: none !important; } /* no punching in Hill Rush */
 </style>
 </head>
 <body>
@@ -135,7 +138,7 @@
     <div class="pill"><span class="coin"></span><span id="mCoins">0</span></div>
   </div>
   <div class="title">
-    <h1>PIRATE<br>HILL RUSH</h1>
+    <h1>HILL<br>RUSH</h1>
     <div class="stage" id="mBoss"></div>
   </div>
   <div class="bottom">
@@ -160,6 +163,7 @@
   <div class="board" id="rBoard"></div>
   <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
   <div class="unlock hidden" id="rUnlock"></div>
+  <button class="retry" id="retryBtn"></button>
   <button class="cont" id="contBtn"></button>
 </div>
 
@@ -169,61 +173,61 @@
 
   // ---------- Localization ----------
   const STRINGS = {
-    en: { play: 'SET SAIL', boss: 'ADMIRAL', stage: 'ISLAND', shop: 'SHOP', back: 'BACK', hint: 'Defeat admirals to unlock more hats', cars: 'Vehicles', hats: 'Hats', upgrades: 'Upgrades', islands: 'Islands',
-          finding: 'Finding pirates...', you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: 'PUNCH', crash: 'CRASH!', outMeat: 'OUT OF MEAT!',
-          backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'ISLAND CLEARED!', bossIn2: 'THE ADMIRAL ATTACKS!',
-          won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
-          passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tap the screen to punch!',
-          ctlHintPc: 'Hold D to drive · W / S to tilt', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distance', flipsL: 'Flips', foesHint: 'PUNCH THEM OR RUN THEM OVER!',
-          speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Meat', richer: 'richer coins',
+    en: { play: 'START', stage: 'STAGE', shop: 'SHOP', back: 'BACK', hint: '', cars: 'Vehicles', hats: 'Hats', upgrades: 'Upgrades', islands: 'Stages',
+          you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: '', crash: 'CRASH!', outMeat: 'OUT OF FUEL!',
+          backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Unlocked: ', beat: '#',
+          cont: 'MENU', retry: 'RETRY', equip: 'SELECT', equipped: 'SELECTED', free: 'FREE', max: 'MAX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
+          ctlHint: 'Hold GAS · the pedals also tilt you in the air', ctlHintPc: 'Hold D to drive · W / S to tilt', checkpoint: '',
+          driverDown: 'DRIVER DOWN!', outFuel: 'OUT OF FUEL!', lowFuel: 'LOW FUEL!', fuelUp: 'FUEL!', best: 'BEST', newRecord: 'NEW RECORD!', dist: 'Distance', flipsL: 'Flips',
+          speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Fuel', richer: 'richer coins',
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
-          u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Meat tank', u_tank_d: 'Carry more meat',
+          u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Fuel tank', u_tank_d: 'Drive further on one tank',
           u_turbo: 'Turbo', u_turbo_d: 'Faster acceleration', u_stab: 'Stability', u_stab_d: 'Harder to flip over',
-          isl_grass: 'Gentle hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills at night', isl_sky: 'Low gravity!' },
-    es: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ISLA', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota almirantes para desbloquear sombreros', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras', islands: 'Islas',
-          finding: 'Buscando piratas...', you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: 'GOLPE', crash: '¡CHOQUE!', outMeat: '¡SIN CARNE!',
-          backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ISLA SUPERADA!', bossIn2: '¡ATACA EL ALMIRANTE!',
-          won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
-          passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · ¡toca la pantalla para golpear!',
-          ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL', kos: 'KOs', dist: 'Distancia', flipsL: 'Mortales', foesHint: '¡GOLPÉALOS O ATROPÉLLALOS!',
-          speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Carne', richer: 'monedas más valiosas',
+          isl_grass: 'Rolling green hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills in the dark', isl_sky: 'Low gravity!' },
+    es: { play: 'EMPEZAR', stage: 'ESCENARIO', shop: 'TIENDA', back: 'VOLVER', hint: '', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras', islands: 'Escenarios',
+          you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: '', crash: '¡CHOQUE!', outMeat: '¡SIN COMBUSTIBLE!',
+          backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
+          cont: 'MENÚ', retry: 'OTRA VEZ', equip: 'ELEGIR', equipped: 'ELEGIDO', free: 'GRATIS', max: 'MÁX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
+          ctlHint: 'Mantén GAS · los pedales también te inclinan en el aire', ctlHintPc: 'Mantén D para avanzar · W / S para inclinar', checkpoint: '',
+          driverDown: '¡CONDUCTOR K.O.!', outFuel: '¡SIN COMBUSTIBLE!', lowFuel: '¡POCO COMBUSTIBLE!', fuelUp: '¡COMBUSTIBLE!', best: 'RÉCORD', newRecord: '¡NUEVO RÉCORD!', dist: 'Distancia', flipsL: 'Mortales',
+          speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Combustible', richer: 'monedas más valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
-          u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque de carne', u_tank_d: 'Lleva más carne',
+          u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque', u_tank_d: 'Llega más lejos con un tanque',
           u_turbo: 'Turbo', u_turbo_d: 'Acelera más rápido', u_stab: 'Estabilidad', u_stab_d: 'Cuesta más voltearse',
-          isl_grass: 'Colinas suaves', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!' },
-    pt: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ILHA', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote almirantes para desbloquear chapéus', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias', islands: 'Ilhas',
-          finding: 'Procurando piratas...', you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: 'SOCO', crash: 'BATEU!', outMeat: 'SEM CARNE!',
-          backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'ILHA CONCLUÍDA!', bossIn2: 'O ALMIRANTE ATACA!',
-          won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
-          passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · toque na tela para socar!',
-          ctlHintPc: 'Segure D para andar · W / S para inclinar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT', kos: 'KOs', dist: 'Distância', flipsL: 'Mortais', foesHint: 'SOQUE OU ATROPELE!',
-          speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Carne', richer: 'moedas mais valiosas',
+          isl_grass: 'Colinas verdes', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!' },
+    pt: { play: 'COMEÇAR', stage: 'FASE', shop: 'LOJA', back: 'VOLTAR', hint: '', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias', islands: 'Fases',
+          you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: '', crash: 'BATEU!', outMeat: 'SEM COMBUSTÍVEL!',
+          backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
+          cont: 'MENU', retry: 'DE NOVO', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', free: 'GRÁTIS', max: 'MÁX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
+          ctlHint: 'Segure GÁS · os pedais também te inclinam no ar', ctlHintPc: 'Segure D para andar · W / S para inclinar', checkpoint: '',
+          driverDown: 'PILOTO NOCAUTE!', outFuel: 'SEM COMBUSTÍVEL!', lowFuel: 'POUCO COMBUSTÍVEL!', fuelUp: 'COMBUSTÍVEL!', best: 'RECORDE', newRecord: 'NOVO RECORDE!', dist: 'Distância', flipsL: 'Mortais',
+          speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Combustível', richer: 'moedas mais valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
-          u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque de carne', u_tank_d: 'Leva mais carne',
+          u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque', u_tank_d: 'Vai mais longe com um tanque',
           u_turbo: 'Turbo', u_turbo_d: 'Acelera mais rápido', u_stab: 'Estabilidade', u_stab_d: 'Mais difícil capotar',
-          isl_grass: 'Colinas suaves', isl_desert: 'Dunas esburacadas', isl_snow: 'Gelo escorregadio', isl_night: 'Colinas enormes à noite', isl_sky: 'Gravidade baixa!' },
+          isl_grass: 'Colinas verdes', isl_desert: 'Dunas esburacadas', isl_snow: 'Gelo escorregadio', isl_night: 'Colinas enormes no escuro', isl_sky: 'Gravidade baixa!' },
   };
   let T = STRINGS.en;
 
   // ---------- Content ----------
   // Like Hill Climb Racing: every vehicle drives differently and has its own 4 upgrades (the 4th one is special per vehicle).
   const CARS = [
-    { id: 'cart',   name: 'Cart',      cost: 0,      upBase: 500,  sp: 'fwd',   top: 13,   acc: 17, mu: 0.9,  airT: 6.5, tank: 40, inertia: 1.1, k: 65, damp: 4.5 },
-    { id: 'barrel', name: 'Barrel',    cost: 15000,  upBase: 900,  sp: 'air',   top: 13.5, acc: 18, mu: 0.88, airT: 10,  tank: 32, inertia: 0.8, k: 55, damp: 3.5 },
-    { id: 'ship',   name: 'Mini Ship', cost: 35000,  upBase: 1500, sp: 'tank',  top: 15.5, acc: 16, mu: 0.95, airT: 6,   tank: 60, inertia: 1.4, k: 70, damp: 5.5 },
-    { id: 'shark',  name: 'Shark Sub', cost: 75000,  upBase: 2500, sp: 'turbo', top: 17,   acc: 21, mu: 1.0,  airT: 7,   tank: 45, inertia: 1.1, k: 70, damp: 5 },
-    { id: 'lion',   name: 'Lion Ship', cost: 150000, upBase: 4000, sp: 'stab',  top: 17.5, acc: 20, mu: 1.12, airT: 7.5, tank: 55, inertia: 1.5, k: 75, damp: 6 },
+    { id: 'cart',   name: 'Jeep',      cost: 0,      upBase: 500,  sp: 'fwd',   top: 13,   acc: 17, mu: 0.9,  airT: 6.5, tank: 40, inertia: 1.1, k: 65, damp: 4.5 },
+    { id: 'barrel', name: 'Dirt Bike', cost: 15000,  upBase: 900,  sp: 'air',   top: 13.5, acc: 18, mu: 0.88, airT: 10,  tank: 32, inertia: 0.8, k: 55, damp: 3.5 },
+    { id: 'ship',   name: 'Buggy',     cost: 35000,  upBase: 1500, sp: 'tank',  top: 15.5, acc: 16, mu: 0.95, airT: 6,   tank: 60, inertia: 1.4, k: 70, damp: 5.5 },
+    { id: 'shark',  name: 'Rally Car', cost: 75000,  upBase: 2500, sp: 'turbo', top: 17,   acc: 21, mu: 1.0,  airT: 7,   tank: 45, inertia: 1.1, k: 70, damp: 5 },
+    { id: 'lion',   name: 'Monster Truck', cost: 150000, upBase: 4000, sp: 'stab',  top: 17.5, acc: 20, mu: 1.12, airT: 7.5, tank: 55, inertia: 1.5, k: 75, damp: 6 },
   ];
   const UPG = ['engine', 'susp', 'tires', 'sp'], UPG_MAX = 10;
   const UPG_MUL = { engine: 1.2, susp: 0.8, tires: 1, sp: 1.1 };
-  const UPG_ICON = { engine: '🔥', susp: '🌀', tires: '🛞', fwd: '⚙️', air: '🪽', tank: '🍖', turbo: '💨', stab: '⚓' };
+  const UPG_ICON = { engine: '🔥', susp: '🌀', tires: '🛞', fwd: '⚙️', air: '🪽', tank: '⛽', turbo: '💨', stab: '🛡️' };
   // Islands are the stages: bought with coins, each with its own physics, and richer coins further on.
   const ISLANDS = [
-    { id: 'grass',  name: 'Palm Island',  cost: 0,     g: 13, grip: 1,    amp: 1,   bump: 1,   rich: 0, theme: 0 },
-    { id: 'desert', name: 'Dune Island',  cost: 8000,  g: 13, grip: 0.92, amp: 0.9, bump: 1.7, rich: 0.25, theme: 4 },
-    { id: 'snow',   name: 'Frost Island', cost: 20000, g: 13, grip: 0.72, amp: 1.1, bump: 1,   rich: 0.35, theme: 3 },
-    { id: 'night',  name: 'Night Reef',   cost: 40000, g: 13, grip: 1,    amp: 1.25, bump: 1.2, rich: 0.5, theme: 2 },
-    { id: 'sky',    name: 'Sky Island',   cost: 80000, g: 7,  grip: 1,    amp: 1.4, bump: 1,   rich: 0.65, theme: 5 },
+    { id: 'grass',  name: 'Countryside',  cost: 0,     g: 13, grip: 1,    amp: 1,   bump: 1,   rich: 0, theme: 0 },
+    { id: 'desert', name: 'Desert',  cost: 8000,  g: 13, grip: 0.92, amp: 0.9, bump: 1.7, rich: 0.25, theme: 4 },
+    { id: 'snow',   name: 'Arctic', cost: 20000, g: 13, grip: 0.72, amp: 1.1, bump: 1,   rich: 0.35, theme: 3 },
+    { id: 'night',  name: 'Night Hills',   cost: 40000, g: 13, grip: 1,    amp: 1.25, bump: 1.2, rich: 0.5, theme: 2 },
+    { id: 'sky',    name: 'Moon',   cost: 80000, g: 7,  grip: 1,    amp: 1.4, bump: 1,   rich: 0.65, theme: 5 },
   ];
   const COIN_VALUES = [5, 25, 100, 500];
   const COIN_COLORS = [['#b8692e', '#e8a066'], ['#8d97a6', '#e2e8ef'], ['#e39a12', '#ffd23f'], ['#b3121a', '#ff6a6a']];
@@ -240,12 +244,12 @@
     { sky: ['#0b1a3a', '#2f4a8a'], sea: '#12305e', cloud: '#5a6aa0', sand: '#8a8aa0', seaLite: '#2a5a9a', seaDeep: '#081a3a', far: '#1d2c55', mid: '#1a3a3a', grass: '#3fa35e', grass2: '#2a7444', dirt: '#6b4a3a', dirt2: '#4a3128', sun: '#f2f4ff', night: true },
     { sky: ['#8fb3d6', '#e6f0f8'], sea: '#4f7fa8', cloud: '#d8e6f2', sand: '#f4fbff', seaLite: '#9fc3e0', seaDeep: '#2f5f88', far: '#8aa1bb', mid: '#6f8aa6', grass: '#f4fbff', grass2: '#c8dced', dirt: '#7a8aa0', dirt2: '#56647a', sun: '#ffffff' },
     { sky: ['#f5b25a', '#ffe7b0'], sea: '#2fa4c8', cloud: '#f7e2c0', sand: '#f6dca0', seaLite: '#7fd6e8', seaDeep: '#1f7fa8', far: '#d49a5a', mid: '#b97a3e', grass: '#f0cf86', grass2: '#d8ac5c', dirt: '#d9a55e', dirt2: '#a8733a', sun: '#fff3c0' },
-    { sky: ['#1b1035', '#6a4aa8'], sea: '#b9a4f2', cloud: '#b9a8e8', sand: '#d8ccff', seaLite: '#e0d6ff', seaDeep: '#7a64c8', far: '#8a6ccf', mid: '#5b3a8a', grass: '#d8ccff', grass2: '#a898e0', dirt: '#6f6890', dirt2: '#47405f', sun: '#fff6e0', night: true },
+    { sky: ['#05051a', '#1b1b3a'], sea: '#2c2c38', cloud: '#3a3a48', sand: '#9a9aa6', seaLite: '#3a3a48', seaDeep: '#22222c', far: '#3a3a48', mid: '#2c2c38', grass: '#d4d4dc', grass2: '#9a9aa6', dirt: '#7a7a86', dirt2: '#4a4a56', sun: '#f2f4ff', night: true },
   ];
 
   // ---------- Save (Bridge storage) ----------
   const defUp = () => Object.fromEntries(CARS.map(c => [c.id, { engine: 0, susp: 0, tires: 0, sp: 0 }]));
-  let save = { v: 2, coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'], islands: ['grass'] }, eq: { cars: 'cart', hats: 'straw', islands: 'grass' }, up: defUp(), seen: 1 };
+  let save = { v: 2, coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'], islands: ['grass'] }, eq: { cars: 'cart', hats: 'straw', islands: 'grass' }, up: defUp(), seen: 1, best: {} }; // best distance per stage
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
   function persist() { if (B) B.storage.set(['pirate_hill_rush'], [JSON.stringify(save)]).catch(() => {}); }
@@ -290,7 +294,7 @@
   }
 
   // ---------- Terrain (heightfield, meters, y up) ----------
-  const STEP = 0.5, TER_LEN = 4200, CP = 60;
+  const STEP = 0.5, TER_LEN = 8000, CP = 60;
   let TER = new Float32Array(1), FINISH = 900;
   function genTerrain(stage) {
     const isl = island(), r = mulberry(1234 + stage * 7919 + isl.cost);
@@ -302,7 +306,7 @@
     for (let i = 0; i < n; i++) {
       const x = i * STEP;
       let ramp = clamp((x - 15) / 120, 0, 1); ramp = ramp * ramp * (3 - 2 * ramp);
-      const grow = 0.55 + 0.45 * clamp(x / 600, 0, 1);
+      const grow = 0.55 + 0.45 * clamp(x / 600, 0, 1) + clamp((x - 600) / 4000, 0, 0.5); // hills keep growing the further you go
       let h = 0;
       for (const o of oct) h += o.a * Math.sin(x * o.f + o.p) - o.a * Math.sin(o.p);
       h *= ramp * grow;
@@ -311,7 +315,7 @@
     }
     // flat-ish finish plateau
     const fi = Math.round(FINISH / STEP), hf = TER[fi];
-    for (let i = fi - 40; i <= fi + 40; i++) { const w = clamp(1 - (Math.abs(i - fi) - 16) / 24, 0, 1); TER[i] = lerp(TER[i], hf, w * w * (3 - 2 * w)); }
+    if (fi < n - 41) for (let i = fi - 40; i <= fi + 40; i++) { const w = clamp(1 - (Math.abs(i - fi) - 16) / 24, 0, 1); TER[i] = lerp(TER[i], hf, w * w * (3 - 2 * w)); }
   }
   function hAt(x) {
     const f = clamp(x / STEP, 0, TER.length - 2), i = f | 0, k = f - i;
@@ -419,21 +423,19 @@
   }
 
   // HCR-style coin values: 5 -> 25 -> 100 the further you go; on pricier islands some groups jump a tier (up to 500).
-  const coinTier = (x, up) => Math.min(3, (x < FINISH * 0.3 ? 0 : x < FINISH * 0.65 ? 1 : 2) + up);
+  const coinTier = (x, up) => Math.min(3, (x < 400 ? 0 : x < 1200 ? 1 : 2) + up); // HCR: coins get richer the further you drive
   function genPickups() {
     pickups = [];
     for (let x = 40; x < TER_LEN - 50; x += rnd(32, 52)) {
-      if (Math.abs(x - FINISH) < 20) continue;
       const n = 5, up = Math.random() < island().rich ? 1 : 0;
       for (let i = 0; i < n; i++) { const px = x + i * 1.7; pickups.push({ x: px, y: hAt(px) + 1.3, type: 'coin', tier: coinTier(px, up) }); }
     }
-    for (let x = 95; x < TER_LEN - 50; x += 115) pickups.push({ x, y: hAt(x) + 1.4, type: 'meat' });
-    for (let x = 230; x < TER_LEN - 50; x += 270) pickups.push({ x: x + 9, y: hAt(x + 9) + 2.2, type: 'fruit' });
+    for (let x = 160; x < TER_LEN - 50; x += 170 + x * 0.06) pickups.push({ x, y: hAt(x) + 1.4, type: 'meat' }); // fuel cans, further apart as you go
   }
 
   function newRace() {
     const stage = save.bosses + 1;
-    FINISH = Math.min(800 + stage * 40, 1100);
+    FINISH = 1e9; // endless: drive as far as you can
     genTerrain(stage);
     genPickups();
     const st = carStats();
@@ -492,7 +494,6 @@
   function updateFoes(dt) {
     const c = me.car;
     if (phase === 'play') {
-      if (me.best >= nextFoeX && foes.filter(f => !f.dead).length < 8) { nextFoeX = me.best + rnd(18, 34) / (1 + me.best / 1500 + save.bosses * 0.05); spawnFoe(); }
     }
     comboT -= dt;
     for (const f of foes) {
@@ -555,16 +556,18 @@
     return { x: c.x + Math.cos(c.a) * 4.5, y: c.y + 0.6 + Math.sin(c.a) * 4.5 };
   }
 
-  function crash() {
-    if (me.crashT > 0) return;
-    me.crashT = 1.5;
-    me.mercy = Math.min(3, me.mercy + 1); // invisible help after repeated crashes, so nobody gets stuck on one hill
-    me.meat = Math.max(0, me.meat - 10);
-    popup(T.crash, '#ff5d73');
-    shake = 12; sfx.crash(); buzz([30, 40, 30]);
-    ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.1, true); zoomKick = Math.max(zoomKick, 0.05); hitStop = 0.06; puff('dust', me.car.x, me.car.y, 8, { r: 0.8, spd: 3 });
-    for (let i = 0; i < 14; i++) parts.push({ x: me.car.x, y: me.car.y + 1, vx: rnd(-4, 4), vy: rnd(2, 8), t: 0, life: rnd(0.5, 1), c: i % 2 ? '#ffd23f' : '#fff', r: rnd(0.08, 0.16) });
+  // HCR rules: bonk your head and the run is over; run dry and roll to a stop and it is over too.
+  let overT = 0;
+  function gameOver(reason) {
+    if (phase !== 'play') return;
+    phase = 'over'; overT = 1.7; me.reason = reason;
+    if (reason === 'down') {
+      popup(T.driverDown, '#ff5d73'); ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.3, true);
+      shake = 14; sfx.crash(); buzz([40, 60, 40]); hitStop = 0.12; zoomKick = 0.12; impact(me.car.x, me.car.y + 1, 0.09);
+      puff('dust', me.car.x, me.car.y, 10, { r: 0.8, spd: 3 }); puff('star', me.car.x, me.car.y + 1.4, 6, { spd: 5, r: 0.45 });
+    } else { popup('⛽ ' + T.outFuel, '#ff8a2b'); sfx.low(); }
   }
+  function crash() { gameOver('down'); }
   function respawn() {
     const x = Math.max(6, me.cp);
     placeCar(me.car, x);
@@ -574,24 +577,18 @@
 
   function updatePlayer(dt) {
     const c = me.car, st = carStats();
-    let inp = readInput();
+    let inp = phase === 'over' ? { gas: 0, brake: false, lean: 0 } : readInput();
     if (me.crashT > 0) {
       me.crashT -= dt;
       inp = { gas: 0, brake: false, lean: 0 };
       if (me.crashT <= 0) respawn();
     }
     const empty = me.meat <= 0;
-    let power = empty ? 0.7 : 1;
+    let power = 1;
+    if (empty) inp.gas = 0; // no fuel, no engine
     if (me.boost > 0) { me.boost -= dt; power *= 1.35; }
     inp.power = power;
-    me.mercy = Math.max(0, me.mercy - dt / 15);
-    inp.mercy = me.mercy * 1.2;
-    // Invisible crew push on a hill you can't climb (the run never stalls).
     const speed = Math.hypot(c.vx, c.vy);
-    // Progress watchdog (the run never stalls): no new ground for 3 s -> a growing invisible crew push; 12 s -> hop past the obstacle.
-    if (c.x > me.progX + 3) { me.progX = c.x; me.noProgT = 0; } else if (me.crashT <= 0) me.noProgT += dt;
-    inp.assist = inp.gas && me.noProgT > 3 ? Math.min(16, (me.noProgT - 3) * 4) : 0;
-    if (me.noProgT > 12 && me.crashT <= 0) { placeCar(c, me.progX + 10); me.progX = c.x; me.noProgT = 0; me.mercy = Math.min(3, me.mercy + 1); }
     const prevAir = c.air;
     for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, inp, st);
     me.squash = (me.squash || 0) * Math.exp(-dt * 8);
@@ -601,10 +598,13 @@
     }
     if (c.ground && inp.gas && Math.abs(c.vx) > 3 && Math.random() < 0.3) puff('dust', c.x - AX * Math.cos(c.a), hAt(c.x - AX) + 0.15, 1, { r: 0.45, spd: 1, vx: -2.5, life: 0.6 });
     if (me.crashT <= 0) {
-      me.meat = Math.max(0, me.meat - dt * (0.3 + inp.gas * 0.75));
-      if (empty && !me.outShown) { me.outShown = true; popup('🍖 ' + T.outMeat, '#ff8a2b'); }
-      if (!empty) me.outShown = false;
-      if (!empty && me.meat < st.tank * 0.2) { me.beepT -= dt; if (me.beepT <= 0) { me.beepT = 0.9; sfx.low(); } }
+      if (phase === 'play') me.meat = Math.max(0, me.meat - dt * (0.45 + inp.gas * 0.55)); // fuel always burns, faster on the gas
+      if (empty) { me.emptyT = (me.emptyT || 0) + dt; if ((speed < 0.4 && me.emptyT > 1.2) || me.emptyT > 9) gameOver('fuel'); }
+      if (!empty && me.meat < st.tank * 0.2) {
+        me.beepT -= dt;
+        if (me.beepT <= 0) { me.beepT = 0.9; sfx.low(); }
+        if (!me.lowShown) { me.lowShown = true; popup('⛽ ' + T.lowFuel, '#ff8a2b'); }
+      }
       if (c.head) crash();
       const rel = Math.cos(c.a - Math.atan(slopeAt(c.x)));
       if (rel < -0.1 && c.body) me.upT += dt; else me.upT = 0;
@@ -626,6 +626,10 @@
       c.flip = 0;
     }
     me.best = Math.max(me.best, c.x);
+    const prevBest = save.best[island().id] || 0;
+    if (!me.recShown && prevBest > 30 && me.best - 6 > prevBest && phase === 'play') { // passed your record
+      me.recShown = true; popup('🏆 ' + T.newRecord, '#ffd23f'); ono('flip', c.x, c.y + 3, '#ffd23f', 1.2, true); sfx.first(); buzz([20, 30, 20]);
+    }
     const cp = Math.floor((c.x - 6) / CP) * CP + 6;
     if (cp > me.cp && me.crashT <= 0) { me.cp = cp; if (cp > 6) { sfx.tick(6); } }
     // pickups
@@ -634,7 +638,7 @@
       if (Math.hypot(p.x - c.x, p.y - (c.y + 0.4)) < 1.5) {
         p.taken = true;
         if (p.type === 'coin') { me.coins += COIN_VALUES[p.tier]; sfx.coin(); }
-        else if (p.type === 'meat') { me.meat = Math.min(st.tank, me.meat + 20); popup('🍖 +20', '#ffb35c'); sfx.munch(); }
+        else if (p.type === 'meat') { me.meat = st.tank; me.lowShown = false; me.emptyT = 0; popup('⛽ ' + T.fuelUp, '#7cff8a'); sfx.fruit(); puff('star', p.x, p.y, 5, { c: '#7cff8a', spd: 4, r: 0.4 }); }
         else { me.boost = 3; popup('🍇 ' + T.fruit, '#d18bff'); sfx.fruit(); puff('star', p.x, p.y, 6, { c: '#d18bff', spd: 5, r: 0.45 }); }
       }
     }
@@ -753,14 +757,14 @@
   }
   function update(dt) {
     time += dt;
-    const racing = phase === 'play' || phase === 'bossIntro' || phase === 'boss' || phase === 'win';
+    const racing = phase === 'play' || phase === 'over';
     if (racing && me) {
       if (phase === 'play') elapsed += dt;
+      if (phase === 'over') { overT -= dt; if (overT <= 0) { showResult(); return; } }
       updatePlayer(dt);
       updateFoes(dt);
       updateShots(dt);
       if (phase === 'play') {
-        if (me.car.x >= FINISH) startBossIntro();
       } else if (phase === 'bossIntro') { introT -= dt; if (introT <= 0) spawnBoss(); }
       else if (phase === 'boss') updateShip(dt);
       else if (phase === 'win') {
@@ -924,63 +928,83 @@
     ctx.fillStyle = '#f2d061'; ctx.fillRect(-28, -2, 59, 2.5);
     ctx.restore();
   }
+  // Hill Climb-style backdrop: sky, clouds and three parallax layers of rolling hills with tree silhouettes.
+  const HILLS = { // per theme index: far, mid, near hill colors and the tree kind
+    0: ['#a8dcb0', '#77c47c', '#56aa5c', 'tree'], 1: ['#e8a07a', '#c97a5a', '#a85a44', 'tree'], 2: ['#2a4a7a', '#1f3a5e', '#163049', 'pine'],
+    3: ['#e3eef8', '#c8dced', '#aac6df', 'pine'], 4: ['#f3d9a4', '#e9c27c', '#d9a55e', 'cactus'], 5: ['#3a3a48', '#2c2c38', '#22222c', 'rock'],
+  };
+  const hillY = (sx, par, base, amp, seed) => { const wx = (sx + camX * ppm * par) / 150; return base - amp * (0.55 + 0.3 * Math.sin(wx + seed) + 0.15 * Math.sin(wx * 2.3 + seed * 2)); };
+  function hillLayer(par, base, amp, col, seed) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let sx = 0; sx <= W + 8; sx += 8) ctx.lineTo(sx, hillY(sx, par, base, amp, seed));
+    ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  }
   function drawBackground() {
-    const th = theme(), m = Math.min(W, H);
-    const horizon = H * 0.47 + clamp(camY * ppm * 0.04, -40, 40);
+    const th = theme(), ti = island().theme, hc = HILLS[ti] || HILLS[0], m = Math.min(W, H), moon = ti === 5;
+    const horizon = H * 0.5 + clamp(camY * ppm * 0.04, -40, 40);
     const g = ctx.createLinearGradient(0, 0, 0, horizon);
     g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    if (th.night) {
-      for (let i = 0; i < 80; i++) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * Math.abs(Math.sin(time * 1.3 + i))})`; const z = hash(i + 3) < 0.15 ? 3 : 2; ctx.fillRect(hash(i) * W, hash(i + 50) * horizon * 0.9, z, z); }
-    }
+    if (th.night) for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.5 * Math.abs(Math.sin(time * 1.3 + i))})`; const z = hash(i + 3) < 0.15 ? 3 : 2; ctx.fillRect(hash(i) * W, hash(i + 50) * horizon * 0.9, z, z); }
     const sunX = W * 0.76, sunY = horizon * 0.3;
-    blob(th.night ? '200,210,255' : '255,240,180', sunX, sunY, m * 0.34, th.night ? 0.35 : 0.6);
-    ctx.fillStyle = th.sun; ctx.beginPath(); ctx.arc(sunX, sunY, m * 0.075, 0, 7); ctx.fill();
-    if (th.night) { ctx.fillStyle = th.sky[0]; ctx.beginPath(); ctx.arc(sunX + m * 0.032, sunY - m * 0.016, m * 0.066, 0, 7); ctx.fill(); } // crescent moon
-    for (let layer = 0; layer < 2; layer++) { // two depths of big cumulus clouds
-      const par = layer ? 0.06 : 0.025, cs = m * (layer ? 0.075 : 0.045), sp = W + cs * 9;
+    if (moon) { // the Earth hangs in the black sky
+      ctx.fillStyle = '#2f7bd8'; ctx.beginPath(); ctx.arc(sunX, sunY, m * 0.08, 0, 7); ctx.fill();
+      ctx.fillStyle = '#4fae5a'; for (const [dx, dy, r] of [[-0.3, -0.2, 0.35], [0.25, 0.3, 0.3], [0.35, -0.35, 0.18]]) { ctx.beginPath(); ctx.arc(sunX + dx * m * 0.08, sunY + dy * m * 0.08, r * m * 0.08, 0, 7); ctx.fill(); }
+    } else {
+      blob(th.night ? '200,210,255' : '255,240,180', sunX, sunY, m * 0.34, th.night ? 0.35 : 0.6);
+      ctx.fillStyle = th.sun; ctx.beginPath(); ctx.arc(sunX, sunY, m * 0.075, 0, 7); ctx.fill();
+      for (let layer = 0; layer < 2; layer++) {
+        const par = layer ? 0.06 : 0.025, cs = m * (layer ? 0.07 : 0.045), sp = W + cs * 9;
+        for (let i = 0; i < 3; i++) {
+          const x = wrapX(hash(i * 7 + layer * 31) * sp - camX * ppm * par + time * (layer ? 6 : 3), sp) - cs * 4;
+          drawCloud(x, horizon * (layer ? 0.4 + hash(i + 11) * 0.25 : 0.12 + hash(i + 21) * 0.2), cs, th.cloud);
+        }
+      }
+    }
+    hillLayer(0.04, horizon, H * 0.17, hc[0], 1);
+    hillLayer(0.1, horizon + H * 0.07, H * 0.14, hc[1], 4);
+    ctx.fillStyle = hc[2]; // tree silhouettes on the middle hills
+    const tsp = 70, toff = wrapX(camX * ppm * 0.1, tsp);
+    for (let i = -1; i < W / tsp + 2; i++) {
+      const k = i + Math.floor(camX * ppm * 0.1 / tsp); if (hash(k + 5) < 0.45) continue;
+      const sx = i * tsp - toff + hash(k) * 30, sy = hillY(sx, 0.1, horizon + H * 0.07, H * 0.14, 4), z = 10 + hash(k + 9) * 8;
+      ctx.beginPath();
+      if (hc[3] === 'tree') { ctx.arc(sx, sy - z, z * 0.8, 0, 7); ctx.rect(sx - 2, sy - z, 4, z); }
+      else if (hc[3] === 'pine') { ctx.moveTo(sx - z * 0.6, sy); ctx.lineTo(sx, sy - z * 2); ctx.lineTo(sx + z * 0.6, sy); }
+      else if (hc[3] === 'cactus') { ctx.rect(sx - 3, sy - z * 1.6, 6, z * 1.6); ctx.rect(sx - 10, sy - z, 5, z * 0.5); ctx.rect(sx + 5, sy - z * 1.2, 5, z * 0.6); }
+      else { ctx.ellipse(sx, sy, z, z * 0.5, 0, Math.PI, 0); }
+      ctx.fill();
+    }
+    hillLayer(0.18, horizon + H * 0.15, H * 0.1, hc[2], 7);
+    if (moon) { ctx.fillStyle = 'rgba(0,0,0,.25)'; for (let i = 0; i < 8; i++) { const sx = wrapX(hash(i + 60) * W - camX * ppm * 0.18, W + 60) - 30; ctx.beginPath(); ctx.ellipse(sx, hillY(sx, 0.18, horizon + H * 0.15, H * 0.1, 7) + 14, 18, 5, 0, 0, 7); ctx.fill(); } }
+  }
+
+  // Foreground scenery standing on the road's grass, per stage: round trees, pines, cacti or moon rocks.
+  function drawTree(x) {
+    const kind = (HILLS[island().theme] || HILLS[0])[3], snow = island().theme === 3, y = hAt(x), sc = 0.8 + hash(x) * 0.5, ink = '#2a1a10';
+    ctx.save(); ctx.translate(sxOf(x), syOf(y - 0.2)); ctx.scale(ppm * sc, -ppm * sc);
+    ctx.lineJoin = 'round'; ctx.lineWidth = 0.07; ctx.strokeStyle = ink;
+    const circ = (cx, cy, r, f) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fillStyle = f; ctx.fill(); ctx.stroke(); };
+    if (kind === 'tree') {
+      ctx.fillStyle = '#8a5a2b'; ctx.fillRect(-0.15, 0, 0.3, 1.8); ctx.strokeRect(-0.15, 0, 0.3, 1.8);
+      circ(-0.6, 2.0, 0.75, '#3e9a36'); circ(0.6, 2.0, 0.75, '#3e9a36'); circ(0, 2.6, 0.95, '#4cb043');
+      ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(-0.25, 2.9, 0.35, 0, 7); ctx.fill();
+    } else if (kind === 'pine') {
+      ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-0.12, 0, 0.24, 0.8);
       for (let i = 0; i < 3; i++) {
-        const x = wrapX(hash(i * 7 + layer * 31) * sp - camX * ppm * par + time * (layer ? 6 : 3), sp) - cs * 4;
-        const y = horizon * (layer ? 0.45 + hash(i + 11) * 0.28 : 0.12 + hash(i + 21) * 0.22);
-        drawCloud(x, y, cs, th.cloud);
+        const b = 0.6 + i * 0.85, w = 1.2 - i * 0.3;
+        ctx.beginPath(); ctx.moveTo(-w, b); ctx.lineTo(0, b + 1.2); ctx.lineTo(w, b); ctx.closePath(); ctx.fillStyle = island().theme === 2 ? '#1f5a3a' : '#2f7a45'; ctx.fill(); ctx.stroke();
+        if (snow) { ctx.beginPath(); ctx.moveTo(-w * 0.45, b + 0.65); ctx.lineTo(0, b + 1.2); ctx.lineTo(w * 0.45, b + 0.65); ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill(); }
       }
+    } else if (kind === 'cactus') {
+      ctx.fillStyle = '#4caf50';
+      for (const [rx, ry, rw, rh] of [[-0.25, 0, 0.5, 2.6], [-0.95, 1.0, 0.4, 1.0], [0.55, 1.3, 0.4, 0.9]]) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(rx, ry, rw, rh, 0.2) : ctx.rect(rx, ry, rw, rh); ctx.fill(); ctx.stroke(); }
+      ctx.fillRect(-0.6, 1.0, 0.4, 0.3); ctx.fillRect(0.2, 1.3, 0.4, 0.3);
+    } else {
+      ctx.beginPath(); ctx.ellipse(0, 0.3, 0.9, 0.55, 0, 0, 7); ctx.fillStyle = '#8a8a96'; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(-0.2, 0.45, 0.25, 0.12, 0, 0, 7); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fill();
     }
-    // horizon islands with palm silhouettes
-    const isp = Math.max(W * 0.9, 380), off = camX * ppm * 0.06, base = Math.floor(off / isp);
-    for (let i = -1; i <= Math.ceil(W / isp) + 1; i++) {
-      const k = base + i, x = i * isp - wrapX(off, isp) + hash(k) * isp * 0.4, w = isp * (0.16 + hash(k + 3) * 0.16), h = Math.max(18, horizon * (0.05 + hash(k + 5) * 0.06));
-      ctx.fillStyle = th.sand; ctx.beginPath(); ctx.ellipse(x, horizon, w * 1.15, h * 0.32, 0, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = th.far; ctx.beginPath(); ctx.ellipse(x, horizon, w, h, 0, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(x - w * 0.3, horizon - h * 0.55, w * 0.32, h * 0.3, -0.2, 0, 7); ctx.fill();
-      if (hash(k + 9) < 0.7) {
-        const px = x + w * 0.2, py = horizon - h * 0.85, ps = h * 0.95;
-        ctx.strokeStyle = th.far; ctx.lineWidth = Math.max(2, ps * 0.08); ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(px, py + ps * 0.3); ctx.quadraticCurveTo(px + ps * 0.15, py - ps * 0.3, px + ps * 0.05, py - ps * 0.8); ctx.stroke();
-        ctx.fillStyle = th.far;
-        for (let j = 0; j < 5; j++) { const a = -2.7 + j * 0.85; ctx.beginPath(); ctx.ellipse(px + ps * 0.05 + Math.cos(a) * ps * 0.35, py - ps * 0.8 + Math.sin(a) * ps * 0.16, ps * 0.38, ps * 0.08, a, 0, 7); ctx.fill(); }
-      }
-    }
-    const sg = ctx.createLinearGradient(0, horizon, 0, H);
-    sg.addColorStop(0, th.seaLite); sg.addColorStop(0.3, th.sea); sg.addColorStop(1, th.seaDeep);
-    ctx.fillStyle = sg; ctx.fillRect(0, horizon, W, H - horizon);
-    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(0, horizon, W, 2);
-    drawBgShip(wrapX(time * 14 - camX * ppm * 0.09 + W * 0.3, W + 300) - 150, horizon + 1, m / 650);
-    ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineCap = 'round';
-    for (let row = 0; row < 4; row++) { // drawn wave marks, bigger and faster closer to us
-      const y = horizon + 10 + row * row * 10 + row * 12, sc = 0.5 + row * 0.4, gap = 70 + row * 40;
-      ctx.lineWidth = 1.5 + row * 0.7;
-      for (let i = 0; i < W / gap + 2; i++) {
-        const x = wrapX(i * gap + hash(i + row * 13) * gap - camX * ppm * (0.08 + row * 0.05) + time * 8, W + gap * 2) - gap;
-        ctx.beginPath(); ctx.arc(x, y + Math.sin(time * 2 + i) * 1.5, 8 * sc, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
-      }
-    }
-    if (!th.night) {
-      ctx.strokeStyle = 'rgba(40,50,70,.75)'; ctx.lineWidth = 2;
-      for (let i = 0; i < 3; i++) {
-        const x = wrapX(hash(i + 40) * W - time * (22 + i * 6) - camX * ppm * 0.03, W + 100) - 50, y = horizon * (0.25 + hash(i + 44) * 0.3), f = Math.sin(time * 6 + i * 2) * 4;
-        ctx.beginPath(); ctx.moveTo(x - 9, y - f); ctx.quadraticCurveTo(x - 4, y - 5, x, y); ctx.quadraticCurveTo(x + 4, y - 5, x + 9, y - f); ctx.stroke();
-      }
-    }
+    ctx.restore();
   }
 
   function drawPalm(x) {
@@ -1005,7 +1029,7 @@
   function drawTerrain() {
     const th = theme(), ink = '#2a1a10';
     const x0 = camX - (W * camK) / ppm - 2, x1 = camX + (W * (1 - camK)) / ppm + 2;
-    for (let k = Math.floor(x0 / 37); k <= Math.ceil(x1 / 37); k++) { const x = k * 37 + hash(k) * 20; if (hash(k + 7) < 0.55 && x > 3) drawPalm(x); }
+    for (let k = Math.floor(x0 / 37); k <= Math.ceil(x1 / 37); k++) { const x = k * 37 + hash(k) * 20; if (hash(k + 7) < 0.55 && x > 3) drawTree(x); }
     const step = Math.max(STEP, 3 / ppm);
     ctx.beginPath(); ctx.moveTo(sxOf(x0), H + 10);
     for (let x = x0; x <= x1; x += step) ctx.lineTo(sxOf(x), syOf(hAt(x)));
@@ -1035,20 +1059,21 @@
       ctx.beginPath(); ctx.moveTo(sx - z, sy); ctx.lineTo(sx - z * 0.5, sy - z * 1.3); ctx.lineTo(sx, sy - z * 0.3); ctx.lineTo(sx + z * 0.35, sy - z * 1.6); ctx.lineTo(sx + z * 0.8, sy); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     if (!me) return;
-    // checkpoints and finish
-    for (let k = Math.ceil((x0 - 6) / CP); k <= (x1 - 6) / CP; k++) {
-      const x = k * CP + 6; if (x <= 6 || Math.abs(x - FINISH) < 30) continue;
-      const sx = sxOf(x), sy = syOf(hAt(x));
-      ctx.fillStyle = '#5a3a1f'; ctx.fillRect(sx - 2, sy - 2.6 * ppm, 4, 2.6 * ppm);
-      ctx.fillStyle = x <= me.cp ? '#36c46b' : '#e8364f';
-      ctx.beginPath(); ctx.moveTo(sx + 2, sy - 2.6 * ppm); ctx.lineTo(sx + 2 + ppm * 0.9, sy - 2.3 * ppm + Math.sin(time * 6) * 2); ctx.lineTo(sx + 2, sy - 2 * ppm); ctx.fill();
-      ctx.textBaseline = 'middle'; txt(`${x - 6}m`, sx, sy - 3 * ppm, Math.max(10, ppm * 0.4), 'rgba(255,255,255,.85)', 'center', 800);
+    // distance signs every 100 m and a flag where your record is
+    for (let k = Math.ceil((x0 - 6) / 100); k <= (x1 - 6) / 100; k++) {
+      if (k <= 0) continue;
+      const x = k * 100 + 6, sx = sxOf(x), sy = syOf(hAt(x));
+      ctx.fillStyle = '#6b4a2a'; ctx.fillRect(sx - 2, sy - 1.8 * ppm, 4, 1.8 * ppm);
+      ctx.fillStyle = '#f4e2b0'; ctx.strokeStyle = '#2a1a10'; ctx.lineWidth = 2; rr(sx - 0.9 * ppm, sy - 2.5 * ppm, 1.8 * ppm, 0.8 * ppm, 4); ctx.fill(); ctx.stroke();
+      ctx.textBaseline = 'middle'; txt(`${k * 100}m`, sx, sy - 2.1 * ppm, Math.max(10, ppm * 0.38), '#2a1a10', 'center', 900);
     }
-    if (FINISH > x0 - 5 && FINISH < x1 + 5) {
-      const sx = sxOf(FINISH), sy = syOf(hAt(FINISH)), hh = 5 * ppm, bw = 0.6 * ppm;
-      ctx.fillStyle = '#f2f2f2'; ctx.fillRect(sx - 3.4 * ppm, sy - hh, 6, hh); ctx.fillRect(sx + 3.4 * ppm - 6, sy - hh, 6, hh);
-      for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(sx - 3.4 * ppm + i * (6.8 * ppm / 12), sy - hh + j * bw / 2, 6.8 * ppm / 12 + 0.5, bw / 2 + 0.5); }
-      ctx.textBaseline = 'middle'; txt('FINISH', sx, sy - hh - 0.5 * ppm, Math.max(12, ppm * 0.6), '#fff', 'center');
+    const bst = save.best[island().id] || 0, bx = bst + 6;
+    if (bst > 0 && bx > x0 && bx < x1) {
+      const sx = sxOf(bx), sy = syOf(hAt(bx));
+      ctx.fillStyle = '#f2f2f2'; ctx.fillRect(sx - 2, sy - 4 * ppm, 4, 4 * ppm);
+      ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#2a1a10'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sx + 2, sy - 4 * ppm); ctx.lineTo(sx + 2 + 1.6 * ppm, sy - 3.6 * ppm + Math.sin(time * 6) * 3); ctx.lineTo(sx + 2, sy - 3.1 * ppm); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.textBaseline = 'middle'; txt(`${T.best} ${Math.round(bst)}m`, sx, sy - 4.5 * ppm, Math.max(11, ppm * 0.42), '#ffd23f', 'center', 900);
     }
   }
 
@@ -1066,10 +1091,12 @@
         if (gl < 0.3) star4(sx + cw * 0.45, sy - r * 0.55, Math.sin(gl / 0.3 * Math.PI) * r * 0.9);
         if (sq > 0.55) { ctx.textBaseline = 'middle'; txt(String(COIN_VALUES[p.tier]), sx, sy + 1, r * (p.tier > 1 ? 0.75 : 0.95), 'rgba(60,30,0,.85)', 'center'); }
       } else if (p.type === 'meat') {
-        ctx.save(); ctx.translate(sx, sy); ctx.rotate(-0.5); ctx.scale(r / 10, r / 10);
-        ctx.fillStyle = '#f4f0e6'; rr(4, -3, 16, 6, 3); ctx.fill(); ctx.beginPath(); ctx.arc(20, -4, 4, 0, 7); ctx.arc(20, 4, 4, 0, 7); ctx.fill();
-        ctx.fillStyle = '#b5532c'; ctx.beginPath(); ctx.ellipse(-4, 0, 13, 10, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = '#d97a45'; ctx.beginPath(); ctx.ellipse(-7, -3, 6, 4, -0.4, 0, 7); ctx.fill();
+        ctx.save(); ctx.translate(sx, sy); ctx.scale(r / 10, r / 10);
+        blob('255,80,80', 0, 0, 26, 0.35); // jerry can with a soft glow
+        ctx.lineWidth = 2.2; ctx.strokeStyle = '#2a1a10'; ctx.fillStyle = '#e8364f';
+        rr(-11, -12, 22, 26, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#b3121a'; rr(-6, -17, 9, 6, 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('F', 0, 2);
         ctx.restore();
       } else {
         ctx.save(); ctx.translate(sx, sy); ctx.scale(r / 10, r / 10);
@@ -1092,14 +1119,8 @@
     // struts
     g.strokeStyle = '#5a5a5a'; g.lineWidth = 0.1;
     g.beginPath(); g.moveTo(-AX, -AY); g.lineTo(-AX + 0.2, -0.1); g.moveTo(AX, -AY); g.lineTo(AX - 0.2, -0.1); g.stroke();
-    // body behind the driver (masts, fins)
-    if (carId === 'ship') {
-      g.fillStyle = '#7a4a22'; g.fillRect(0.55, 0.2, 0.12, 1.5);
-      shape([[0.7, 1.6], [0.7, 0.55], [1.45, 0.65]], '#fdf8ea');
-      shape([[0.67, 1.7], [0.67, 1.95], [1.05, 1.82]], '#222');
-    } else if (carId === 'shark') {
-      shape([[0.3, 0.3], [0.75, 1.05], [1.05, 0.3]], '#4d6f96');
-    }
+    // roll cage behind the driver (buggy) and the bike's rear fender
+    if (carId === 'ship') { g.strokeStyle = out; g.lineWidth = 0.16; g.beginPath(); g.moveTo(-1.05, 0.05); g.lineTo(-0.8, 1.55); g.lineTo(0.45, 1.55); g.lineTo(0.85, 0.05); g.stroke(); g.strokeStyle = '#9aa4b2'; g.lineWidth = 0.1; g.stroke(); }
     // driver: chibi pirate with a big expressive head (o.mood: grin | wow | shout | dizzy)
     const mood = o.mood || 'grin', HD = [-0.12, 1.16], HR = 0.44, skin = '#f3c18c', hair = '#1b1820';
     g.lineWidth = lw; g.strokeStyle = out;
@@ -1141,39 +1162,37 @@
       } else { g.beginPath(); g.moveTo(mx - 0.12, my); for (let i = 1; i <= 6; i++) g.lineTo(mx - 0.12 + i * 0.04, my + (i % 2 ? 0.03 : -0.03)); g.stroke(); }
     }
     g.save(); g.translate(HD[0], HD[1] + 0.06); g.scale(1.4, 1.4); g.translate(-HEAD[0], -HEAD[1]);
-    drawHat(g, hatId);
+    drawHelmet(g);
     g.restore();
-    // chassis
-    if (carId === 'cart') {
-      shape([[-1.4, -0.3], [1.3, -0.3], [1.42, 0.28], [-1.45, 0.3]], '#a8642f');
-      g.strokeStyle = '#6e3c17'; g.lineWidth = 0.05; g.beginPath(); g.moveTo(-1.38, -0.01); g.lineTo(1.35, -0.01); g.stroke();
-      ell(1.42, 0.45, 0.13, 0.17, '#ffd23f');
-    } else if (carId === 'barrel') {
-      ell(0, -0.02, 1.45, 0.45, '#b5733a');
-      g.save(); g.beginPath(); g.ellipse(0, -0.02, 1.44, 0.44, 0, 0, 7); g.clip();
-      g.fillStyle = '#5b5b66'; for (const x of [-0.85, 0, 0.85]) g.fillRect(x - 0.07, -0.5, 0.14, 1);
-      g.restore();
-      g.lineWidth = lw; g.strokeStyle = out; g.beginPath(); g.ellipse(0, -0.02, 1.45, 0.45, 0, 0, 7); g.stroke();
-    } else if (carId === 'ship') {
-      shape([[-1.5, 0.28], [1.65, 0.32], [1.2, -0.38], [-1.25, -0.38]], '#c43a3a');
-      g.fillStyle = '#f6efe0'; g.fillRect(-1.35, -0.05, 2.85, 0.14);
-      for (const x of [-0.8, -0.1, 0.6]) ell(x, -0.2, 0.08, 0.08, '#2c2c3a', false);
-    } else if (carId === 'shark') {
-      ell(0.05, 0, 1.5, 0.45, '#5b7fa6');
-      g.save(); g.beginPath(); g.ellipse(0.05, 0, 1.49, 0.44, 0, 0, 7); g.clip(); g.fillStyle = '#e8eef4'; g.fillRect(-1.6, -0.5, 3.3, 0.38); g.restore();
-      g.lineWidth = lw; g.strokeStyle = out; g.beginPath(); g.ellipse(0.05, 0, 1.5, 0.45, 0, 0, 7); g.stroke();
-      shape([[-1.4, 0], [-1.9, 0.45], [-1.75, 0], [-1.9, -0.4]], '#4d6f96');
-      ell(1.15, 0.1, 0.08, 0.08, '#111', false);
-      g.fillStyle = '#fff'; g.beginPath(); g.moveTo(1.15, -0.12); for (let i = 0; i < 4; i++) { g.lineTo(1.2 + i * 0.08, -0.22); g.lineTo(1.24 + i * 0.08, -0.12); } g.fill();
-    } else if (carId === 'lion') {
-      shape([[-1.5, 0.28], [1.2, 0.32], [1.05, -0.38], [-1.25, -0.38]], '#f2c230');
-      g.fillStyle = '#7a4a22'; g.fillRect(-1.35, -0.06, 2.4, 0.12);
-      g.fillStyle = '#e07a1f';
-      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.ellipse(1.45 + Math.cos(a) * 0.38, 0.32 + Math.sin(a) * 0.38, 0.17, 0.11, a, 0, 7); g.fill(); }
-      ell(1.45, 0.32, 0.36, 0.36, '#e07a1f');
-      ell(1.5, 0.3, 0.26, 0.24, '#f7d36a');
-      g.fillStyle = out; g.beginPath(); g.arc(1.42, 0.38, 0.04, 0, 7); g.arc(1.6, 0.38, 0.04, 0, 7); g.fill();
-      ell(1.52, 0.24, 0.06, 0.045, '#8a3a1a', false);
+    // vehicle body
+    if (carId === 'cart') { // jeep
+      shape([[-1.45, -0.28], [1.4, -0.28], [1.52, 0.22], [0.75, 0.3], [-1.45, 0.34]], '#3f9a46');
+      g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(-1.4, -0.28, 2.8, 0.18);
+      g.strokeStyle = out; g.lineWidth = 0.08; g.beginPath(); g.moveTo(0.6, 0.3); g.lineTo(0.8, 0.95); g.stroke(); // windshield frame
+      ell(-1.6, 0.12, 0.3, 0.3, '#2b2233'); ell(-1.6, 0.12, 0.13, 0.13, '#9aa4b2', false); // spare tire
+      ell(1.46, 0.08, 0.1, 0.12, '#ffd23f');
+    } else if (carId === 'barrel') { // dirt bike
+      g.strokeStyle = out; g.lineWidth = 0.13; g.beginPath(); g.moveTo(-AX, -AY); g.lineTo(-0.1, 0.12); g.lineTo(0.75, 0.3); g.lineTo(AX, -AY); g.stroke();
+      g.strokeStyle = '#9aa4b2'; g.lineWidth = 0.08; g.stroke();
+      shape([[-0.35, 0.12], [0.55, 0.12], [0.75, 0.42], [-0.15, 0.48]], '#ff8a2b'); // tank
+      shape([[-0.95, 0.3], [-0.2, 0.3], [-0.2, 0.42], [-1.0, 0.45]], '#1b1820'); // seat
+      g.strokeStyle = out; g.lineWidth = 0.09; g.beginPath(); g.moveTo(0.75, 0.3); g.lineTo(0.85, 0.75); g.lineTo(0.62, 0.8); g.stroke(); // handlebar
+      shape([[0.85, -0.1], [1.4, -0.05], [1.3, 0.12], [0.9, 0.08]], '#ff8a2b'); // front fender
+    } else if (carId === 'ship') { // buggy
+      shape([[-1.4, -0.3], [1.35, -0.3], [1.55, 0.05], [-1.5, 0.12]], '#ff8a2b');
+      g.fillStyle = '#1b1820'; g.fillRect(-0.5, -0.12, 0.9, 0.1);
+      ell(1.45, -0.05, 0.08, 0.1, '#ffd23f');
+    } else if (carId === 'shark') { // rally car (open top)
+      shape([[-1.5, -0.3], [1.45, -0.3], [1.6, 0.12], [0.55, 0.32], [-1.5, 0.36]], '#2f7bd8');
+      g.fillStyle = '#ffffff'; g.fillRect(-1.45, 0.02, 2.95, 0.1); g.fillRect(-1.45, 0.16, 2.95, 0.05);
+      ell(-0.55, -0.05, 0.2, 0.2, '#ffffff'); g.fillStyle = out; g.fillRect(-0.58, -0.15, 0.06, 0.2); // race number
+      shape([[-1.5, 0.36], [-1.6, 0.75], [-1.05, 0.75], [-1.15, 0.36]], '#1b1820'); // spoiler
+      ell(1.52, 0.02, 0.1, 0.12, '#ffd23f');
+    } else if (carId === 'lion') { // monster truck
+      shape([[-1.55, -0.05], [1.45, -0.05], [1.58, 0.45], [0.8, 0.5], [-1.55, 0.52]], '#c4161c');
+      g.fillStyle = '#ffd23f'; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(-1.2 + i * 0.7, 0.05); g.quadraticCurveTo(-0.95 + i * 0.7, 0.45, -0.7 + i * 0.7, 0.05); g.fill(); } // flame decals
+      shape([[1.45, -0.05], [1.75, -0.02], [1.75, 0.18], [1.5, 0.2]], '#5b5b66'); // bumper
+      g.fillStyle = '#9aa4b2'; g.fillRect(-1.25, 0.52, 0.12, 0.45); g.fillRect(-1.05, 0.52, 0.12, 0.38); // exhaust stacks
     }
     // stretchy rubber arm: a bezier that wobbles while it is out, a big fist and speed marks
     { const sh = [0.02, 0.6];
@@ -1197,12 +1216,20 @@
     for (const x of [-AX, AX]) {
       g.save(); g.translate(x, -AY); g.rotate(wr);
       ell(0, 0, WR, WR, '#2b2233');
-      ell(0, 0, WR * 0.68, WR * 0.68, '#c98a4b');
-      g.strokeStyle = '#7a4a22'; g.lineWidth = 0.06; g.beginPath();
-      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; g.moveTo(0, 0); g.lineTo(Math.cos(a) * WR * 0.66, Math.sin(a) * WR * 0.66); } g.stroke();
+      g.fillStyle = '#4a4458'; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; g.save(); g.rotate(a); g.fillRect(WR - 0.07, -0.05, 0.1, 0.1); g.restore(); } // tread
+      ell(0, 0, WR * 0.55, WR * 0.55, '#c9d2dc');
+      g.strokeStyle = '#8d97a6'; g.lineWidth = 0.06; g.beginPath();
+      for (let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5; g.moveTo(0, 0); g.lineTo(Math.cos(a) * WR * 0.52, Math.sin(a) * WR * 0.52); } g.stroke();
       ell(0, 0, 0.08, 0.08, '#ffd23f', false);
       g.restore();
     }
+  }
+  function drawHelmet(g) { // a racing helmet instead of a pirate hat
+    const hx = HEAD[0], hy = HEAD[1], out = '#2a1a10';
+    g.lineWidth = 0.05; g.strokeStyle = out;
+    g.beginPath(); g.arc(hx, hy + 0.02, 0.35, -0.12, Math.PI + 0.12); g.closePath(); g.fillStyle = '#e8364f'; g.fill(); g.stroke();
+    g.fillStyle = '#fff'; g.fillRect(hx - 0.05, hy + 0.12, 0.1, 0.25);
+    g.beginPath(); g.ellipse(hx + 0.27, hy + 0.1, 0.12, 0.06, -0.3, 0, 7); g.fillStyle = '#1b1820'; g.fill(); g.stroke(); // visor tip
   }
   function drawHat(g, id) {
     const hx = HEAD[0], hy = HEAD[1], out = '#2a1a10';
@@ -1485,21 +1512,15 @@
     ctx.textBaseline = 'middle';
     const sc = clamp(Math.min(W, H) / 420, 0.8, 1.3);
     const bossMode = phase === 'boss' || phase === 'win';
-    let y = 18;
-    if (!bossMode) {
-      y = drawTrack(18, sc) + 6;
-      ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(12, y, 80 * sc, 34 * sc, 12); ctx.fill();
-      txt(`💀 ${kos}`, 12 + 40 * sc, y + 18 * sc, 18 * sc, '#fff', 'center');
-      const left = Math.max(0, Math.round(FINISH - me.car.x));
-      if (phase === 'play') txt(`${left} ${T.toGo}`, W / 2, y + 18 * sc, 13 * sc, '#fff', 'center', 800);
-    } else if (ship) {
-      const bw = Math.min(W - 40, 420), bx = (W - bw) / 2;
-      ctx.font = `900 ${15 * sc}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = '#1b1530';
-      ctx.strokeText(`⚓ ${ship.name}`, W / 2, y + 4); txt(`⚓ ${ship.name}`, W / 2, y + 4, 15 * sc, '#fff', 'center');
-      ctx.fillStyle = '#1b1530'; rr(bx, y + 16, bw, 18 * sc, 9); ctx.fill();
-      ctx.fillStyle = '#e8364f'; rr(bx + 3, y + 19, Math.max(0, (bw - 6) * ship.hp / ship.hpMax), 18 * sc - 6, 6); ctx.fill();
-      txt(`${Math.ceil(ship.hp)} / ${ship.hpMax}`, W / 2, y + 16 + 9 * sc, 11 * sc, '#fff', 'center');
-      y += 26 + 18 * sc;
+    let y = 14;
+    { // distance, HCR style: big in the middle, your best below it
+      const d = Math.max(0, Math.round(me.car.x - 6)), bst = Math.round(save.best[island().id] || 0), rec = bst > 0 && d > bst;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
+      ctx.font = `${34 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 7 * sc; ctx.strokeStyle = '#1b1530';
+      ctx.strokeText(`${d} m`, W / 2, y); ctx.fillStyle = rec ? '#ffd23f' : '#fff'; ctx.fillText(`${d} m`, W / 2, y);
+      ctx.font = `800 ${12 * sc}px system-ui, sans-serif`; ctx.lineWidth = 4 * sc; const bt = `${T.best} ${Math.max(bst, rec ? d : 0)} m`;
+      ctx.strokeText(bt, W / 2, y + 38 * sc); ctx.fillStyle = rec ? '#ffd23f' : 'rgba(255,255,255,.85)'; ctx.fillText(bt, W / 2, y + 38 * sc);
+      ctx.textBaseline = 'middle';
     }
     // coins (right)
     const ct = fmt(me.coins);
@@ -1522,7 +1543,7 @@
     }
     // meat gauge
     const my = y + 40 * sc, st = carStats(), k = me.meat / st.tank;
-    ctx.font = `${16 * sc}px system-ui`; ctx.textAlign = 'left'; ctx.fillText('🍖', 12, my + 8 * sc);
+    ctx.font = `${16 * sc}px system-ui`; ctx.textAlign = 'left'; ctx.fillText('⛽', 12, my + 8 * sc);
     ctx.fillStyle = 'rgba(15,20,40,.7)'; rr(36 * sc, my, 90 * sc, 14 * sc, 7); ctx.fill();
     ctx.fillStyle = k < 0.25 ? (Math.sin(time * 10) > 0 ? '#e8364f' : '#ff8a2b') : '#ffb35c'; rr(36 * sc + 2, my + 2, Math.max(0, (90 * sc - 4) * k), 14 * sc - 4, 5); ctx.fill();
     // feed
@@ -1593,7 +1614,7 @@
   function renderMenu() {
     $('mCoins').textContent = fmt(save.coins);
     $('mStage').textContent = `🏝️ ${island().name}`;
-    $('mBoss').textContent = `⚓ ${T.boss} #${save.bosses + 1}`;
+    $('mBoss').textContent = `🏆 ${T.best} ${Math.round(save.best[island().id] || 0)} m`;
     $('playBtn').textContent = T.play;
     $('shopLbl').textContent = '🛒 ' + T.shop;
     const car = byId('cars', save.eq.cars), can = (x, cat) => !save.owned[cat].includes(x.id) && save.coins >= x.cost;
@@ -1620,7 +1641,7 @@
     $('shopBack').textContent = T.back;
     $('shopHint').textContent = shopTab === 'hats' ? T.hint : '';
     const tabs = $('tabs'); tabs.innerHTML = '';
-    for (const id of ['upgrades', 'cars', 'islands', 'hats']) {
+    for (const id of ['upgrades', 'cars', 'islands']) {
       const b = document.createElement('button'); b.className = 'tab' + (id === shopTab ? ' on' : ''); b.textContent = T[id];
       b.onclick = () => { shopTab = id; sfx.ui(); renderShop(); };
       tabs.appendChild(b);
@@ -1669,7 +1690,7 @@
   function drawPreview(canvas, carId, hatId, zoomHat) {
     const g = canvas.getContext('2d');
     const gr = g.createLinearGradient(0, 0, 0, canvas.height);
-    gr.addColorStop(0, '#bfe6ff'); gr.addColorStop(1, '#fdf3dc');
+    gr.addColorStop(0, '#9fdcff'); gr.addColorStop(1, '#e8f7ff');
     g.fillStyle = gr; g.fillRect(0, 0, canvas.width, canvas.height);
     g.fillStyle = '#5cc64c'; g.fillRect(0, canvas.height * 0.86, canvas.width, canvas.height);
     g.save();
@@ -1702,23 +1723,23 @@
 
   function showResult() {
     phase = 'result';
-    save.bosses++;
-    const stage = save.bosses;
-    const reward = me.coins + 1000 + stage * 250;
+    const d = Math.round(Math.max(0, me.best - 6)), key = island().id, prev = save.best[key] || 0, rec = d > prev;
+    if (rec) save.best[key] = d;
+    const reward = me.coins + Math.round(d * 0.5); // what you picked up, plus a little per meter
     save.coins += reward;
     persist();
-    $('rTitle').textContent = T.won;
-    $('rSub').textContent = `🏝️ ${island().name} · ${T.boss} #${stage}`;
+    send('level_completed');
+    $('rTitle').textContent = me.reason === 'fuel' ? T.outFuel : T.driverDown;
+    $('rSub').textContent = rec && prev > 0 ? '🏆 ' + T.newRecord : `${island().name} · ${T.best} ${Math.max(prev, d)} m`;
     const board = $('rBoard'); board.innerHTML = '';
-    for (const [k, v] of [['📏 ' + T.dist, `${FINISH} m`], ['💀 ' + T.kos, kos], ['🤸 ' + T.flipsL, me.flips]]) {
-      const row = document.createElement('div'); row.className = 'brow';
+    for (const [k, v] of [['📏 ' + T.dist, `${d} m`], ['🏆 ' + T.best, `${Math.max(prev, d)} m`], ['🤸 ' + T.flipsL, me.flips]]) {
+      const row = document.createElement('div'); row.className = 'brow' + (k.startsWith('🏆') && rec ? ' me' : '');
       row.innerHTML = '<span></span><span></span>'; row.firstChild.textContent = k; row.lastChild.textContent = v;
       board.appendChild(row);
     }
     $('rCoins').textContent = '+' + fmt(reward);
-    const news = HATS.filter(x => x.boss === stage).map(x => x.name);
-    $('rUnlock').classList.toggle('hidden', !news.length);
-    $('rUnlock').textContent = '🔓 ' + T.unlocked + news.join(', ');
+    $('rUnlock').classList.add('hidden');
+    $('retryBtn').textContent = T.retry;
     $('contBtn').textContent = T.cont;
     show('result');
     setTimeout(() => sfx.coins(), 250);
@@ -1845,7 +1866,7 @@
       if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); unlockAudio(); doPunch(); }
     });
     window.addEventListener('keyup', e => { if (KEYS[e.code]) input[KEYS[e.code]] = false; });
-    cv.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); doPunch(); }); // tap anywhere to punch
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); });
 
     try {
       if (window.bridge) { await bridge.initialize(); B = bridge; }
@@ -1870,6 +1891,7 @@
     $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'upgrades'; show('shop'); renderShop(); };
     $('shopBack').onclick = () => { show('menu'); renderMenu(); };
     $('contBtn').onclick = toMenu;
+    $('retryBtn').onclick = () => { toMenu(); startRace(); };
 
     toMenu();
     requestAnimationFrame(t => {
