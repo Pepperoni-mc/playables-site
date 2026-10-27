@@ -61,7 +61,7 @@
   #match { background: rgba(20,16,44,.92); color: #fff; justify-content: center; gap: 12px; }
   #match h2 { margin: 0; font-size: 26px; font-weight: 900; }
   #match .count { font-size: 44px; font-weight: 900; color: var(--gold); }
-  .plist { width: min(340px, 90vw); display: flex; flex-direction: column; gap: 6px; min-height: 330px; }
+  .plist { width: min(340px, 90vw); display: flex; flex-direction: column; gap: 6px; min-height: 170px; }
   .prow { background: rgba(255,255,255,.1); border-radius: 10px; padding: 6px 12px; display: flex; justify-content: space-between; font-weight: 700; animation: slide .25s ease-out; }
   .prow .ping { opacity: .6; font-size: 13px; }
   .prow.me { background: var(--green); }
@@ -113,7 +113,7 @@
 <div id="match" class="screen hidden">
   <div class="spinner"></div>
   <h2 id="matchTitle"></h2>
-  <div class="count" id="matchCount">1/10</div>
+  <div class="count" id="matchCount">1/5</div>
   <div class="plist" id="plist"></div>
 </div>
 
@@ -134,19 +134,19 @@
   const STRINGS = {
     en: { play: 'PLAY', boss: 'BOSS', stage: 'STAGE', shop: 'SHOP', back: 'BACK', hint: 'Defeat bosses to unlock more', blocks: 'Blocks', worlds: 'Worlds', avatars: 'Avatars', upgrades: 'Upgrades',
           finding: 'Finding players...', you: 'You', perfect: 'PERFECT!', miss: 'MISS!', floors: 'floors', shieldLost: 'SHIELD -1', fell: 'COLLAPSE!', go: 'GO!',
-          bossIn: 'YOU ARE #1!', bossIn2: 'BOSS INCOMING', won: 'BOSS DEFEATED!', rank: 'Rank #1 of 10', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'EQUIP', equipped: 'EQUIPPED',
+          bossIn: 'YOU ARE #1!', bossIn2: 'BOSS INCOMING', won: 'BOSS DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'EQUIP', equipped: 'EQUIPPED',
           beat: 'Beat boss #', free: 'FREE', max: 'MAX', rush: 'RUSH!', smash: 'SMASH!', blocked: 'BLOCKED!', passed: 'You passed', missed: 'missed!', tapHint: 'TAP TO DROP', overtime: 'OVERTIME', rally: 'RALLY',
           u_perfect: 'Perfect zone', u_perfect_d: 'Wider perfect window', u_slow: 'Slow motion', u_slow_d: 'Blocks move slower', u_start: 'Head start', u_start_d: '+2 floors at start',
           u_power: 'Boss damage', u_power_d: '+25% damage to boss', u_shield: 'Extra shield', u_shield_d: '+1 shield per round', none: 'None' },
     es: { play: 'JUGAR', boss: 'JEFE', stage: 'NIVEL', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota jefes para desbloquear más', blocks: 'Bloques', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Mejoras',
           finding: 'Buscando jugadores...', you: 'Tú', perfect: '¡PERFECTO!', miss: '¡FALLASTE!', floors: 'pisos', shieldLost: 'ESCUDO -1', fell: '¡DERRUMBE!', go: '¡YA!',
-          bossIn: '¡ERES EL #1!', bossIn2: 'LLEGA EL JEFE', won: '¡JEFE DERROTADO!', rank: 'Puesto #1 de 10', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EN USO',
+          bossIn: '¡ERES EL #1!', bossIn2: 'LLEGA EL JEFE', won: '¡JEFE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EN USO',
           beat: 'Vence al jefe #', free: 'GRATIS', max: 'MÁX', rush: '¡PRISA!', smash: '¡GOLPE!', blocked: '¡BLOQUEADO!', passed: 'Pasaste a', missed: '¡falló!', tapHint: 'TOCA PARA SOLTAR', overtime: 'TIEMPO EXTRA', rally: 'REMONTADA',
           u_perfect: 'Zona perfecta', u_perfect_d: 'Perfecto más fácil', u_slow: 'Cámara lenta', u_slow_d: 'Bloques más lentos', u_start: 'Ventaja', u_start_d: '+2 pisos al inicio',
           u_power: 'Daño al jefe', u_power_d: '+25% de daño al jefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Ninguno' },
     pt: { play: 'JOGAR', boss: 'CHEFE', stage: 'FASE', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote chefes para desbloquear mais', blocks: 'Blocos', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Melhorias',
           finding: 'Procurando jogadores...', you: 'Você', perfect: 'PERFEITO!', miss: 'ERROU!', floors: 'andares', shieldLost: 'ESCUDO -1', fell: 'DESABOU!', go: 'JÁ!',
-          bossIn: 'VOCÊ É O #1!', bossIn2: 'CHEFE CHEGANDO', won: 'CHEFE DERROTADO!', rank: 'Posição #1 de 10', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EM USO',
+          bossIn: 'VOCÊ É O #1!', bossIn2: 'CHEFE CHEGANDO', won: 'CHEFE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EM USO',
           beat: 'Vença o chefe #', free: 'GRÁTIS', max: 'MÁX', rush: 'PRESSA!', smash: 'PANCADA!', blocked: 'BLOQUEADO!', passed: 'Você passou', missed: 'errou!', tapHint: 'TOQUE PARA SOLTAR', overtime: 'PRORROGAÇÃO', rally: 'VIRADA',
           u_perfect: 'Zona perfeita', u_perfect_d: 'Perfeito mais fácil', u_slow: 'Câmera lenta', u_slow_d: 'Blocos mais lentos', u_start: 'Vantagem', u_start_d: '+2 andares no início',
           u_power: 'Dano ao chefe', u_power_d: '+25% de dano ao chefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Nenhum' },
@@ -229,7 +229,7 @@
   }
 
   // ---------- Towers ----------
-  const SIZE = 10, BH = 2, BASE = 20, RANGE = 11, ROUND = 60, BOTS = 9;
+  const SIZE = 10, BH = 2, BASE = 20, RANGE = 11, ROUND = 60, BOTS = 4;
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
@@ -287,7 +287,7 @@
     bots = names.map((name, i) => {
       const skins = BLOCKS.slice(0, 7);
       const b = { name, avatar: BOT_AVATARS[(Math.random() * BOT_AVATARS.length) | 0], tower: makeTower(skins[(i + 1) % skins.length].c, 0),
-                  rate: rnd(0.75, 1.25) * (i < 3 ? 1.15 : 1), perfectP: rnd(0.15, 0.4), missP: rnd(0.03, 0.08), next: rnd(0.3, 1.2), streak: 0, bias: i % 4 };
+                  rate: rnd(0.75, 1.25) * (i < 2 ? 1.15 : 1), perfectP: rnd(0.15, 0.4), missP: rnd(0.03, 0.08), next: rnd(0.3, 1.2), streak: 0, bias: i % 4 };
       return b;
     });
     elapsed = 0; goSfx = false; overtime = false; feed = []; popups = []; parts = []; boss = null; shake = 0; rushT = 0; lastRank = 10;
@@ -609,8 +609,9 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const sz = clamp(W / 32, 11, 15);
     ctx.font = `800 ${sz}px system-ui, sans-serif`;
-    const text = `${avatar ? avatar + ' ' : ''}${name}`;
+    const text = `${avatar ? avatar + ' ' : ''}${name.length > 9 ? name.slice(0, 8) + '…' : name}`;
     const tw = Math.max(ctx.measureText(text).width, 40) + 16;
+    x = clamp(x, tw / 2 + 6, W - tw / 2 - 6);
     ctx.fillStyle = highlight ? 'rgba(54,196,107,.95)' : 'rgba(20,16,44,.75)';
     rr(x - tw / 2, y - sz * 1.9, tw, sz * 2.9, 8); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.fillText(text, x, y - sz * 1.0);
@@ -646,7 +647,7 @@
       drawTower(me.tower, mx, my, sc, { cur: phase === 'play' || phase === 'boss' ? cur : null });
       label(mx, ly, T.you, me.avatar, floorsOf(me.tower), true);
       if (phase === 'play' || phase === 'bossIntro') { // VS badge between the two towers
-        const vx = (mx + lx) / 2 + 8, vy = ly - 6, r = clamp(W * 0.05, 15, 24);
+        const vx = (mx + lx) / 2, vy = ly - 6, r = clamp(W * 0.045, 15, 22);
         ctx.fillStyle = '#e8364f'; ctx.beginPath(); ctx.arc(vx, vy, r, 0, 7); ctx.fill();
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
         ctx.textBaseline = 'middle'; txt('VS', vx, vy + 1, r * 0.8, '#fff', 'center');
@@ -679,7 +680,7 @@
       ctx.fillStyle = p.isMe ? 'rgba(54,196,107,.9)' : p === opp && !dim ? 'rgba(232,54,79,.75)' : 'rgba(20,16,44,.6)';
       rr(x, y0, sw, sh, 6); ctx.fill();
       txt(String(i + 1), x + sw / 2, y0 + 8 * sc, 9 * sc, i === 0 ? '#ffc531' : 'rgba(255,255,255,.8)', 'center', 900);
-      const bh = Math.max(2, (sh - 36 * sc) * f / maxF), bw = sw * 0.5, bx = x + (sw - bw) / 2, by = y0 + sh - 18 * sc - bh;
+      const bh = Math.max(2, (sh - 36 * sc) * f / maxF), bw = Math.min(sw * 0.5, 22 * sc), bx = x + (sw - bw) / 2, by = y0 + sh - 18 * sc - bh;
       ctx.fillStyle = hsl(p.tower.skin(Math.max(0, f - 1)), 0); ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(bx + bw / 2, by, bw / 2, bh);
       ctx.font = `${10 * sc}px system-ui`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
@@ -863,16 +864,16 @@
       row.innerHTML = `<span></span><span class="ping">${isMe ? '' : (20 + Math.random() * 90 | 0) + ' ms'}</span>`;
       row.firstChild.textContent = name;
       list.appendChild(row);
-      $('matchCount').textContent = `${list.children.length}/10`;
+      $('matchCount').textContent = `${list.children.length}/${BOTS + 1}`;
     };
     add(`${myAvatar() ? myAvatar() + ' ' : ''}${T.you}`, true);
     let n = 0;
     const tick = () => {
       if (phase !== 'match') return;
-      if (n < BOTS) { const name = randName(used); names.push(name); add(name, false); n++; sfx.tick(n); setTimeout(tick, rnd(120, 420)); }
-      else setTimeout(() => startRace(names), 450);
+      if (n < BOTS) { const name = randName(used); names.push(name); add(name, false); n++; sfx.tick(n); setTimeout(tick, rnd(90, 220)); }
+      else setTimeout(() => startRace(names), 300);
     };
-    setTimeout(tick, 500);
+    setTimeout(tick, 250);
   }
 
   function startRace(names) {
