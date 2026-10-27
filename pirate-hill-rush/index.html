@@ -100,6 +100,25 @@
     box-shadow: 0 5px 0 #8a3515, 0 8px 16px rgba(0,0,0,.35); background: conic-gradient(#ff8a2b var(--p, 360deg), #6b5a4a 0); }
   #punch.on { transform: scale(.92); }
   #punch .pl { position: absolute; bottom: -18px; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  /* PC: keyboard like Hill Climb Racing, so the touch stick and pedals hide and a key legend shows */
+  body.pc #stick, body.pc #gas, body.pc #brake { display: none; }
+  #keys { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: none; gap: 8px; color: #fff; font-weight: 800; font-size: 13px; }
+  body.pc #keys { display: flex; }
+  .key { background: rgba(15,20,40,.72); border-radius: 8px; padding: 6px 10px; white-space: nowrap; }
+  .key b { display: inline-block; min-width: 22px; padding: 1px 6px; margin-right: 6px; background: #fff; color: #2a1d12; border-radius: 5px; box-shadow: 0 2px 0 #b9ab92; text-align: center; }
+  body.pc #punch { bottom: 70px; }
+  /* Shop: HCR-style stat bars and upgrade level segments */
+  .stats { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; }
+  .stat span { width: 54px; text-align: left; opacity: .75; }
+  .stat i { flex: 1; height: 7px; background: #eadfc8; border-radius: 4px; overflow: hidden; }
+  .stat i b { display: block; height: 100%; background: linear-gradient(90deg, #ffb02e, #ff7a1f); }
+  .segs { display: flex; gap: 2px; width: 100%; }
+  .segs b { flex: 1; height: 9px; border-radius: 2px; background: #eadfc8; }
+  .segs b.on { background: var(--green); }
+  .vhead { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 8px 12px 8px 8px; box-shadow: 0 4px 0 #d6c39c; }
+  .vhead canvas { width: 140px; height: 98px; border-radius: 10px; flex: none; }
+  .vhead .nm { font-weight: 900; font-size: 20px; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -112,6 +131,7 @@
   <div id="brake" class="pedal"></div>
   <div id="gas" class="pedal"></div>
   <div id="punch" class="hidden">👊<span class="pl" id="punchLbl"></span></div>
+  <div id="keys"></div>
 </div>
 
 <div id="menu" class="screen">
@@ -161,53 +181,70 @@
 
   // ---------- Localization ----------
   const STRINGS = {
-    en: { play: 'SET SAIL', boss: 'ADMIRAL', stage: 'ISLAND', shop: 'SHOP', back: 'BACK', hint: 'Defeat admirals to unlock more', cars: 'Vehicles', hats: 'Hats', upgrades: 'Upgrades',
+    en: { play: 'SET SAIL', boss: 'ADMIRAL', stage: 'ISLAND', shop: 'SHOP', back: 'BACK', hint: 'Defeat admirals to unlock more hats', cars: 'Vehicles', hats: 'Hats', upgrades: 'Upgrades', islands: 'Islands',
           finding: 'Finding pirates...', you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: 'PUNCH', crash: 'CRASH!', outMeat: 'OUT OF MEAT!',
           backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', rally: 'TAILWIND!', finish: 'FINISH!', bossIn: 'YOU ARE #1!', bossIn2: 'THE ADMIRAL ATTACKS!',
-          won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'EQUIP', equipped: 'EQUIPPED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
+          won: 'ADMIRAL DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'SELECT', equipped: 'SELECTED', beat: 'Beat admiral #', free: 'FREE', max: 'MAX',
           passed: 'You passed', rammed: 'RAMMED! SLOWED', cannon: 'CANNONBALL!', fruit: 'FRUIT POWER!', punchHint: 'PUNCH THE SHIP!', ctlHint: 'Hold GAS · tilt with the stick',
-          toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT',
-          u_engine: 'Engine', u_engine_d: 'Faster and stronger', u_susp: 'Suspension', u_susp_d: 'Softer landings, better tilt', u_grip: 'Grip', u_grip_d: 'Climb steeper hills',
-          u_tank: 'Meat tank', u_tank_d: '+10 meat capacity' },
-    es: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ISLA', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota almirantes para desbloquear más', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras',
+          ctlHintPc: 'Hold → to drive · ← → also tilt in the air', toGo: 'm to go', didFlip: 'did a backflip!', bigAir: 'caught big air!', checkpoint: 'CHECKPOINT',
+          speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Meat', richer: 'richer coins',
+          u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
+          u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Meat tank', u_tank_d: 'Carry more meat',
+          u_turbo: 'Turbo', u_turbo_d: 'Faster acceleration', u_stab: 'Stability', u_stab_d: 'Harder to flip over',
+          isl_grass: 'Gentle hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills at night', isl_sky: 'Low gravity!' },
+    es: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ISLA', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota almirantes para desbloquear sombreros', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras', islands: 'Islas',
           finding: 'Buscando piratas...', you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: 'GOLPE', crash: '¡CHOQUE!', outMeat: '¡SIN CARNE!',
           backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', rally: '¡VIENTO A FAVOR!', finish: '¡META!', bossIn: '¡ERES EL #1!', bossIn2: '¡ATACA EL ALMIRANTE!',
-          won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EN USO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
+          won: '¡ALMIRANTE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ELEGIR', equipped: 'ELEGIDO', beat: 'Vence al almirante #', free: 'GRATIS', max: 'MÁX',
           passed: 'Pasaste a', rammed: '¡EMBESTIDA! MÁS LENTO', cannon: '¡CAÑONAZO!', fruit: '¡PODER DE FRUTA!', punchHint: '¡GOLPEA EL BARCO!', ctlHint: 'Mantén GAS · inclina con la palanca',
-          toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL',
-          u_engine: 'Motor', u_engine_d: 'Más rápido y fuerte', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes suaves, mejor control', u_grip: 'Agarre', u_grip_d: 'Sube colinas más empinadas',
-          u_tank: 'Tanque de carne', u_tank_d: '+10 de carne' },
-    pt: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ILHA', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote almirantes para desbloquear mais', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias',
+          ctlHintPc: 'Mantén → para avanzar · ← → también giran en el aire', toGo: 'm para la meta', didFlip: '¡hizo un mortal!', bigAir: '¡voló alto!', checkpoint: 'PUNTO DE CONTROL',
+          speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Carne', richer: 'monedas más valiosas',
+          u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
+          u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque de carne', u_tank_d: 'Lleva más carne',
+          u_turbo: 'Turbo', u_turbo_d: 'Acelera más rápido', u_stab: 'Estabilidad', u_stab_d: 'Cuesta más voltearse',
+          isl_grass: 'Colinas suaves', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!' },
+    pt: { play: 'ZARPAR', boss: 'ALMIRANTE', stage: 'ILHA', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote almirantes para desbloquear chapéus', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias', islands: 'Ilhas',
           finding: 'Procurando piratas...', you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: 'SOCO', crash: 'BATEU!', outMeat: 'SEM CARNE!',
           backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', rally: 'VENTO A FAVOR!', finish: 'CHEGADA!', bossIn: 'VOCÊ É O #1!', bossIn2: 'O ALMIRANTE ATACA!',
-          won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EM USO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
+          won: 'ALMIRANTE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', beat: 'Vença o almirante #', free: 'GRÁTIS', max: 'MÁX',
           passed: 'Você passou', rammed: 'ABALROADO! MAIS LENTO', cannon: 'BALA DE CANHÃO!', fruit: 'PODER DA FRUTA!', punchHint: 'SOQUE O NAVIO!', ctlHint: 'Segure GÁS · incline com a alavanca',
-          toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT',
-          u_engine: 'Motor', u_engine_d: 'Mais rápido e forte', u_susp: 'Suspensão', u_susp_d: 'Pousos suaves, mais controle', u_grip: 'Aderência', u_grip_d: 'Sobe ladeiras mais íngremes',
-          u_tank: 'Tanque de carne', u_tank_d: '+10 de carne' },
+          ctlHintPc: 'Segure → para andar · ← → também giram no ar', toGo: 'm até a chegada', didFlip: 'deu um mortal!', bigAir: 'voou alto!', checkpoint: 'CHECKPOINT',
+          speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Carne', richer: 'moedas mais valiosas',
+          u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
+          u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque de carne', u_tank_d: 'Leva mais carne',
+          u_turbo: 'Turbo', u_turbo_d: 'Acelera mais rápido', u_stab: 'Estabilidade', u_stab_d: 'Mais difícil capotar',
+          isl_grass: 'Colinas suaves', isl_desert: 'Dunas esburacadas', isl_snow: 'Gelo escorregadio', isl_night: 'Colinas enormes à noite', isl_sky: 'Gravidade baixa!' },
   };
   let T = STRINGS.en;
 
   // ---------- Content ----------
+  // Like Hill Climb Racing: every vehicle drives differently and has its own 4 upgrades (the 4th one is special per vehicle).
   const CARS = [
-    { id: 'cart',   name: 'Cart',      boss: 0, cost: 0 },
-    { id: 'barrel', name: 'Barrel',    boss: 1, cost: 150 },
-    { id: 'ship',   name: 'Mini Ship', boss: 2, cost: 350 },
-    { id: 'shark',  name: 'Shark Sub', boss: 3, cost: 600 },
-    { id: 'lion',   name: 'Lion Ship', boss: 5, cost: 1000 },
+    { id: 'cart',   name: 'Cart',      cost: 0,      upBase: 500,  sp: 'fwd',   top: 13,   acc: 17, mu: 0.9,  airT: 6.5, tank: 40, inertia: 1.1, k: 65, damp: 4.5 },
+    { id: 'barrel', name: 'Barrel',    cost: 15000,  upBase: 900,  sp: 'air',   top: 13.5, acc: 18, mu: 0.88, airT: 10,  tank: 32, inertia: 0.8, k: 55, damp: 3.5 },
+    { id: 'ship',   name: 'Mini Ship', cost: 35000,  upBase: 1500, sp: 'tank',  top: 15.5, acc: 16, mu: 0.95, airT: 6,   tank: 60, inertia: 1.4, k: 70, damp: 5.5 },
+    { id: 'shark',  name: 'Shark Sub', cost: 75000,  upBase: 2500, sp: 'turbo', top: 17,   acc: 21, mu: 1.0,  airT: 7,   tank: 45, inertia: 1.1, k: 70, damp: 5 },
+    { id: 'lion',   name: 'Lion Ship', cost: 150000, upBase: 4000, sp: 'stab',  top: 17.5, acc: 20, mu: 1.12, airT: 7.5, tank: 55, inertia: 1.5, k: 75, damp: 6 },
   ];
+  const UPG = ['engine', 'susp', 'tires', 'sp'], UPG_MAX = 10;
+  const UPG_MUL = { engine: 1.2, susp: 0.8, tires: 1, sp: 1.1 };
+  const UPG_ICON = { engine: '🔥', susp: '🌀', tires: '🛞', fwd: '⚙️', air: '🪽', tank: '🍖', turbo: '💨', stab: '⚓' };
+  // Islands are the stages: bought with coins, each with its own physics, and richer coins further on.
+  const ISLANDS = [
+    { id: 'grass',  name: 'Palm Island',  cost: 0,     g: 13, grip: 1,    amp: 1,   bump: 1,   rich: 0, theme: 0 },
+    { id: 'desert', name: 'Dune Island',  cost: 8000,  g: 13, grip: 0.92, amp: 0.9, bump: 1.7, rich: 0.25, theme: 4 },
+    { id: 'snow',   name: 'Frost Island', cost: 20000, g: 13, grip: 0.72, amp: 1.1, bump: 1,   rich: 0.35, theme: 3 },
+    { id: 'night',  name: 'Night Reef',   cost: 40000, g: 13, grip: 1,    amp: 1.25, bump: 1.2, rich: 0.5, theme: 2 },
+    { id: 'sky',    name: 'Sky Island',   cost: 80000, g: 7,  grip: 1,    amp: 1.4, bump: 1,   rich: 0.65, theme: 5 },
+  ];
+  const COIN_VALUES = [5, 25, 100, 500];
+  const COIN_COLORS = [['#b8692e', '#e8a066'], ['#8d97a6', '#e2e8ef'], ['#e39a12', '#ffd23f'], ['#b3121a', '#ff6a6a']];
   const HATS = [
     { id: 'straw',   name: 'Straw Hat',   boss: 0, cost: 0 },
-    { id: 'bandana', name: 'Bandana',     boss: 1, cost: 120 },
-    { id: 'tricorn', name: 'Captain Hat', boss: 2, cost: 250 },
-    { id: 'marine',  name: 'Marine Cap',  boss: 4, cost: 600 },
-    { id: 'crown',   name: 'Crown',       boss: 6, cost: 1200 },
-  ];
-  const UPGRADES = [
-    { id: 'engine', icon: '🔥', base: 80, max: 5 },
-    { id: 'susp',   icon: '🌀', base: 70, max: 5 },
-    { id: 'grip',   icon: '🛞', base: 70, max: 5 },
-    { id: 'tank',   icon: '🍖', base: 60, max: 5 },
+    { id: 'bandana', name: 'Bandana',     boss: 1, cost: 1200 },
+    { id: 'tricorn', name: 'Captain Hat', boss: 2, cost: 2500 },
+    { id: 'marine',  name: 'Marine Cap',  boss: 4, cost: 6000 },
+    { id: 'crown',   name: 'Crown',       boss: 6, cost: 12000 },
   ];
   const NAMES = ['Redbeard', 'Kraken', 'SaltyPete', 'Barnacle', 'Mako', 'Coral', 'Jinx', 'Rumble', 'Gully', 'Anchor', 'Bilge', 'Stormy', 'Marlin', 'Pegleg', 'Tide',
                  'Squid', 'Nova', 'Rayo', 'Chispa', 'Turbo', 'Mango', 'Pixel', 'Sushi', 'Moka', 'Zed', 'Luna', 'Orion', 'Pepe', 'Tito22', 'Ghost', 'Waffle', 'Frost', 'Dante'];
@@ -217,11 +254,13 @@
     { sky: ['#ff7e5f', '#feb47b'], sea: '#c85c72', far: '#7a3f62', mid: '#5b3a52', grass: '#78c04a', grass2: '#4c8f32', dirt: '#a8653a', dirt2: '#734225', sun: '#ffe08a' },
     { sky: ['#0b1a3a', '#2f4a8a'], sea: '#12305e', far: '#1d2c55', mid: '#1a3a3a', grass: '#3fa35e', grass2: '#2a7444', dirt: '#6b4a3a', dirt2: '#4a3128', sun: '#f2f4ff', night: true },
     { sky: ['#8fb3d6', '#e6f0f8'], sea: '#4f7fa8', far: '#8aa1bb', mid: '#6f8aa6', grass: '#f4fbff', grass2: '#c8dced', dirt: '#7a8aa0', dirt2: '#56647a', sun: '#ffffff' },
+    { sky: ['#f5b25a', '#ffe7b0'], sea: '#2fa4c8', far: '#d49a5a', mid: '#b97a3e', grass: '#f0cf86', grass2: '#d8ac5c', dirt: '#d9a55e', dirt2: '#a8733a', sun: '#fff3c0' },
+    { sky: ['#1b1035', '#6a4aa8'], sea: '#b9a4f2', far: '#8a6ccf', mid: '#5b3a8a', grass: '#d8ccff', grass2: '#a898e0', dirt: '#6f6890', dirt2: '#47405f', sun: '#fff6e0', night: true },
   ];
 
   // ---------- Save (Bridge storage) ----------
-  let save = { coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'] }, eq: { cars: 'cart', hats: 'straw' },
-               up: { engine: 0, susp: 0, grip: 0, tank: 0 }, seen: 2 };
+  const defUp = () => Object.fromEntries(CARS.map(c => [c.id, { engine: 0, susp: 0, tires: 0, sp: 0 }]));
+  let save = { v: 2, coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'], islands: ['grass'] }, eq: { cars: 'cart', hats: 'straw', islands: 'grass' }, up: defUp(), seen: 1 };
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
   function persist() { if (B) B.storage.set(['pirate_hill_rush'], [JSON.stringify(save)]).catch(() => {}); }
@@ -231,16 +270,22 @@
       const d = await B.storage.get(['pirate_hill_rush']);
       if (d[0]) {
         const s = typeof d[0] === 'string' ? JSON.parse(d[0]) : d[0];
-        save = Object.assign(save, s, {
-          owned: Object.assign({}, save.owned, s.owned || {}), eq: Object.assign({}, save.eq, s.eq || {}), up: Object.assign({}, save.up, s.up || {}),
-        });
+        if (!s.v) { // v1: cosmetic-only cars and a 10x cheaper economy. Keep hats, scale coins, start the new vehicles fresh.
+          s.coins = (s.coins || 0) * 10; s.up = {}; s.seen = 1; s.v = 2;
+          s.owned = { hats: (s.owned && s.owned.hats) || ['straw'] }; s.eq = { hats: (s.eq && s.eq.hats) || 'straw' };
+        }
+        const up = defUp();
+        for (const id in up) Object.assign(up[id], (s.up || {})[id] || {});
+        save = Object.assign(save, s, { owned: Object.assign({}, save.owned, s.owned || {}), eq: Object.assign({}, save.eq, s.eq || {}), up });
       }
     } catch (e) {}
   }
-  const CATS = { cars: CARS, hats: HATS };
+  const CATS = { cars: CARS, hats: HATS, islands: ISLANDS };
   const byId = (cat, id) => CATS[cat].find(x => x.id === id) || CATS[cat][0];
-  const upCost = (u) => Math.round(u.base * Math.pow(1.7, save.up[u.id]));
-  const unlockedCount = () => Object.values(CATS).reduce((n, list) => n + list.filter(x => save.bosses >= x.boss).length, 0);
+  const island = () => byId('islands', save.eq.islands);
+  const upCost = (car, u) => Math.round(car.upBase * UPG_MUL[u] * Math.pow(1.32, save.up[car.id][u]) / 50) * 50;
+  const unlockedCount = () => HATS.filter(x => save.bosses >= x.boss).length;
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
 
   // ---------- Helpers ----------
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -264,9 +309,9 @@
   const STEP = 0.5, TER_LEN = 4200, CP = 60;
   let TER = new Float32Array(1), FINISH = 900;
   function genTerrain(stage) {
-    const r = mulberry(1234 + stage * 7919);
+    const isl = island(), r = mulberry(1234 + stage * 7919 + isl.cost);
     const amp = Math.min(1 + stage * 0.07, 1.45);
-    const oct = [[6, 0.017], [3, 0.045], [1.6, 0.11], [0.35, 0.33]].map(([a, f]) => ({ a: a * amp, f: f * (0.85 + r() * 0.3), p: r() * 6.28 }));
+    const oct = [[6 * isl.amp, 0.017], [3 * isl.amp, 0.045], [1.6 * isl.amp, 0.11], [0.35 * isl.bump, 0.33]].map(([a, f]) => ({ a: a * amp, f: f * (0.85 + r() * 0.3), p: r() * 6.28 }));
     const n = Math.ceil(TER_LEN / STEP);
     TER = new Float32Array(n);
     let prev = 0;
@@ -292,12 +337,22 @@
 
   // ---------- Vehicle physics ----------
   // Rigid chassis with two soft (penalty-spring) wheels, a driver head that can bonk, and HCR-style air control.
-  const G = 13, AX = 1.05, AY = 0.5, WR = 0.45, WI = 0.12, INERTIA = 1.1, SUB = 8;
+  const AX = 1.05, AY = 0.5, WR = 0.45, WI = 0.12, SUB = 8;
   const BODY_PTS = [[-1.4, 0.05], [1.4, 0.05], [-1.25, 0.45], [1.3, 0.35], [0, -0.35]];
   const HEAD = [-0.15, 1.02], HEAD_R = 0.3;
-  function carStats() {
-    const u = save.up;
-    return { top: 13 + u.engine * 1.4, acc: 18 + u.engine * 2.5, k: 65, damp: 4.5 + u.susp * 0.9, airT: 7 + u.susp * 1.2, mu: 0.95 + u.grip * 0.09, tank: 40 + u.tank * 10 };
+  function carStats(id) {
+    const c = byId('cars', id || save.eq.cars), u = save.up[c.id], isl = island(), sp = u.sp;
+    return {
+      g: isl.g, inertia: c.inertia,
+      top: c.top + u.engine * 0.55 + (c.sp === 'turbo' ? sp * 0.3 : 0),
+      acc: c.acc + u.engine * 1.1 + (c.sp === 'turbo' ? sp * 1.5 : 0),
+      k: c.k + u.susp * 1.5, damp: c.damp + u.susp * 0.4,
+      mu: (c.mu + u.tires * 0.045) * isl.grip,
+      airT: c.airT + u.susp * 0.15 + (c.sp === 'air' ? sp * 0.6 : 0),
+      tank: c.tank + (c.sp === 'tank' ? sp * 6 : 0),
+      fwd: c.sp === 'fwd' ? 0.35 + sp * 0.065 : 1,
+      stab: c.sp === 'stab' ? 1 + sp * 0.25 : 0,
+    };
   }
   function newCar(x) { const c = { x, y: 0, vx: 0, vy: 0, a: 0, w: 0, ws: 0, wr: 0, ground: 0, body: 0, head: false, air: 0, flip: 0 }; placeCar(c, x); return c; }
   function placeCar(c, x) {
@@ -311,7 +366,7 @@
   }
   function stepCar(c, dt, inp, st) {
     const cos = Math.cos(c.a), sin = Math.sin(c.a);
-    let fx = 0, fy = -G, tq = 0, ground = 0, body = 0;
+    let fx = 0, fy = -st.g, tq = 0, ground = 0, body = 0;
     const top = st.top * (inp.power || 1), acc = st.acc * (inp.power || 1);
     const maxW = top / WR;
     const fwd = c.vx * cos + c.vy * sin;
@@ -329,7 +384,8 @@
       let fn = st.k * pen - st.damp * vn;
       if (pen > 0.28) fn += (pen - 0.28) * 800;
       if (fn < 0) fn = 0;
-      const lim = st.mu * fn, ft = clamp((c.ws * WR - vt) * 30, -lim, lim);
+      const drive = ox > 0 && !inp.brake ? st.fwd : 1; // front wheels only pull with 4WD
+      const lim = st.mu * fn, ft = clamp((c.ws * WR - vt) * 30, -lim, lim) * drive;
       c.ws -= ft * WR / WI * dt;
       fx += k.nx * fn + k.tx * ft; fy += k.ny * fn + k.ty * ft;
       tq += rx * k.ny * fn - ry * k.nx * fn + px * k.ty * ft - py * k.tx * ft;
@@ -349,12 +405,14 @@
       if (contact(c.x + rx, c.y + ry).d < HEAD_R * 0.8) c.head = true; }
     const air = ground === 0 && body === 0;
     let lean = inp.lean || 0;
-    if (air) lean += (inp.gas > 0 ? 0.65 : 0) - (inp.brake ? 0.65 : 0);
+    if (air) lean += (inp.gas > 0 ? 0.9 : 0) - (inp.brake ? 0.9 : 0);
     else if (inp.gas > 0) tq += 1.2 * inp.gas; // engine reaction lifts the nose a little
     tq += clamp(lean, -1, 1) * (air ? st.airT : 3);
-    if (inp.assist && ground) { fx += Math.cos(c.a) * inp.assist; fy += Math.sin(c.a) * inp.assist; }
+    const stab = st.stab + (inp.mercy || 0);
+    if (stab) tq -= (c.a - Math.atan(slopeAt(c.x))) * stab * (air ? 1.6 : 2.5);
+    if (inp.assist && ground) { const s = slopeAt(c.x), inv = 1 / Math.sqrt(1 + s * s); fx += inv * inp.assist; fy += s * inv * inp.assist; }
     c.vx += fx * dt; c.vy += fy * dt;
-    c.w += tq / INERTIA * dt; c.w *= 1 - (air ? 0.4 : 1.4) * dt; c.w = clamp(c.w, -7, 7);
+    c.w += tq / st.inertia * dt; c.w *= 1 - (air ? 0.4 : 1.4) * dt; c.w = clamp(c.w, -7, 7);
     c.vx *= 1 - 0.015 * dt;
     c.x += c.vx * dt; c.y += c.vy * dt; c.a += c.w * dt;
     c.wr -= c.ws * dt;
@@ -379,12 +437,14 @@
     return { gas, brake, lean };
   }
 
+  // HCR-style coin values: 5 -> 25 -> 100 the further you go; on pricier islands some groups jump a tier (up to 500).
+  const coinTier = (x, up) => Math.min(3, (x < FINISH * 0.3 ? 0 : x < FINISH * 0.65 ? 1 : 2) + up);
   function genPickups() {
     pickups = [];
     for (let x = 40; x < TER_LEN - 50; x += rnd(32, 52)) {
       if (Math.abs(x - FINISH) < 20) continue;
-      const n = 5;
-      for (let i = 0; i < n; i++) { const px = x + i * 1.7; pickups.push({ x: px, y: hAt(px) + 1.3, type: 'coin' }); }
+      const n = 5, up = Math.random() < island().rich ? 1 : 0;
+      for (let i = 0; i < n; i++) { const px = x + i * 1.7; pickups.push({ x: px, y: hAt(px) + 1.3, type: 'coin', tier: coinTier(px, up) }); }
     }
     for (let x = 95; x < TER_LEN - 50; x += 115) pickups.push({ x, y: hAt(x) + 1.4, type: 'meat' });
     for (let x = 230; x < TER_LEN - 50; x += 270) pickups.push({ x: x + 9, y: hAt(x + 9) + 2.2, type: 'fruit' });
@@ -396,8 +456,8 @@
     genTerrain(stage);
     genPickups();
     const st = carStats();
-    me = { name: T.you, isMe: true, car: newCar(6), meat: st.tank, coins: 0, flips: 0, crashT: 0, upT: 0, stuckT: 0, best: 6, boost: 0,
-           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, punchT: -1, punchCD: 0, cp: 6 };
+    me = { name: T.you, isMe: true, car: newCar(6), meat: st.tank, coins: 0, flips: 0, crashT: 0, upT: 0, sideT: 0, progX: 6, noProgT: 0, best: 6, boost: 0,
+           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, cp: 6 };
     bots = names.map((name, i) => ({
       name, avatar: BOT_AVATARS[(Math.random() * BOT_AVATARS.length) | 0], x: 6 - (i + 1) * 0.01, v: 0,
       pace: rnd(0.88, 1.08) * (i < 2 ? 1.08 : 1), bias: i, carId: CARS[(i + 1 + (Math.random() * 3 | 0)) % CARS.length].id, hatId: HATS[(Math.random() * HATS.length) | 0].id,
@@ -422,7 +482,7 @@
     return Math.min(cap, FINISH - 18 - b.bias * 10);
   }
   function updateBots(dt) {
-    const top = Math.min(16 + save.bosses * 0.4, 19);
+    const top = Math.max(Math.min(16 + save.bosses * 0.4, 19), carStats().top * 1.08);
     for (const b of bots) {
       const s = slopeAt(b.x + 2);
       let vt = top * b.pace * (1 - 0.35 * clamp(s, 0, 1)) * (elapsed < 2 ? elapsed / 2 : 1);
@@ -445,6 +505,7 @@
   function crash() {
     if (me.crashT > 0) return;
     me.crashT = 1.5;
+    me.mercy = Math.min(3, me.mercy + 1); // invisible help after repeated crashes, so nobody gets stuck on one hill
     me.meat = Math.max(0, me.meat - 10);
     popup(T.crash, '#ff5d73');
     shake = 12; sfx.crash(); buzz([30, 40, 30]);
@@ -453,7 +514,7 @@
   function respawn() {
     const x = Math.max(6, me.cp);
     placeCar(me.car, x);
-    me.upT = 0; me.stuckT = 0;
+    me.upT = 0; me.sideT = 0; me.noProgT = 0; me.progX = Math.min(me.progX, x);
     if (ship) ship.x = Math.min(ship.x, x - 16);
   }
 
@@ -466,24 +527,30 @@
       if (me.crashT <= 0) respawn();
     }
     const empty = me.meat <= 0;
-    let power = empty ? 0.5 : 1;
+    let power = empty ? 0.7 : 1;
     if (me.boost > 0) { me.boost -= dt; power *= 1.35; }
     if (rallyOn) power *= 1.12;
     inp.power = power;
+    me.mercy = Math.max(0, me.mercy - dt / 15);
+    inp.mercy = me.mercy * 1.2;
     // Invisible crew push on a hill you can't climb (the run never stalls).
     const speed = Math.hypot(c.vx, c.vy);
-    if (inp.gas && c.ground && speed < 1.5 && Math.sin(c.a) > 0.25) me.stuckT += dt; else me.stuckT = Math.max(0, me.stuckT - dt * 2);
-    inp.assist = me.stuckT > 1.8 ? 9 : 0;
+    // Progress watchdog (the run never stalls): no new ground for 3 s -> a growing invisible crew push; 12 s -> hop past the obstacle.
+    if (c.x > me.progX + 3) { me.progX = c.x; me.noProgT = 0; } else if (me.crashT <= 0) me.noProgT += dt;
+    inp.assist = inp.gas && me.noProgT > 3 ? Math.min(16, (me.noProgT - 3) * 4) : 0;
+    if (me.noProgT > 12 && me.crashT <= 0) { placeCar(c, me.progX + 10); me.progX = c.x; me.noProgT = 0; me.mercy = Math.min(3, me.mercy + 1); }
     const prevAir = c.air;
     for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, inp, st);
     if (me.crashT <= 0) {
       me.meat = Math.max(0, me.meat - dt * (0.3 + inp.gas * 0.75));
       if (empty && !me.outShown) { me.outShown = true; popup('🍖 ' + T.outMeat, '#ff8a2b'); }
       if (!empty) me.outShown = false;
+      if (!empty && me.meat < st.tank * 0.2) { me.beepT -= dt; if (me.beepT <= 0) { me.beepT = 0.9; sfx.low(); } }
       if (c.head) crash();
       const rel = Math.cos(c.a - Math.atan(slopeAt(c.x)));
-      if ((rel < -0.1 && c.body) || (rel < 0.35 && speed < 0.4 && c.body)) me.upT += dt; else me.upT = 0;
-      if (me.upT > 1.0) crash();
+      if (rel < -0.1 && c.body) me.upT += dt; else me.upT = 0;
+      if (rel < 0.35 && c.body) me.sideT += dt; else me.sideT = Math.max(0, me.sideT - dt); // stuck on its side or tail
+      if (me.upT > 1.0 || me.sideT > 1.8) crash();
     }
     // flips & landings
     if (c.air > 0) {
@@ -493,7 +560,7 @@
       }
     } else {
       if (prevAir > 0 && me.crashT <= 0) {
-        if (prevAir > 0.9) { const n = Math.round(prevAir * 2); me.coins += n; popup(`${T.air} +${n}`, '#7cdcff'); sfx.land(true); if (ship && phase === 'boss') hitShip(5, true); }
+        if (prevAir > 0.9) { const n = Math.round(prevAir * 2) * 50; me.coins += n; popup(`${T.air} +${fmt(n)}`, '#7cdcff'); sfx.land(true); if (ship && phase === 'boss') hitShip(5, true); }
         else if (prevAir > 0.25) sfx.land(false);
         if (prevAir > 0.25) for (let i = 0; i < 6; i++) parts.push({ x: c.x + rnd(-1, 1), y: hAt(c.x) + 0.1, vx: rnd(-2, 2), vy: rnd(1, 3), t: 0, life: 0.5, c: 'rgba(160,120,80,.8)', r: rnd(0.1, 0.2) });
       }
@@ -507,7 +574,7 @@
       if (p.taken || Math.abs(p.x - c.x) > 2) continue;
       if (Math.hypot(p.x - c.x, p.y - (c.y + 0.4)) < 1.5) {
         p.taken = true;
-        if (p.type === 'coin') { me.coins++; sfx.coin(); }
+        if (p.type === 'coin') { me.coins += COIN_VALUES[p.tier]; sfx.coin(); }
         else if (p.type === 'meat') { me.meat = Math.min(st.tank, me.meat + 20); popup('🍖 +20', '#ffb35c'); sfx.munch(); }
         else { me.boost = 3; popup('🍇 ' + T.fruit, '#d18bff'); sfx.fruit(); }
       }
@@ -515,13 +582,13 @@
     if (me.punchCD > 0) me.punchCD -= dt;
     if (me.punchT >= 0) {
       const prev = me.punchT; me.punchT += dt;
-      if (prev < 0.16 && me.punchT >= 0.16 && ship) hitShip(7, false);
+      if (prev < 0.16 && me.punchT >= 0.16 && ship && me.car.x - ship.x < 16) hitShip(7, false); // the arm only reaches a ship on screen
       if (me.punchT > 0.34) me.punchT = -1;
     }
   }
   function trick(name) {
-    me.flips++; me.coins += 5;
-    popup(`${name} +5`, '#ffd23f'); sfx.flip(me.flips);
+    me.flips++; me.coins += 500;
+    popup(`${name} +500`, '#ffd23f'); sfx.flip(me.flips);
     if (ship && phase === 'boss') hitShip(10, true);
   }
 
@@ -533,8 +600,8 @@
     sfx.bossIntro();
   }
   function spawnBoss() {
-    const stage = save.bosses + 1, hp = Math.min(70 + stage * 12, 200);
-    ship = { x: me.car.x - 34, y: hAt(me.car.x - 34), a: 0, v: 8, hp, hpMax: hp, flash: 0, fireT: 3.5, name: `${T.boss} Lv${stage * 5 + 10}` };
+    const stage = save.bosses + 1, hp = Math.min(95 + stage * 15, 260);
+    ship = { x: me.car.x - 16, y: hAt(me.car.x - 16), a: 0, v: 8, hp, hpMax: hp, flash: 0, fireT: 3.5, name: `${T.boss} Lv${stage * 5 + 10}` };
     phase = 'boss';
     popup('👊 ' + T.punchHint, '#ff8a2b');
   }
@@ -561,7 +628,7 @@
     ship.a += (Math.atan(slopeAt(ship.x)) * 0.5 - ship.a) * Math.min(1, dt * 2);
     ship.flash = Math.max(0, ship.flash - dt);
     if (ship.x > c.x - 8 && me.crashT <= 0) { // ram: slows you, never knocks you out
-      c.vx *= 0.45; ship.x = c.x - 22; ship.v = 4;
+      c.vx *= 0.45; ship.x = c.x - 18; ship.v = 4;
       popup('💥 ' + T.rammed, '#ff8a2b'); shake = 12; sfx.boom(); buzz(40);
     }
     ship.fireT -= dt;
@@ -601,9 +668,9 @@
   function updateCamera(c, dt, bossCam) {
     const base = clamp(Math.min(W / 12.5, H / 16), 22, 64);
     const sp = Math.hypot(c.vx, c.vy);
-    const target = base * (1 - Math.min(0.18, sp * 0.008)) * (bossCam ? 0.8 : 1);
+    const target = base * (1 - Math.min(0.18, sp * 0.008)) * (bossCam ? 0.62 : 1);
     ppm += (target - ppm) * Math.min(1, dt * 2);
-    camK += ((bossCam ? 0.66 : 0.36) - camK) * Math.min(1, dt * 2);
+    camK += ((bossCam ? 0.7 : 0.36) - camK) * Math.min(1, dt * 2);
     camX += (c.x + clamp(c.vx * 0.25, -2, 4) - camX) * Math.min(1, dt * 6);
     camY += (c.y + 1 - camY) * Math.min(1, dt * 4);
   }
@@ -633,7 +700,8 @@
     } else if (demo) {
       const c = demo, sl = Math.atan(slopeAt(c.x));
       const lean = c.ground ? 0 : clamp(-(c.a - sl) * 1.5 - c.w * 0.3, -1, 1);
-      for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, { gas: 0.7, brake: false, lean, power: 1 }, carStats());
+      const st = carStats();
+      for (let i = 0; i < SUB; i++) stepCar(c, dt / SUB, { gas: 0.7, brake: false, lean, power: 1 }, st);
       if (c.head || c.x > 600 || Math.cos(c.a - sl) < 0) placeCar(c, 8);
       updateCamera(c, dt, false);
     }
@@ -660,7 +728,7 @@
     ctx.lineWidth = size * 0.16; ctx.strokeStyle = '#1b1530'; ctx.lineJoin = 'round';
     ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
   }
-  const theme = () => THEMES[(save.bosses) % THEMES.length];
+  const theme = () => THEMES[island().theme];
 
   function drawBackground() {
     const th = theme();
@@ -747,9 +815,10 @@
       if (p.taken || p.x < x0 || p.x > x1) continue;
       const sx = sxOf(p.x), sy = syOf(p.y + Math.sin(time * 3 + p.x) * 0.12), r = ppm * 0.38;
       if (p.type === 'coin') {
-        const sq = Math.abs(Math.cos(time * 3 + p.x));
-        ctx.fillStyle = '#e39a12'; ctx.beginPath(); ctx.ellipse(sx, sy, r * (0.25 + 0.75 * sq), r, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.ellipse(sx, sy, r * (0.25 + 0.75 * sq) * 0.75, r * 0.75, 0, 0, 7); ctx.fill();
+        const sq = Math.abs(Math.cos(time * 2 + p.x * 0.3)), [dk, lt] = COIN_COLORS[p.tier], cw = r * (0.25 + 0.75 * sq);
+        ctx.fillStyle = dk; ctx.beginPath(); ctx.ellipse(sx, sy, cw, r, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = lt; ctx.beginPath(); ctx.ellipse(sx, sy, cw * 0.78, r * 0.78, 0, 0, 7); ctx.fill();
+        if (sq > 0.55) { ctx.textBaseline = 'middle'; txt(String(COIN_VALUES[p.tier]), sx, sy + 1, r * (p.tier > 1 ? 0.75 : 0.95), 'rgba(60,30,0,.85)', 'center'); }
       } else if (p.type === 'meat') {
         ctx.save(); ctx.translate(sx, sy); ctx.rotate(-0.5); ctx.scale(r / 10, r / 10);
         ctx.fillStyle = '#f4f0e6'; rr(4, -3, 16, 6, 3); ctx.fill(); ctx.beginPath(); ctx.arc(20, -4, 4, 0, 7); ctx.arc(20, 4, 4, 0, 7); ctx.fill();
@@ -1011,7 +1080,7 @@
       y += 26 + 18 * sc;
     }
     // coins (right)
-    const ct = String(me.coins);
+    const ct = fmt(me.coins);
     ctx.font = `900 ${15 * sc}px system-ui`;
     const cw = ctx.measureText(ct).width + 40 * sc;
     ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(W - 12 - cw, y, cw, 30 * sc, 15 * sc); ctx.fill();
@@ -1034,10 +1103,10 @@
     }
     ctx.globalAlpha = 1;
     if (phase === 'play') {
-      txt(`● ${38 + Math.round(Math.sin(time * 0.7) * 6 + Math.sin(time * 2.3) * 3)} ms`, W / 2, H - 12, 11, 'rgba(255,255,255,.55)', 'center', 700);
+      txt(`● ${38 + Math.round(Math.sin(time * 0.7) * 6 + Math.sin(time * 2.3) * 3)} ms`, W / 2, isPc ? H - 62 : H - 12, 11, 'rgba(255,255,255,.55)', 'center', 700);
       if (elapsed < 1.6) banner(T.go, '#36c46b', H * 0.3);
       if (!goSfx) { goSfx = true; sfx.go(); }
-      else if (elapsed < 5 && me.car.x < 20) banner(T.ctlHint, '#fff', H * 0.4, Math.min(W * 0.05, 22));
+      else if (elapsed < 5 && me.car.x < 20) banner(isPc ? T.ctlHintPc : T.ctlHint, '#fff', H * 0.4, Math.min(W * 0.05, 22));
     }
     if (phase === 'bossIntro') { const t = 1 - introT / 2.6; banner(t < 0.45 ? T.bossIn : T.bossIn2, t < 0.45 ? '#ffc531' : '#e8364f', H * 0.3); }
     if (phase === 'win') banner(T.won, '#ffc531', H * 0.33);
@@ -1061,7 +1130,7 @@
 
   // ---------- Touch controls ----------
   const $ = (id) => document.getElementById(id);
-  let lastPunchP = -1;
+  let lastPunchP = -1, isPc = false;
   function syncControls() {
     const on = me && (phase === 'play' || phase === 'bossIntro' || phase === 'boss' || phase === 'win');
     $('ctl').classList.toggle('hidden', !on);
@@ -1103,66 +1172,77 @@
   function show(id) { screens.forEach(s => $(s).classList.toggle('hidden', s !== id)); }
 
   function renderMenu() {
-    $('mCoins').textContent = save.coins;
-    $('mStage').textContent = `🏝️ ${T.stage} ${save.bosses + 1}`;
+    $('mCoins').textContent = fmt(save.coins);
+    $('mStage').textContent = `🏝️ ${island().name}`;
     $('mBoss').textContent = `⚓ ${T.boss} #${save.bosses + 1}`;
     $('playBtn').textContent = T.play;
     $('shopLbl').textContent = '🛒 ' + T.shop;
-    const affordable = Object.entries(CATS).some(([cat, list]) => list.some(x => save.bosses >= x.boss && !save.owned[cat].includes(x.id) && save.coins >= x.cost))
-      || UPGRADES.some(u => save.up[u.id] < u.max && save.coins >= upCost(u));
+    const car = byId('cars', save.eq.cars), can = (x, cat) => !save.owned[cat].includes(x.id) && save.coins >= x.cost;
+    const affordable = CARS.some(x => can(x, 'cars')) || ISLANDS.some(x => can(x, 'islands')) || HATS.some(x => save.bosses >= x.boss && can(x, 'hats'))
+      || UPG.some(u => save.up[car.id][u] < UPG_MAX && save.coins >= upCost(car, u));
     $('shopBadge').classList.toggle('hidden', !(affordable || unlockedCount() > save.seen));
   }
 
-  let shopTab = 'cars';
+  let shopTab = 'upgrades';
+  function buyBtn(b, cost, onBuy) {
+    b.className = 'b-buy' + (save.coins < cost ? ' poor' : '');
+    b.innerHTML = cost ? `<span class="coin"></span>${fmt(cost)}` : T.free;
+    b.onclick = () => { if (save.coins < cost) return; save.coins -= cost; onBuy(); persist(); sfx.buy(); renderShop(); };
+  }
+  function statBars(c) {
+    const rows = [[T.speed, c.top / 20], [T.grip, c.mu / 1.25], [T.airS, c.airT / 11], [T.fuel, c.tank / 65]];
+    return '<div class="stats">' + rows.map(([n, v]) => `<div class="stat"><span>${n}</span><i><b style="width:${Math.round(clamp(v, 0.08, 1) * 100)}%"></b></i></div>`).join('') + '</div>';
+  }
+  function addDiv(parent, cls, text) { const d = document.createElement('div'); d.className = cls; d.textContent = text; parent.appendChild(d); return d; }
   function renderShop() {
     if (unlockedCount() > save.seen) { save.seen = unlockedCount(); persist(); }
-    $('sCoins').textContent = save.coins;
+    $('sCoins').textContent = fmt(save.coins);
     $('shopTitle').textContent = T.shop;
     $('shopBack').textContent = T.back;
-    $('shopHint').textContent = shopTab === 'upgrades' ? '' : T.hint;
+    $('shopHint').textContent = shopTab === 'hats' ? T.hint : '';
     const tabs = $('tabs'); tabs.innerHTML = '';
-    for (const id of ['cars', 'hats', 'upgrades']) {
+    for (const id of ['upgrades', 'cars', 'islands', 'hats']) {
       const b = document.createElement('button'); b.className = 'tab' + (id === shopTab ? ' on' : ''); b.textContent = T[id];
       b.onclick = () => { shopTab = id; sfx.ui(); renderShop(); };
       tabs.appendChild(b);
     }
     const g = $('grid'); g.innerHTML = '';
-    if (shopTab === 'upgrades') {
-      for (const u of UPGRADES) {
-        const lv = save.up[u.id], maxed = lv >= u.max, cost = upCost(u);
+    if (shopTab === 'upgrades') { // the selected vehicle's own upgrades, like the HCR garage
+      const car = byId('cars', save.eq.cars), lv = save.up[car.id];
+      const head = document.createElement('div'); head.className = 'vhead';
+      const pv = document.createElement('canvas'); pv.width = 280; pv.height = 196; head.appendChild(pv);
+      drawPreview(pv, car.id, save.eq.hats, false);
+      const info = document.createElement('div'); info.style.flex = '1'; head.appendChild(info);
+      addDiv(info, 'nm', car.name); info.insertAdjacentHTML('beforeend', statBars(carStats(car.id)));
+      g.appendChild(head);
+      for (const u of UPG) {
+        const key = u === 'sp' ? car.sp : u, level = lv[u];
         const card = document.createElement('div'); card.className = 'card';
-        card.innerHTML = `<div class="em">${u.icon}</div><div class="nm"></div><div class="ds"></div><div class="lv">Lv ${lv} / ${u.max}</div>`;
-        card.querySelector('.nm').textContent = T['u_' + u.id];
-        card.querySelector('.ds').textContent = T['u_' + u.id + '_d'];
+        addDiv(card, 'em', UPG_ICON[key]); addDiv(card, 'nm', T['u_' + key]); addDiv(card, 'ds', T['u_' + key + '_d']);
+        card.insertAdjacentHTML('beforeend', `<div class="segs">${Array.from({ length: UPG_MAX }, (_, i) => `<b class="${i < level ? 'on' : ''}"></b>`).join('')}</div>`);
         const b = document.createElement('button');
-        if (maxed) { b.className = 'b-on'; b.textContent = T.max; }
-        else {
-          b.className = 'b-buy' + (save.coins < cost ? ' poor' : ''); b.innerHTML = `<span class="coin"></span>${cost}`;
-          b.onclick = () => { if (save.coins < cost) return; save.coins -= cost; save.up[u.id]++; persist(); sfx.buy(); renderShop(); };
-        }
+        if (level >= UPG_MAX) { b.className = 'b-on'; b.textContent = T.max; }
+        else buyBtn(b, upCost(car, u), () => { lv[u]++; });
         card.appendChild(b); g.appendChild(card);
       }
       return;
     }
-    for (const item of CATS[shopTab]) {
-      const owned = save.owned[shopTab].includes(item.id), unlocked = save.bosses >= item.boss, eq = save.eq[shopTab] === item.id;
+    const cat = shopTab;
+    for (const item of CATS[cat]) {
+      const owned = save.owned[cat].includes(item.id), eq = save.eq[cat] === item.id, locked = cat === 'hats' && save.bosses < item.boss;
       const card = document.createElement('div'); card.className = 'card' + (eq ? ' eq' : '');
       const pv = document.createElement('canvas'); pv.width = 240; pv.height = 168; card.appendChild(pv);
-      drawPreview(pv, shopTab === 'cars' ? item.id : save.eq.cars, shopTab === 'hats' ? item.id : save.eq.hats, shopTab === 'hats');
-      if (!unlocked) { const c = pv.getContext('2d'); c.fillStyle = 'rgba(243,230,204,.75)'; c.fillRect(0, 0, pv.width, pv.height); }
-      const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = item.name; card.appendChild(nm);
+      if (cat === 'islands') drawIslandPreview(pv, item);
+      else drawPreview(pv, cat === 'cars' ? item.id : save.eq.cars, cat === 'hats' ? item.id : save.eq.hats, cat === 'hats');
+      if (locked) { const x = pv.getContext('2d'); x.fillStyle = 'rgba(243,230,204,.75)'; x.fillRect(0, 0, pv.width, pv.height); }
+      addDiv(card, 'nm', item.name);
+      if (cat === 'cars') { addDiv(card, 'ds', `${UPG_ICON[item.sp]} ${T['u_' + item.sp]}`); card.insertAdjacentHTML('beforeend', statBars(item)); }
+      if (cat === 'islands') addDiv(card, 'ds', T['isl_' + item.id] + (item.rich ? ' · ' + T.richer : ''));
       const b = document.createElement('button');
       if (eq) { b.className = 'b-on'; b.textContent = T.equipped; }
-      else if (owned) { b.className = 'b-eq'; b.textContent = T.equip; b.onclick = () => { save.eq[shopTab] = item.id; persist(); sfx.ui(); renderShop(); }; }
-      else if (!unlocked) { b.className = 'b-lock'; b.textContent = `🔒 ${T.beat}${item.boss}`; }
-      else {
-        b.className = 'b-buy' + (save.coins < item.cost ? ' poor' : '');
-        b.innerHTML = item.cost ? `<span class="coin"></span>${item.cost}` : T.free;
-        b.onclick = () => {
-          if (save.coins < item.cost) return;
-          save.coins -= item.cost; save.owned[shopTab].push(item.id); save.eq[shopTab] = item.id; persist(); sfx.buy(); renderShop();
-        };
-      }
+      else if (owned) { b.className = 'b-eq'; b.textContent = T.equip; b.onclick = () => { save.eq[cat] = item.id; persist(); sfx.ui(); renderShop(); }; }
+      else if (locked) { b.className = 'b-lock'; b.textContent = `🔒 ${T.beat}${item.boss}`; }
+      else buyBtn(b, item.cost, () => { save.owned[cat].push(item.id); save.eq[cat] = item.id; });
       card.appendChild(b); g.appendChild(card);
     }
   }
@@ -1175,9 +1255,20 @@
     g.fillStyle = '#5cc64c'; g.fillRect(0, canvas.height * 0.86, canvas.width, canvas.height);
     g.save();
     if (zoomHat) { g.translate(canvas.width * 0.6, canvas.height * 1.25); g.scale(95, -95); }
-    else { g.translate(canvas.width / 2, canvas.height * 0.62); g.scale(52, -52); }
+    else { g.translate(canvas.width / 2, canvas.height * 0.62); g.scale(canvas.width / 4.6, -canvas.width / 4.6); }
     drawCar(g, carId, hatId, 0.3);
     g.restore();
+  }
+  function drawIslandPreview(canvas, isl) {
+    const g = canvas.getContext('2d'), th = THEMES[isl.theme], w = canvas.width, h = canvas.height;
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, th.sky[0]); gr.addColorStop(1, th.sky[1]);
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    if (th.night) { g.fillStyle = '#fff'; for (let i = 0; i < 25; i++) g.fillRect(hash(i) * w, hash(i + 9) * h * 0.5, 2, 2); }
+    g.fillStyle = th.sun; g.beginPath(); g.arc(w * 0.8, h * 0.2, 14, 0, 7); g.fill();
+    g.fillStyle = th.sea; g.fillRect(0, h * 0.5, w, h);
+    const y = (x) => h * 0.7 - Math.sin(x * 0.03 + 1) * 18 * isl.amp - Math.sin(x * 0.12) * 3 * isl.bump;
+    g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 4) g.lineTo(x, y(x)); g.lineTo(w, h); g.closePath(); g.fillStyle = th.dirt; g.fill();
+    g.beginPath(); for (let x = 0; x <= w; x += 4) x ? g.lineTo(x, y(x)) : g.moveTo(x, y(x)); g.lineWidth = 8; g.strokeStyle = th.grass; g.stroke();
   }
 
   function startMatchmaking() {
@@ -1206,6 +1297,7 @@
   function startRace(names) {
     newRace(names);
     releaseAll();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); // Space must punch, not re-press a menu button
     show(null);
     phase = 'play';
     send('level_started');
@@ -1215,7 +1307,7 @@
     phase = 'result';
     save.bosses++;
     const stage = save.bosses;
-    const reward = me.coins + me.flips * 3 + 50 + stage * 30;
+    const reward = me.coins + 1000 + stage * 250;
     save.coins += reward;
     persist();
     $('rTitle').textContent = T.won;
@@ -1227,8 +1319,8 @@
       row.firstChild.textContent = `${i === 0 ? '👑' : '#' + (i + 1)}  ${p.avatar ? p.avatar + ' ' : ''}${p.name}`;
       board.appendChild(row);
     });
-    $('rCoins').textContent = '+' + reward;
-    const news = [...CARS.filter(x => x.boss === stage), ...HATS.filter(x => x.boss === stage)].map(x => x.name);
+    $('rCoins').textContent = '+' + fmt(reward);
+    const news = HATS.filter(x => x.boss === stage).map(x => x.name);
     $('rUnlock').classList.toggle('hidden', !news.length);
     $('rUnlock').textContent = '🔓 ' + T.unlocked + news.join(', ');
     $('contBtn').textContent = T.cont;
@@ -1320,6 +1412,7 @@
     flip(n) { osc(PENTA[Math.min(4 + n, PENTA.length - 1)], 0.08, 1.0, { send: 0.6 }); osc(PENTA[Math.min(4 + n, PENTA.length - 1)] * 1.5, 0.03, 0.8, { delay: 0.06, send: 0.6 }); },
     crash() { for (let i = 0; i < 3; i++) { osc(rnd(70, 95), 0.18, 0.25, { delay: i * 0.08, to: 50 }); hiss(0.1, 0.18, { filter: 'lowpass', f: 700, delay: i * 0.08 }); } },
     tick(n) { hiss(0.05, 0.03, { f: 1200 + n * 40, q: 5 }); },
+    low() { osc(880, 0.035, 0.12, { type: 'triangle' }); },
     ui() { osc(420, 0.07, 0.09, { to: 560 }); hiss(0.025, 0.03, { f: 1600, q: 3 }); },
     buy() { [0, 2, 4].forEach((k, i) => osc(PENTA[k + 2], 0.06, 0.6, { delay: i * 0.07, send: 0.5 })); },
     first() { osc(523.25, 0.06, 0.9, { send: 0.6 }); osc(783.99, 0.04, 0.9, { delay: 0.08, send: 0.6 }); },
@@ -1367,10 +1460,16 @@
       await load();
     }
     $('gas').textContent = T.gas; $('brake').textContent = T.brake; $('stickLbl').textContent = T.tilt; $('punchLbl').textContent = T.punch;
+    // Mouse/keyboard devices play with the arrow keys (HCR on PC); the touch UI comes back the moment someone touches the screen.
+    isPc = !(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    document.body.classList.toggle('pc', isPc);
+    if (isPc) $('punchLbl').textContent = 'SPACE';
+    window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && isPc) { isPc = false; document.body.classList.remove('pc'); $('punchLbl').textContent = T.punch; } }, true);
+    $('keys').innerHTML = `<span class="key"><b>←</b>${T.brake}</span><span class="key"><b>→</b>${T.gas}</span><span class="key"><b>↑ ↓</b>${T.tilt}</span>`;
 
     if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
     $('playBtn').onclick = startMatchmaking;
-    $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'cars'; show('shop'); renderShop(); };
+    $('shopBtn').onclick = () => { unlockAudio(); shopTab = 'upgrades'; show('shop'); renderShop(); };
     $('shopBack').onclick = () => { show('menu'); renderMenu(); };
     $('contBtn').onclick = toMenu;
 
