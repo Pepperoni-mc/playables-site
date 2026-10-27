@@ -268,7 +268,7 @@
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    S = Math.min(W * 0.42, H * 0.3, 260) / (20 * COS);
+    S = Math.min(W * 0.42, H * 0.38) / (20 * COS); // no fixed cap: big screens get a big tower
   }
 
   // ---------- Towers ----------
@@ -749,7 +749,7 @@
 
   function label(x, y, name, avatar, floors, highlight) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const sz = clamp(W / 32, 11, 15);
+    const sz = clamp(S * 1.15, 11, 22); // scales with the tower
     ctx.font = `800 ${sz}px system-ui, sans-serif`;
     const text = `${avatar ? avatar + ' ' : ''}${name.length > 9 ? name.slice(0, 8) + '…' : name}`;
     const tw = Math.max(ctx.measureText(text).width, 40) + 16;
@@ -780,7 +780,8 @@
     } else if (me) {
       const bossMode = phase === 'boss' || phase === 'win' || phase === 'bossIntro' || (phase === 'lose' && boss);
       const mx = W / 2, sc = S * 0.85, my = H * 0.62, ly = H * 0.44;
-      const fx = W * (bossMode ? 0.8 : 0.9), fs = S * (bossMode ? 0.7 : 0.55), lx = Math.min(fx, W - 48);
+      // opponent sits beside you at a distance tied to tower size, so wide screens don't push it to the far edge
+      const fx = W / 2 + Math.min(W * (bossMode ? 0.3 : 0.4), S * (bossMode ? 13 : 16)), fs = S * (bossMode ? 0.7 : 0.55), lx = Math.min(fx, W - 48);
       const foe = bossMode ? boss : opp;
       let foeEdges = null;
       if (foe) {
@@ -899,6 +900,20 @@
     ctx.restore();
   }
 
+  // Soft radial sprites for particle effects, rendered once.
+  const sprite = (stops) => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    stops.forEach(([o, col]) => gr.addColorStop(o, col)); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return c;
+  };
+  const FIRE = {
+    core:  sprite([[0, 'rgba(255,255,235,1)'], [0.35, 'rgba(255,230,120,.9)'], [1, 'rgba(255,160,40,0)']]),
+    mid:   sprite([[0, 'rgba(255,200,60,.95)'], [0.45, 'rgba(255,110,20,.7)'], [1, 'rgba(230,50,0,0)']]),
+    outer: sprite([[0, 'rgba(240,80,10,.8)'], [0.5, 'rgba(180,30,0,.45)'], [1, 'rgba(120,10,0,0)']]),
+    smoke: sprite([[0, 'rgba(60,45,45,.6)'], [1, 'rgba(60,45,45,0)']]),
+  };
+
   // P: the tower's projector, tb: its top block, yTop: world y of the tower top, sc: tower scale.
   function drawAura(kind, lvl, P, tb, yTop, sc) {
     if (!kind || kind === 'none' || !lvl || !tb) return;
@@ -922,25 +937,41 @@
     strokeOutline(o, (f) => `rgba(255,255,255,${0.9 * f})`, 1.2, 0);
 
     if (kind === 'fire') {
-      for (const q of spots) { // flames rising from the whole top face
-        const i = q.i;
-        const fl = sc * (1.3 + lvl * 0.6) * (0.55 + 0.45 * Math.sin(time * 10 + i * 2.1)) * q.fade;
-        let dx = q.nx * 0.5, dy = q.ny * 0.5 - 1; const dl = Math.hypot(dx, dy); dx /= dl; dy /= dl;
-        const sway = Math.sin(time * 7 + i) * 0.35, w = sc * (0.35 + lvl * 0.06);
-        const tx = q.x + (dx + sway * -dy) * fl, ty = q.y + (dy + sway * dx) * fl;
-        const fg = ctx.createLinearGradient(q.x, q.y, tx, ty);
-        fg.addColorStop(0, 'rgba(255,235,140,.95)'); fg.addColorStop(0.45, 'rgba(255,120,20,.85)'); fg.addColorStop(1, 'rgba(220,30,0,0)');
-        ctx.fillStyle = fg; ctx.beginPath();
-        ctx.moveTo(q.x - dy * w, q.y + dx * w);
-        ctx.quadraticCurveTo(q.x + dx * fl * 0.5 - dy * w, q.y + dy * fl * 0.5 + dx * w, tx, ty);
-        ctx.quadraticCurveTo(q.x + dx * fl * 0.5 + dy * w, q.y + dy * fl * 0.5 - dx * w, q.x + dy * w, q.y - dx * w);
-        ctx.closePath(); ctx.fill();
+      // Particle fire: soft blobs rise off the face, shrink and cool from white-yellow to orange, red, then smoke.
+      const rise = sc * (4 + lvl * 1.6), N = 26 + lvl * 14, base = sc * (1.1 + lvl * 0.18);
+      const particle = (j) => {
+        const sp = spots[j % spots.length], u = (time * (0.9 + hash(j + 5) * 0.6) + hash(j + 13)) % 1;
+        return {
+          u, a: Math.sin(Math.PI * Math.min(1, u * 1.15)),
+          x: sp.x + (hash(j + 21) - 0.5) * sc * 1.6 + Math.sin(time * 5 + j) * sc * 0.5 * u,
+          y: sp.y - u * rise * (0.7 + hash(j + 31) * 0.6),
+          s: base * (1 - u * 0.75) * (0.7 + hash(j + 41) * 0.6),
+        };
+      };
+      for (let j = 0; j < N; j++) { // body: normal blending so it reads on light worlds
+        const q = particle(j);
+        ctx.globalAlpha = q.a * 0.9; // stretched tall so each blob reads as a tongue of flame
+        ctx.drawImage(q.u < 0.5 ? FIRE.mid : FIRE.outer, q.x - q.s * 1.15, q.y - q.s * 2.6, q.s * 2.3, q.s * 3.6);
       }
-      if (lvl >= 3) for (let i = 0; i < lvl * 4; i++) { // embers drifting up off the rim
-        const u = (time * 0.7 + hash(i + 50)) % 1, q = o.at(hash(i + 9));
-        ctx.fillStyle = `rgba(255,${150 + (i % 4) * 20},40,${(1 - u) * q.fade})`;
-        ctx.fillRect(q.x + q.nx * sc + Math.sin(time * 3 + i) * 3, q.y - u * sc * 8, 2.5, 2.5);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let j = 0; j < N; j++) { // hot cores near the base glow additively
+        const q = particle(j);
+        if (q.u > 0.45) continue;
+        ctx.globalAlpha = q.a * 0.5;
+        ctx.drawImage(FIRE.core, q.x - q.s * 0.7, q.y - q.s * 1.5, q.s * 1.4, q.s * 2.2);
       }
+      ctx.globalCompositeOperation = 'source-over';
+      for (let j = 0; j < 4 + lvl * 2; j++) { // smoke curling off the top
+        const sp = spots[(j * 3) % spots.length], u = (time * 0.35 + hash(j + 60)) % 1, s = sc * (1.5 + u * 2.5);
+        ctx.globalAlpha = 0.16 * Math.sin(Math.PI * u);
+        ctx.drawImage(FIRE.smoke, sp.x + Math.sin(time + j) * sc - s, sp.y - rise * (0.9 + u) - s, s * 2, s * 2);
+      }
+      for (let j = 0; j < lvl * 5; j++) { // sparks shooting up
+        const sp = spots[(j * 5) % spots.length], u = (time * 1.4 + hash(j + 70)) % 1;
+        ctx.globalAlpha = 1 - u; ctx.fillStyle = '#ffe9a0';
+        ctx.fillRect(sp.x + Math.sin(j * 9.1 + u * 4) * sc * 1.2, sp.y - u * rise * 1.9, 1.5, 3.5);
+      }
+      ctx.globalAlpha = 1;
     } else if (kind === 'lightning') {
       const tick = Math.floor(time * 16);
       for (let i = 0; i < lvl + 1; i++) { // arcs crawling along the edge
