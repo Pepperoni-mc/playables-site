@@ -2393,21 +2393,21 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
           equip: 'EQUIP', equipped: 'EQUIPPED', beat: 'Beat hunter #', free: 'FREE', max: 'MAX', hold: 'HOLD TO FLY', bitten: 'BITTEN!', vampire: 'VAMPIRE!',
           incoming: 'HUNTER INCOMING', grab: 'Grab blood orbs to send your bats!', defeated: 'HUNTER DEFEATED!', escaped: 'HE ESCAPED!', shieldUp: 'BAT GUARD!', shieldLost: 'GUARD BROKEN',
           magnet: 'BLOOD MAGNET!', retry: 'TRY AGAIN', menu: 'Menu', newRec: 'NEW RECORD!', bosses: 'Hunters', unlocked: 'Unlocked: ', next: 'Next hunter',
-          d_zap: 'ZAPPED BY GARLIC!', d_stake: 'STAKED!', d_sun: 'BURNED BY SUNLIGHT!',
+          floor: 'GET OFF THE GROUND!', d_zap: 'ZAPPED BY GARLIC!', d_stake: 'STAKED!', d_sun: 'BURNED BY SUNLIGHT!',
           u_magnet: 'Blood magnet', u_magnet_d: 'Magnet lasts +1.5 s', u_shield: 'Bat guard', u_shield_d: 'Start with +1 guard', u_value: 'Rich blood', u_value_d: '+10% blood per drop',
           u_bats: 'Bat swarm', u_bats_d: '+25% damage to hunters', u_time: 'Long night', u_time_d: '+2 s to beat hunters' },
     es: { play: 'JUGAR', shop: 'TIENDA', back: 'VOLVER', best: 'RÉCORD', hunter: 'CAZADOR', hint: 'Derrota cazadores para desbloquear más', vamps: 'Vampiros', capes: 'Capas', upgrades: 'Mejoras',
           equip: 'USAR', equipped: 'EN USO', beat: 'Vence al cazador #', free: 'GRATIS', max: 'MÁX', hold: 'MANTÉN PARA VOLAR', bitten: '¡MORDIDO!', vampire: '¡VAMPIRO!',
           incoming: 'LLEGA EL CAZADOR', grab: '¡Toma orbes de sangre para lanzar murciélagos!', defeated: '¡CAZADOR DERROTADO!', escaped: '¡SE ESCAPÓ!', shieldUp: '¡GUARDIA MURCIÉLAGO!', shieldLost: 'GUARDIA ROTA',
           magnet: '¡IMÁN DE SANGRE!', retry: 'REINTENTAR', menu: 'Menú', newRec: '¡NUEVO RÉCORD!', bosses: 'Cazadores', unlocked: 'Desbloqueado: ', next: 'Próximo cazador',
-          d_zap: '¡ELECTROCUTADO POR AJO!', d_stake: '¡ESTACADO!', d_sun: '¡QUEMADO POR EL SOL!',
+          floor: '¡NO TE QUEDES EN EL SUELO!', d_zap: '¡ELECTROCUTADO POR AJO!', d_stake: '¡ESTACADO!', d_sun: '¡QUEMADO POR EL SOL!',
           u_magnet: 'Imán de sangre', u_magnet_d: 'El imán dura +1.5 s', u_shield: 'Guardia murciélago', u_shield_d: 'Empieza con +1 guardia', u_value: 'Sangre rica', u_value_d: '+10% de sangre por gota',
           u_bats: 'Enjambre', u_bats_d: '+25% de daño a cazadores', u_time: 'Noche larga', u_time_d: '+2 s para vencer cazadores' },
     pt: { play: 'JOGAR', shop: 'LOJA', back: 'VOLTAR', best: 'RECORDE', hunter: 'CAÇADOR', hint: 'Derrote caçadores para desbloquear mais', vamps: 'Vampiros', capes: 'Capas', upgrades: 'Melhorias',
           equip: 'USAR', equipped: 'EM USO', beat: 'Vença o caçador #', free: 'GRÁTIS', max: 'MÁX', hold: 'SEGURE PARA VOAR', bitten: 'MORDIDO!', vampire: 'VAMPIRO!',
           incoming: 'CAÇADOR CHEGANDO', grab: 'Pegue orbes de sangue para lançar morcegos!', defeated: 'CAÇADOR DERROTADO!', escaped: 'ELE FUGIU!', shieldUp: 'GUARDA MORCEGO!', shieldLost: 'GUARDA QUEBRADA',
           magnet: 'ÍMÃ DE SANGUE!', retry: 'TENTAR DE NOVO', menu: 'Menu', newRec: 'NOVO RECORDE!', bosses: 'Caçadores', unlocked: 'Desbloqueado: ', next: 'Próximo caçador',
-          d_zap: 'ELETROCUTADO POR ALHO!', d_stake: 'ESTACADO!', d_sun: 'QUEIMADO PELO SOL!',
+          floor: 'SAIA DO CHÃO!', d_zap: 'ELETROCUTADO POR ALHO!', d_stake: 'ESTACADO!', d_sun: 'QUEIMADO PELO SOL!',
           u_magnet: 'Ímã de sangue', u_magnet_d: 'O ímã dura +1.5 s', u_shield: 'Guarda morcego', u_shield_d: 'Comece com +1 guarda', u_value: 'Sangue rico', u_value_d: '+10% de sangue por gota',
           u_bats: 'Enxame', u_bats_d: '+25% de dano aos caçadores', u_time: 'Noite longa', u_time_d: '+2 s para vencer caçadores' },
   };
@@ -3160,7 +3160,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   let phase = 'menu'; // menu | intro | run | dead | result
   let me = null, camX = 0, speed = 0, holding = false, time = 0, paused = false, audioOn = true, shake = 0, flash = 0, flashCol = '#ff2840';
   let zaps = [], drops = [], pickups = [], stakes = [], beams = [], events = [], orbs = [], bats = [], parts = [];
-  let nextX = 0, stakeT = 0, introT = 0, deadT = 0, killer = '', runCoins = 0, runBosses = 0, chain = 0, chainT = 0, flapT = 0, hintT = 0, trailT = 0;
+  let groundT = 0, floorWarned = false, nextX = 0, stakeT = 0, introT = 0, deadT = 0, killer = '', runCoins = 0, runBosses = 0, chain = 0, chainT = 0, flapT = 0, hintT = 0, trailT = 0;
   let boss = null, bossNext = 1000, bossPending = false, banner = null, world = 0, menuBob = 0, unlockNews = [];
   let bgCur = null, bgPrev = null, PV = null, introFx = [];
 
@@ -3192,7 +3192,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   function newRun() {
     clearWorld();
     me = { y: 100, vy: 0, alive: true, shield: save.up.shield, inv: 0, magnet: 0, run: 0, k: 0, rot: 0, spin: 0, hurt: 0, blink: 0, flyK: 0, x: -14 };
-    camX = 0; speed = 0; nextX = VW() + 30; stakeT = 6; deadT = 0; killer = ''; runCoins = 0; runBosses = 0; chain = 0; hintT = 0; unlockNews = [];
+    camX = 0; speed = 0; nextX = VW() + 30; stakeT = 5; groundT = 0; floorWarned = false; deadT = 0; killer = ''; runCoins = 0; runBosses = 0; chain = 0; hintT = 0; unlockNews = [];
     if (boss) { kill(boss); boss = null; }
     bossNext = 1000; bossPending = false; banner = null;
     setWorld(0, false);
@@ -3248,7 +3248,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
 
   function spawnChunk() {
-    const d = nextX * MPU, L = clamp(d / 1600, 0, 1);
+    const d = nextX * MPU, L = clamp(d / 1300, 0, 1);
     const r = Math.random();
     if (d < 120 || r < 0.34) { // blood drops
       const kinds = ['line', 'wave', 'arc', 'diag', 'block'], kind = kinds[(Math.random() * kinds.length) | 0];
@@ -3263,7 +3263,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       events.push({ x: nextX, fire: () => { for (const y of set) addBeam({ y, h: 11, t: 0, warn: 1.25, on: 0.95 }); sfx.warn(); } });
       nextX += Math.max(speed, 26) * 3.4;
     } else { // garlic zappers; the first stretch is gentle: single, short ones
-      const count = 1 + (d > 400 && Math.random() < L + 0.2 ? 1 : 0) + (d > 900 && Math.random() < L * 0.6 ? 1 : 0);
+      const count = 1 + (d > 300 && Math.random() < L + 0.25 ? 1 : 0) + (d > 700 && Math.random() < L * 0.7 ? 1 : 0);
       const gap = rnd(27, 35) - L * 4;
       for (let i = 0; i < count; i++) {
         const angs = [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4];
@@ -3271,6 +3271,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         if (d > 300 && Math.random() < 0.18 + L * 0.25) { z.rot = rnd(0.9, 1.6) * (Math.random() < 0.5 ? -1 : 1); z.len = Math.min(z.len, 24); }
         const ext = z.rot ? z.len / 2 : Math.abs(Math.sin(z.ang)) * z.len / 2;
         z.y = rnd(10 + ext, 97 - ext);
+        if (d > 150 && i === 0 && Math.random() < 0.3) { z.ang = 0; z.rot = 0; z.y = 95.5; } // a garlic fence on the floor: jump it
         addZap(z);
       }
       const w = count * gap + 10;
@@ -3473,6 +3474,14 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       if (holding) { flapT -= dt; if (flapT <= 0) { flapT = 0.17; sfx.flap(); } }
       if (holding && hintT < 1) hintT += dt;
       emitTrail(dt, holding, px * U, sy(me.y - 1.5));
+      if (phase === 'run' && dist() > 60) {
+        groundT = onGround ? groundT + dt : Math.min(groundT, 0);
+        if (groundT > 1.5 && !beams.some(b => b.y > 85)) {
+          groundT = -1.2;
+          addBeam({ y: 94, h: 10, t: 0, warn: 1.0, on: 0.9 }); sfx.warn();
+          if (!floorWarned) { floorWarned = true; popup(T.floor, '#ffd65a', W / 2, sy(70)); }
+        }
+      }
       if (onGround && Math.random() < dt * 8) mist(px * U - 8, FB - 2, '#8a7a9a', -speed * U * 0.6, -rnd(10, 30), 0.4, 3, 12, 0.35);
     } else {
       me.vy += G * 1.2 * dt; me.y += me.vy * dt; me.rot += me.spin * dt;
@@ -3487,11 +3496,11 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (phase === 'run' && !bossPending) while (nextX < camX + VW() + 40) spawnChunk();
     for (const e of events) if (!e.done && camX + VW() >= e.x) { e.done = true; e.fire(); }
     events = events.filter(e => !e.done);
-    if (phase === 'run' && !boss && dist() > 250) {
+    if (phase === 'run' && !boss && dist() > 180) {
       stakeT -= dt;
       if (stakeT <= 0) {
         const L = clamp(dist() / 2000, 0, 1);
-        stakeT = rnd(4.5, 7) - L * 2.5;
+        stakeT = rnd(3.6, 6) - L * 2.2;
         const n = Math.random() < L * 0.5 ? 2 : 1;
         for (let i = 0; i < n; i++) addStake({ x: VW() + 6, y: pc() + (i ? rnd(-18, 18) : 0), vx: -(speed + 70), vy: 0, state: 'warn', t: -i * 0.35 });
         sfx.warn();
