@@ -232,9 +232,9 @@
   const WORLDS = [
     { id: 'forest', hpMul: 0.8, spawnMul: 1, enemies: ['slime', 'goblin', 'wolf'], boss: 'troll',
       palette: { ground: '#7fcf5a', ground2: '#5fb347', edge: '#3d8a3a', deco: '#ffe066' } },
-    { id: 'cave', hpMul: 1.05, spawnMul: 1, enemies: ['bat', 'spider', 'golem'], boss: 'wyrm',
+    { id: 'cave', hpMul: 1.3, spawnMul: 1, enemies: ['bat', 'spider', 'golem'], boss: 'wyrm',
       palette: { ground: '#6d5bb8', ground2: '#56479c', edge: '#2f2766', deco: '#5ef0d2' } },
-    { id: 'castle', hpMul: 0.95, spawnMul: 0.95, enemies: ['skeleton', 'knight', 'wraith'], boss: 'king',
+    { id: 'castle', hpMul: 1.1, spawnMul: 0.95, enemies: ['skeleton', 'knight', 'wraith'], boss: 'king',
       palette: { ground: '#c9876a', ground2: '#b06f55', edge: '#6e2f3a', deco: '#ffc531' } },
   ];
   // hp, speed (units/s), contact dmg, radius, gold
@@ -334,7 +334,7 @@
 
   // ---------- Enemies & waves ----------
   // Tuned against a skilled dodger: the hordes must be dense enough that dodging alone isn't enough.
-  const SPAWN_BASE = 1.4, SPAWN_PER_WAVE = 0.55, ENEMY_DMG_MUL = 1.6;
+  const SPAWN_BASE = 1.4, SPAWN_PER_WAVE = 0.55, ENEMY_DMG_MUL = 0.75;
   const spawnRate = (wave, world) => (SPAWN_BASE + SPAWN_PER_WAVE * (wave - 1)) * world.spawnMul;
   // A spawn point around the hero that stays inside the map: try the angle, then the opposite one, then clamp.
   function spawnPoint(angle, dist) {
@@ -361,12 +361,15 @@
       e.hitT = Math.max(0, e.hitT - dt);
       e.whirlT = Math.max(0, e.whirlT - dt);
       e.flash = Math.max(0, e.flash - dt);
-      const h = run.hero, dx = e.x - h.x, dy = e.y - h.y;
-      const d = Math.hypot(dx, dy) || 1, stop = HERO_R + e.r;
+      const h = run.hero, stop = HERO_R + e.r;
+      let dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy) || 1;
       if (d > stop) {
         const step = Math.min(d - stop, (run.freeze ? 0 : e.speed) * (e.slowT > 0 ? 0.5 : 1) * dt);
         e.x -= dx / d * step; e.y -= dy / d * step;
-      } else if (e.hitT <= 0) {
+        dx = e.x - h.x; dy = e.y - h.y; d = Math.hypot(dx, dy) || 1;
+      }
+      // Contact is checked after moving: a monster that keeps up with a moving hero still bites.
+      if (d <= stop + 0.5 && e.hitT <= 0) {
         e.hitT = 0.8;
         hurtHero(e.dmg);
         // Knock the attacker back a little so the hero isn't buried.
