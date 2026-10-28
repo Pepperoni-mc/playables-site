@@ -2351,6 +2351,14 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   .sndBtn { position: absolute; top: 12px; left: 14px; width: 44px; height: 44px; border-radius: 12px; background: rgba(8,10,36,.7); font-size: 20px; box-shadow: 0 0 0 2px rgba(255,255,255,.15); }
   #pauseBtn { position: absolute; right: 14px; top: calc(22px + clamp(15px, 4.4vmin, 24px) * 1.5); width: 40px; height: 40px; border-radius: 12px; pointer-events: auto;
               background: rgba(8,10,36,.75); font-weight: 900; font-size: 15px; letter-spacing: 1px; box-shadow: 0 0 0 2px rgba(255,255,255,.2); }
+  .vol { display: flex; flex-direction: column; gap: 8px; width: min(320px, 86vw); background: rgba(8,10,36,.96); border-radius: 16px; padding: 10px 14px 12px;
+         box-shadow: 0 0 0 2px rgba(255,255,255,.15), 0 8px 24px rgba(0,0,0,.4); }
+  .vol h3 { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: 1px; text-align: left; opacity: .8; }
+  .vrow { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 14px; }
+  .vrow button { width: 38px; height: 38px; flex: none; border-radius: 10px; background: rgba(255,255,255,.12); font-size: 18px; }
+  .vrow span { width: 74px; text-align: left; }
+  .vrow input { flex: 1; min-width: 0; height: 30px; accent-color: var(--gold); cursor: pointer; }
+  #volPop { position: absolute; top: 62px; left: 14px; z-index: 3; }
   #pauseScr { background: rgba(7,9,30,.82); justify-content: center; gap: 16px; z-index: 5; }
   #pauseScr h2 { margin: 0; font-size: clamp(40px, 12vw, 64px); }
   .adBtn { background: linear-gradient(#ffe066, #ffb020); color: var(--ink); font-weight: 900; padding: 12px 22px; border-radius: 14px; box-shadow: 0 5px 0 #b06a00; font-size: 17px; }
@@ -2398,6 +2406,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
 
 <div id="menu" class="screen">
   <button class="sndBtn" id="sndBtn">🔊</button>
+  <div class="vol hidden" id="volPop"></div>
   <div class="pill coins" id="mCoinsPill"><span class="coinI"></span><span id="mCoins">0</span></div>
   <div class="title"><h1>ORBIT<br><span>RALLY</span></h1><div class="stage" id="mPlanet"></div><div class="rival" id="mRival"></div></div>
   <div class="bottom">
@@ -2456,6 +2465,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
 </div>
 <div id="pauseScr" class="screen hidden">
   <h2 id="pTitle" class="stroke"></h2>
+  <div class="vol" id="pVol"></div>
   <button class="cont" id="pResume"></button>
   <button class="menuBtn" id="pQuit"></button>
 </div>
@@ -2469,13 +2479,13 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   const STRINGS = {
     en: { tGas: 'Hold GAS to drive!', tGasK: 'Hold W or ↑ to drive!', tTilt: 'Tilt ↺ ↻ to land flat!', tTiltK: 'Tilt with A / D to land flat!', planets: 'PLANETS', chooseRival: 'CHOOSE A RIVAL', gravity: 'Gravity', grav: ['Low', 'Medium', 'High'], locked: 'Beat {n} to unlock', beaten: 'Beaten', prize: 'Prize', rematchHalf: 'rematch: half prize', paused: 'PAUSED', resume: 'RESUME', quit: 'QUIT RACE', double: 'DOUBLE COINS', doubled: 'Coins doubled!', rivals: 'RIVALS', go2: 'RACE', nextRace: 'NEXT RACE', rival: 'Rival', bossLbl: 'BOSS', bossRace: 'BOSS RACE', unlocked: 'New planet unlocked: {p}!', next: 'Next rival: {n}', champ: 'Planet champion!', rematch: 'Boss rematch', shop: 'WORKSHOP', coinsRun: 'Coins collected', bonus: 'Win bonus', max: 'MAX', lv: 'Lv', u_engine: 'Engine', u_engine_d: 'Top speed and acceleration', u_tires: 'Tires', u_tires_d: 'Grip and cleaner landings', u_body: 'Body', u_body_d: 'Air control and quick recovery', u_nitro: 'Nitro', u_nitro_d: 'Longer, stronger boost', win: 'YOU WIN!', lose: '{n} WINS!', youDid: 'Your lap progress', you: 'YOU', play: 'RACE', gas: 'GAS', brake: 'BRAKE', nitro: 'NITRO', perfect: 'PERFECT!', rough: 'ROUGH LANDING', flipped: 'FLIPPED!', go: 'GO!',
           finish: 'LAP COMPLETE!', time: 'Lap time', best: 'Best', newRec: 'NEW RECORD!', retry: 'RACE AGAIN', menu: 'Menu',
-          keys: 'W / ↑ gas · S / ↓ brake · A D / ← → tilt · Space nitro' },
+          keys: 'W / ↑ gas · S / ↓ brake · A D / ← → tilt · Space nitro', music: 'MUSIC', sfx: 'EFFECTS', sound: 'SOUND' },
     es: { tGas: '¡Mantén GAS para avanzar!', tGasK: '¡Mantén W o ↑ para avanzar!', tTilt: '¡Inclina ↺ ↻ para caer plano!', tTiltK: '¡Inclina con A / D para caer plano!', planets: 'PLANETAS', chooseRival: 'ELIGE UN RIVAL', gravity: 'Gravedad', grav: ['Baja', 'Media', 'Alta'], locked: 'Vence a {n} para desbloquear', beaten: 'Vencido', prize: 'Premio', rematchHalf: 'revancha: medio premio', paused: 'PAUSA', resume: 'CONTINUAR', quit: 'SALIR DE LA CARRERA', double: 'DUPLICAR MONEDAS', doubled: '¡Monedas duplicadas!', rivals: 'RIVALES', go2: 'CORRER', nextRace: 'SIGUIENTE CARRERA', rival: 'Rival', bossLbl: 'JEFE', bossRace: 'CARRERA DE JEFE', unlocked: '¡Nuevo planeta: {p}!', next: 'Próximo rival: {n}', champ: '¡Campeón del planeta!', rematch: 'Revancha con el jefe', shop: 'TALLER', coinsRun: 'Monedas recogidas', bonus: 'Premio por ganar', max: 'MÁX', lv: 'Nv', u_engine: 'Motor', u_engine_d: 'Velocidad máxima y aceleración', u_tires: 'Llantas', u_tires_d: 'Agarre y aterrizajes más limpios', u_body: 'Carrocería', u_body_d: 'Control en el aire y recuperación rápida', u_nitro: 'Nitro', u_nitro_d: 'Impulso más largo y potente', win: '¡GANASTE!', lose: '¡GANA {n}!', youDid: 'Tu avance en la vuelta', you: 'TÚ', play: 'CORRER', gas: 'GAS', brake: 'FRENO', nitro: 'NITRO', perfect: '¡PERFECTO!', rough: 'MAL ATERRIZAJE', flipped: '¡VOLCASTE!', go: '¡YA!',
           finish: '¡VUELTA COMPLETA!', time: 'Tiempo de vuelta', best: 'Récord', newRec: '¡NUEVO RÉCORD!', retry: 'CORRER OTRA VEZ', menu: 'Menú',
-          keys: 'W / ↑ gas · S / ↓ freno · A D / ← → inclinar · Espacio nitro' },
+          keys: 'W / ↑ gas · S / ↓ freno · A D / ← → inclinar · Espacio nitro', music: 'MÚSICA', sfx: 'EFECTOS', sound: 'SONIDO' },
     pt: { tGas: 'Segure GÁS para andar!', tGasK: 'Segure W ou ↑ para andar!', tTilt: 'Incline ↺ ↻ para cair reto!', tTiltK: 'Incline com A / D para cair reto!', planets: 'PLANETAS', chooseRival: 'ESCOLHA UM RIVAL', gravity: 'Gravidade', grav: ['Baixa', 'Média', 'Alta'], locked: 'Vença {n} para desbloquear', beaten: 'Vencido', prize: 'Prêmio', rematchHalf: 'revanche: metade do prêmio', paused: 'PAUSA', resume: 'CONTINUAR', quit: 'SAIR DA CORRIDA', double: 'DOBRAR MOEDAS', doubled: 'Moedas dobradas!', rivals: 'RIVAIS', go2: 'CORRER', nextRace: 'PRÓXIMA CORRIDA', rival: 'Rival', bossLbl: 'CHEFE', bossRace: 'CORRIDA DO CHEFE', unlocked: 'Novo planeta: {p}!', next: 'Próximo rival: {n}', champ: 'Campeão do planeta!', rematch: 'Revanche com o chefe', shop: 'OFICINA', coinsRun: 'Moedas coletadas', bonus: 'Prêmio da vitória', max: 'MÁX', lv: 'Nv', u_engine: 'Motor', u_engine_d: 'Velocidade máxima e aceleração', u_tires: 'Pneus', u_tires_d: 'Aderência e pousos mais limpos', u_body: 'Carroceria', u_body_d: 'Controle no ar e recuperação rápida', u_nitro: 'Nitro', u_nitro_d: 'Impulso mais longo e forte', win: 'VOCÊ VENCEU!', lose: '{n} VENCEU!', youDid: 'Seu avanço na volta', you: 'VOCÊ', play: 'CORRER', gas: 'GÁS', brake: 'FREIO', nitro: 'NITRO', perfect: 'PERFEITO!', rough: 'POUSO RUIM', flipped: 'CAPOTOU!', go: 'JÁ!',
           finish: 'VOLTA COMPLETA!', time: 'Tempo da volta', best: 'Recorde', newRec: 'NOVO RECORDE!', retry: 'CORRER DE NOVO', menu: 'Menu',
-          keys: 'W / ↑ gás · S / ↓ freio · A D / ← → inclinar · Espaço nitro' },
+          keys: 'W / ↑ gás · S / ↓ freio · A D / ← → inclinar · Espaço nitro', music: 'MÚSICA', sfx: 'EFEITOS', sound: 'SOM' },
   };
   let T = STRINGS.en, LANG = 'en';
 
@@ -2490,31 +2500,31 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       craters: 9, craterW: [150, 270], craterD: [26, 60], rim: [16, 34], hills: [[3, 14], [7, 7], [12, 4]],
       colors: { sky: '#070b26', neb: '#4b3cc9', atmo: '#7fa8ff', far: '#ff9a5a', crust: '#e3e8f6', soil: '#8f98bd', deep: '#4c547c', core: '#2b3052', rock: '#aab3d2', dust: '#e6eaf7' },
       bots: [
-        { name: 'Rusty', look: { body: '#3b7bff', stripe: '#ffd23a', helmet: '#e8414f', shape: 0 }, up: { engine: 0, tires: 0, body: 0, nitro: 0 }, car: { maxSpeed: 0.8, accel: 0.8 }, ai: { aim: 0.3, nitro: 0.2 }, prize: 30 },
-        { name: 'Pebble', look: { body: '#9aa3b5', stripe: '#ff7a2b', helmet: '#5ad1ff', shape: 1 }, up: { engine: 0, tires: 0, body: 0, nitro: 0 }, car: { maxSpeed: 0.92 }, ai: { aim: 0.35, nitro: 0.3 }, prize: 40 },
-        { name: 'Comet Kim', look: { body: '#ff4fa3', stripe: '#ffffff', helmet: '#7a5cff', shape: 2 }, up: { engine: 1, tires: 0, body: 0, nitro: 0 }, car: {}, ai: { aim: 0.45, nitro: 0.4 }, prize: 50 },
-        { name: 'Nova', look: { body: '#2fd18a', stripe: '#1a2a5a', helmet: '#ffd23a', shape: 0 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: {}, ai: { aim: 0.5, nitro: 0.45 }, prize: 65 },
-        { name: 'Baron Crater', boss: true, look: { body: '#5a3cff', stripe: '#ffc531', helmet: '#2b2340', shape: 1 }, up: { engine: 2, tires: 2, body: 2, nitro: 2 }, car: { maxSpeed: 0.98 }, ai: { aim: 0.8, nitro: 0.75 }, prize: 120 },
+        { name: 'Rusty', look: { body: '#3b7bff', stripe: '#ffd23a', helmet: '#e8414f', shape: 0 }, up: { engine: 0, tires: 0, body: 0, nitro: 0 }, car: { maxSpeed: 1.0, accel: 1.0 }, ai: { aim: 0.35, nitro: 0.3 }, prize: 30 },
+        { name: 'Pebble', look: { body: '#9aa3b5', stripe: '#ff7a2b', helmet: '#5ad1ff', shape: 1 }, up: { engine: 0, tires: 0, body: 0, nitro: 0 }, car: { maxSpeed: 1.1, accel: 1.1 }, ai: { aim: 0.5, nitro: 0.45 }, prize: 40 },
+        { name: 'Comet Kim', look: { body: '#ff4fa3', stripe: '#ffffff', helmet: '#7a5cff', shape: 2 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 1.1, accel: 1.1 }, ai: { aim: 0.6, nitro: 0.55 }, prize: 50 },
+        { name: 'Nova', look: { body: '#2fd18a', stripe: '#1a2a5a', helmet: '#ffd23a', shape: 0 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 1.15, accel: 1.15 }, ai: { aim: 0.6, nitro: 0.55 }, prize: 65 },
+        { name: 'Baron Crater', boss: true, look: { body: '#5a3cff', stripe: '#ffc531', helmet: '#2b2340', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.97, accel: 0.97 }, ai: { aim: 0.88, nitro: 0.83 }, prize: 120 },
       ] },
     { id: 'jungle', name: { en: 'Red Jungle', es: 'Selva Roja', pt: 'Selva Vermelha' }, seed: 23, radius: 1400, gravity: 850, coin: 1.5, decor: 'plant',
       craters: 12, craterW: [150, 250], craterD: [14, 26], rim: [10, 20], hills: [[4, 12], [9, 7], [15, 4]],
       colors: { sky: '#071a24', neb: '#1fa88a', atmo: '#8dffc4', far: '#c58aff', crust: '#6ad35a', soil: '#c9472c', deep: '#7c2216', core: '#3a0d0a', rock: '#e0663f', dust: '#f0a070', leaf: '#4cc95a', cap: '#ff4f6a' },
       bots: [
-        { name: 'Fern', look: { body: '#8fe04a', stripe: '#2a6a2a', helmet: '#ff9a3a', shape: 2 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: {}, ai: { aim: 0.4, nitro: 0.35 }, prize: 80 },
-        { name: 'Mojo', look: { body: '#ff9a2b', stripe: '#3a1a0a', helmet: '#2fd1c4', shape: 1 }, up: { engine: 2, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 0.9 }, ai: { aim: 0.45, nitro: 0.4 }, prize: 95 },
-        { name: 'Viper Vee', look: { body: '#16b37a', stripe: '#e8ff4a', helmet: '#16b37a', shape: 2 }, up: { engine: 2, tires: 2, body: 2, nitro: 2 }, car: {}, ai: { aim: 0.3, nitro: 0.25 }, prize: 110 },
-        { name: 'Tank Tilda', look: { body: '#8a7a3a', stripe: '#ffcf4a', helmet: '#c94a2a', shape: 1 }, up: { engine: 2, tires: 2, body: 2, nitro: 2 }, car: { maxSpeed: 0.97 }, ai: { aim: 0.5, nitro: 0.45 }, prize: 130 },
-        { name: 'Queen Thorn', boss: true, look: { body: '#d4184a', stripe: '#ffd76a', helmet: '#2a0a1a', shape: 0 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: {}, ai: { aim: 0.7, nitro: 0.65 }, prize: 250 },
+        { name: 'Fern', look: { body: '#8fe04a', stripe: '#2a6a2a', helmet: '#ff9a3a', shape: 2 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 1.12, accel: 1.12 }, ai: { aim: 0.45, nitro: 0.4 }, prize: 80 },
+        { name: 'Mojo', look: { body: '#ff9a2b', stripe: '#3a1a0a', helmet: '#2fd1c4', shape: 1 }, up: { engine: 2, tires: 2, body: 2, nitro: 2 }, car: { maxSpeed: 0.95, accel: 0.95 }, ai: { aim: 0.55, nitro: 0.5 }, prize: 95 },
+        { name: 'Viper Vee', look: { body: '#16b37a', stripe: '#e8ff4a', helmet: '#16b37a', shape: 2 }, up: { engine: 2, tires: 2, body: 2, nitro: 2 }, car: { maxSpeed: 1.02, accel: 1.02 }, ai: { aim: 0.6, nitro: 0.55 }, prize: 110 },
+        { name: 'Tank Tilda', look: { body: '#8a7a3a', stripe: '#ffcf4a', helmet: '#c94a2a', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.97, accel: 0.97 }, ai: { aim: 0.7, nitro: 0.65 }, prize: 130 },
+        { name: 'Queen Thorn', boss: true, look: { body: '#d4184a', stripe: '#ffd76a', helmet: '#2a0a1a', shape: 0 }, up: { engine: 4, tires: 4, body: 4, nitro: 4 }, car: { maxSpeed: 0.95, accel: 0.95 }, ai: { aim: 0.94, nitro: 0.89 }, prize: 250 },
       ] },
     { id: 'colossus', name: { en: 'Colossus', es: 'Coloso', pt: 'Colosso' }, seed: 37, radius: 1700, gravity: 1250, coin: 2, decor: 'crystal',
       craters: 20, craterW: [110, 190], craterD: [14, 30], rim: [8, 18], hills: [[5, 20], [11, 9], [19, 5]],
       colors: { sky: '#170612', neb: '#ff4a2a', atmo: '#ff8a4a', far: '#7ad0ff', crust: '#8a7aa6', soil: '#4a3d5e', deep: '#2a2036', core: '#ff6a1a', rock: '#5c4f74', dust: '#b9a8c9', glow: '#ff7a2a' },
       bots: [
-        { name: 'Magma Max', look: { body: '#ff5a1a', stripe: '#2a1a1a', helmet: '#ffc531', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.92 }, ai: { aim: 0.45, nitro: 0.4 }, prize: 150 },
-        { name: 'Cinder', look: { body: '#6a6a7a', stripe: '#ff8a2a', helmet: '#e8414f', shape: 0 }, up: { engine: 4, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.93 }, ai: { aim: 0.55, nitro: 0.5 }, prize: 175 },
-        { name: 'Obsidian', look: { body: '#2a2440', stripe: '#9a7aff', helmet: '#c9b8ff', shape: 2 }, up: { engine: 4, tires: 4, body: 4, nitro: 4 }, car: { maxSpeed: 0.95 }, ai: { aim: 0.5, nitro: 0.45 }, prize: 200 },
-        { name: 'Blaze Bo', look: { body: '#ffcf1a', stripe: '#e8414f', helmet: '#ff6a1a', shape: 0 }, up: { engine: 4, tires: 4, body: 4, nitro: 4 }, car: {}, ai: { aim: 0.7, nitro: 0.65 }, prize: 230 },
-        { name: 'King Kolossus', boss: true, look: { body: '#26243a', stripe: '#ffc531', helmet: '#ff3a1a', shape: 1 }, up: { engine: 5, tires: 5, body: 5, nitro: 5 }, car: { maxSpeed: 0.95 }, ai: { aim: 0.8, nitro: 0.75 }, prize: 500 },
+        { name: 'Magma Max', look: { body: '#ff5a1a', stripe: '#2a1a1a', helmet: '#ffc531', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: {}, ai: { aim: 0.55, nitro: 0.5 }, prize: 150 },
+        { name: 'Cinder', look: { body: '#6a6a7a', stripe: '#ff8a2a', helmet: '#e8414f', shape: 0 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 1.0, accel: 1.0 }, ai: { aim: 0.65, nitro: 0.6 }, prize: 175 },
+        { name: 'Obsidian', look: { body: '#2a2440', stripe: '#9a7aff', helmet: '#c9b8ff', shape: 2 }, up: { engine: 4, tires: 4, body: 4, nitro: 4 }, car: { maxSpeed: 1.02, accel: 1.02 }, ai: { aim: 0.7, nitro: 0.65 }, prize: 200 },
+        { name: 'Blaze Bo', look: { body: '#ffcf1a', stripe: '#e8414f', helmet: '#ff6a1a', shape: 0 }, up: { engine: 4, tires: 4, body: 4, nitro: 4 }, car: { maxSpeed: 1.05, accel: 1.05 }, ai: { aim: 0.75, nitro: 0.7 }, prize: 230 },
+        { name: 'King Kolossus', boss: true, look: { body: '#26243a', stripe: '#ffc531', helmet: '#ff3a1a', shape: 1 }, up: { engine: 5, tires: 5, body: 5, nitro: 5 }, car: { maxSpeed: 1.08, accel: 1.08 }, ai: { aim: 0.97, nitro: 0.92 }, prize: 500 },
       ] },
   ];
   // Base car. Upgrades will add on top of these numbers.
@@ -2543,7 +2553,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   const LOOK = { body: '#ff5a36', stripe: '#ffffff', helmet: '#ffd23a' };
 
   // ---------- Save (Bridge storage) ----------
-  let save = { coins: 0, best: {}, up: Object.assign({}, NOUP), planet: 0, unlocked: 0, beaten: PLANETS.map(() => 0), sound: true, tut: 0 };
+  let save = { coins: 0, best: {}, up: Object.assign({}, NOUP), planet: 0, unlocked: 0, beaten: PLANETS.map(() => 0), music: 1, sfx: 1, tut: 0 };
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
   function persist() { if (B) B.storage.set(['orbit_rally'], [JSON.stringify(save)]).catch(() => {}); }
@@ -2555,6 +2565,8 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         const s = typeof d[0] === 'string' ? JSON.parse(d[0]) : d[0];
         save = Object.assign(save, s, { best: Object.assign({}, save.best, s.best || {}), up: Object.assign({}, save.up, s.up || {}),
                                        beaten: PLANETS.map((_, i) => (s.beaten && s.beaten[i]) || 0) });
+        if (s.sound === false && s.music === undefined) save.music = save.sfx = 0;
+        delete save.sound; save.music = clamp(+save.music || 0, 0, 1); save.sfx = clamp(+save.sfx || 0, 0, 1);
         save.unlocked = clamp(save.unlocked | 0, 0, PLANETS.length - 1); save.planet = clamp(save.planet | 0, 0, save.unlocked);
       }
     } catch (e) {}
@@ -3435,15 +3447,15 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   // ---------- Audio ----------
   // Everything is synthesized: an engine that follows the car, a nitro roar, short effects and a looping tune per planet.
   let actx = null, master = null, musicBus = null, sfxBus = null, noiseBuf = null, engine = null;
-  const audioLive = () => audioOn && save.sound && !isPaused();
+  const audioLive = () => audioOn && (save.music > 0 || save.sfx > 0) && !isPaused();
   function unlockAudio() {
     try {
       if (!actx) {
         actx = new (window.AudioContext || window.webkitAudioContext)();
         const comp = actx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
         master = actx.createGain(); master.gain.value = 0.8; master.connect(comp).connect(actx.destination);
-        musicBus = actx.createGain(); musicBus.gain.value = 0.32; musicBus.connect(master);
-        sfxBus = actx.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(master);
+        musicBus = actx.createGain(); musicBus.gain.value = 0.32 * save.music * save.music; musicBus.connect(master);
+        sfxBus = actx.createGain(); sfxBus.gain.value = 0.9 * save.sfx * save.sfx; sfxBus.connect(master);
         noiseBuf = actx.createBuffer(1, actx.sampleRate, actx.sampleRate);
         const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
         // Engine: two detuned saws through a lowpass; nitro: filtered noise. Both run all the time at zero volume when idle.
@@ -3459,6 +3471,29 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       syncAudio();
     } catch (e) {}
   }
+  // Sliders are linear; gain follows the square so the middle of the slider sounds like half volume.
+  function applyVolume() {
+    if (musicBus) musicBus.gain.setTargetAtTime(0.32 * save.music * save.music, actx.currentTime, 0.03);
+    if (sfxBus) sfxBus.gain.setTargetAtTime(0.9 * save.sfx * save.sfx, actx.currentTime, 0.03);
+    $('sndBtn').textContent = save.music > 0 || save.sfx > 0 ? '🔊' : '🔇';
+  }
+  // The same two sliders live in the menu popup and on the pause screen.
+  const lastVol = { music: 1, sfx: 1 };
+  function buildVolume(box) {
+    box.innerHTML = '';
+    const h = document.createElement('h3'); h.textContent = T.sound; box.appendChild(h);
+    for (const [k, icon] of [['music', '🎵'], ['sfx', '💥']]) {
+      const row = document.createElement('div'); row.className = 'vrow';
+      const b = document.createElement('button'), lbl = document.createElement('span'), r = document.createElement('input');
+      lbl.textContent = T[k]; r.type = 'range'; r.min = 0; r.max = 100; r.step = 5; r.dataset.vol = k;
+      const paint = () => { r.value = Math.round(save[k] * 100); b.textContent = save[k] > 0 ? icon : '🔇'; };
+      r.oninput = () => { save[k] = r.value / 100; if (save[k] > 0) lastVol[k] = save[k]; unlockAudio(); applyVolume(); syncVolume(); };
+      r.onchange = () => { persist(); if (k === 'sfx') sfx.coin(false); };
+      b.onclick = () => { save[k] = save[k] > 0 ? 0 : lastVol[k]; persist(); unlockAudio(); applyVolume(); syncVolume(); };
+      row._paint = paint; paint(); row.append(b, lbl, r); box.appendChild(row);
+    }
+  }
+  function syncVolume() { document.querySelectorAll('.vrow').forEach(r => r._paint()); }
   function syncAudio() {
     // Paused means nothing moves, so stop drawing too (saves battery during ads and in background tabs).
     if (app && app.ticker) { if (isPaused()) app.ticker.stop(); else app.ticker.start(); }
@@ -3582,7 +3617,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
   function toMenu() {
     phase = 'menu'; releaseAll(); userPause = false; pick = null; setPlanet(save.planet); resetCars(); buildCoins();
-    $('sndBtn').textContent = save.sound ? '🔊' : '🔇'; $('mapBtn').textContent = '🪐 ' + T.planets;
+    $('sndBtn').textContent = save.music > 0 || save.sfx > 0 ? '🔊' : '🔇'; $('mapBtn').textContent = '🪐 ' + T.planets;
     const b = P.bots[botIx], done = save.beaten[save.planet] >= P.bots.length;
     $('mRival').innerHTML = (b.boss ? `<b class="bossChip">👑 ${done ? T.rematch : T.bossLbl}</b>` : `${T.rival} ${botIx + 1}/${P.bots.length}`) +
       ` <span class="dot" style="background:${b.look.body}"></span>${b.name}`;
@@ -3789,6 +3824,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     userPause = on; releaseAll(); syncAudio();
     $('pauseScr').classList.toggle('hidden', !on);
     $('pTitle').textContent = T.paused; $('pResume').textContent = T.resume; $('pQuit').textContent = T.quit;
+    if (on) buildVolume($('pVol'));
   }
 
   let ringG = null;
@@ -3890,7 +3926,8 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     $('rDouble').onclick = watchDouble;
     $('pauseBtn').onclick = () => setUserPause(true); $('pResume').onclick = () => setUserPause(false);
     $('pQuit').onclick = () => { setUserPause(false); send('level_failed'); toMenu(); };
-    $('sndBtn').onclick = () => { save.sound = !save.sound; persist(); unlockAudio(); syncAudio(); $('sndBtn').textContent = save.sound ? '🔊' : '🔇'; };
+    $('sndBtn').onclick = () => { unlockAudio(); const p = $('volPop'); if (p.classList.toggle('hidden')) return; buildVolume(p); };
+    document.addEventListener('pointerdown', e => { if (!e.target.closest('#volPop, #sndBtn')) $('volPop').classList.add('hidden'); });
     $('menuBtn').onclick = toMenu;
     $('shopBtn').onclick = openShop; $('rShop').onclick = openShop;
     $('shopBack').onclick = closeShop;
