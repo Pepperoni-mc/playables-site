@@ -81,6 +81,8 @@
   .reward .coin { width: 34px; height: 34px; }
   .unlock { background: var(--accent); border-radius: 12px; padding: 8px 14px; font-weight: 800; }
   .menuBtn { background: transparent; color: #fff; opacity: .8; font-weight: 800; padding: 8px; text-decoration: underline; }
+  .adBtn { background: var(--gold); color: var(--ink); font-weight: 900; font-size: 16px; padding: 10px 22px; border-radius: 14px; box-shadow: 0 4px 0 var(--gold-d); }
+  .adBtn:disabled { opacity: .7; }
   .cont { background: var(--green); color: #fff; font-weight: 900; font-size: 20px; padding: 14px 40px; border-radius: 16px; box-shadow: 0 5px 0 #22924c; }
 </style>
 </head>
@@ -89,7 +91,7 @@
 
 <div id="menu" class="screen">
   <div class="topbar">
-    <div class="pill" id="mStage"></div>
+    <div style="display:flex;gap:8px"><div class="pill" id="mStage"></div><button class="pill" id="muteBtn" aria-label="Sound"></button></div>
     <div class="pill"><span class="coin"></span><span id="mCoins">0</span></div>
   </div>
   <div class="title">
@@ -124,6 +126,7 @@
   <div class="sub" id="rSub"></div>
   <div class="board" id="rBoard"></div>
   <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
+  <button class="adBtn hidden" id="adBtn"></button>
   <div class="unlock hidden" id="rUnlock"></div>
   <button class="cont" id="contBtn"></button>
   <button class="menuBtn hidden" id="menuBtn"></button>
@@ -140,19 +143,19 @@
           bossIn: 'YOU ARE #1!', bossIn2: 'BOSS INCOMING', won: 'BOSS DEFEATED!', rank: 'Rank #1 of 5', cont: 'CONTINUE', unlocked: 'Unlocked: ', equip: 'EQUIP', equipped: 'EQUIPPED',
           beat: 'Beat boss #', free: 'FREE', max: 'MAX', rush: 'RUSH!', smash: 'SMASH!', blocked: 'BLOCKED!', passed: 'You passed', missed: 'missed!', tapHint: 'TAP TO DROP', lost: 'DEFEAT', finished: 'You finished', bossWon: 'The boss held on', retry: 'TRY AGAIN', menu: 'Menu', timeUp: "TIME'S UP!",
           u_perfect: 'Perfect zone', u_perfect_d: 'Wider perfect window', u_slow: 'Slow motion', u_slow_d: 'Blocks move slower', u_start: 'Head start', u_start_d: '+2 floors at start',
-          u_power: 'Boss damage', u_power_d: '+25% damage to boss', u_shield: 'Extra shield', u_shield_d: '+1 shield per round', none: 'None', u_time: 'Boss timer', u_time_d: '+2 s to beat the boss', u_coins: 'Coin boost', u_coins_d: '+10% coins per round', },
+          u_power: 'Boss damage', u_power_d: '+25% damage to boss', u_shield: 'Extra shield', u_shield_d: '+1 shield per round', none: 'None', u_time: 'Boss timer', u_time_d: '+2 s to beat the boss', u_coins: 'Coin boost', u_coins_d: '+10% coins per round', adX2: 'WATCH AD: x2 COINS', adDone: 'COINS DOUBLED!', },
     es: { play: 'JUGAR', boss: 'JEFE', stage: 'NIVEL', shop: 'TIENDA', back: 'VOLVER', hint: 'Derrota jefes para desbloquear más', blocks: 'Bloques', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Mejoras',
           finding: 'Buscando jugadores...', you: 'Tú', perfect: '¡PERFECTO!', miss: '¡FALLASTE!', floors: 'pisos', shieldLost: 'ESCUDO -1', fell: '¡DERRUMBE!', go: '¡YA!',
           bossIn: '¡ERES EL #1!', bossIn2: 'LLEGA EL JEFE', won: '¡JEFE DERROTADO!', rank: 'Puesto #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EN USO',
           beat: 'Vence al jefe #', free: 'GRATIS', max: 'MÁX', rush: '¡PRISA!', smash: '¡GOLPE!', blocked: '¡BLOQUEADO!', passed: 'Pasaste a', missed: '¡falló!', tapHint: 'TOCA PARA SOLTAR', lost: 'DERROTA', finished: 'Terminaste', bossWon: 'El jefe resistió', retry: 'REINTENTAR', menu: 'Menú', timeUp: '¡SE ACABÓ EL TIEMPO!',
           u_perfect: 'Zona perfecta', u_perfect_d: 'Perfecto más fácil', u_slow: 'Cámara lenta', u_slow_d: 'Bloques más lentos', u_start: 'Ventaja', u_start_d: '+2 pisos al inicio',
-          u_power: 'Daño al jefe', u_power_d: '+25% de daño al jefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Ninguno', u_time: 'Tiempo jefe', u_time_d: '+2 s para vencer al jefe', u_coins: 'Más monedas', u_coins_d: '+10% de monedas por partida', },
+          u_power: 'Daño al jefe', u_power_d: '+25% de daño al jefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Ninguno', u_time: 'Tiempo jefe', u_time_d: '+2 s para vencer al jefe', u_coins: 'Más monedas', u_coins_d: '+10% de monedas por partida', adX2: 'VER ANUNCIO: x2 MONEDAS', adDone: '¡MONEDAS DUPLICADAS!', },
     pt: { play: 'JOGAR', boss: 'CHEFE', stage: 'FASE', shop: 'LOJA', back: 'VOLTAR', hint: 'Derrote chefes para desbloquear mais', blocks: 'Blocos', worlds: 'Mundos', avatars: 'Avatares', upgrades: 'Melhorias',
           finding: 'Procurando jogadores...', you: 'Você', perfect: 'PERFEITO!', miss: 'ERROU!', floors: 'andares', shieldLost: 'ESCUDO -1', fell: 'DESABOU!', go: 'JÁ!',
           bossIn: 'VOCÊ É O #1!', bossIn2: 'CHEFE CHEGANDO', won: 'CHEFE DERROTADO!', rank: 'Posição #1 de 5', cont: 'CONTINUAR', unlocked: 'Desbloqueado: ', equip: 'USAR', equipped: 'EM USO',
           beat: 'Vença o chefe #', free: 'GRÁTIS', max: 'MÁX', rush: 'PRESSA!', smash: 'PANCADA!', blocked: 'BLOQUEADO!', passed: 'Você passou', missed: 'errou!', tapHint: 'TOQUE PARA SOLTAR', lost: 'DERROTA', finished: 'Você terminou', bossWon: 'O chefe resistiu', retry: 'TENTAR DE NOVO', menu: 'Menu', timeUp: 'ACABOU O TEMPO!',
           u_perfect: 'Zona perfeita', u_perfect_d: 'Perfeito mais fácil', u_slow: 'Câmera lenta', u_slow_d: 'Blocos mais lentos', u_start: 'Vantagem', u_start_d: '+2 andares no início',
-          u_power: 'Dano ao chefe', u_power_d: '+25% de dano ao chefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Nenhum', u_time: 'Tempo chefe', u_time_d: '+2 s para vencer o chefe', u_coins: 'Mais moedas', u_coins_d: '+10% de moedas por partida', },
+          u_power: 'Dano ao chefe', u_power_d: '+25% de dano ao chefe', u_shield: 'Escudo extra', u_shield_d: '+1 escudo por partida', none: 'Nenhum', u_time: 'Tempo chefe', u_time_d: '+2 s para vencer o chefe', u_coins: 'Mais moedas', u_coins_d: '+10% de moedas por partida', adX2: 'VER ANÚNCIO: x2 MOEDAS', adDone: 'MOEDAS DOBRADAS!', },
   };
   let T = STRINGS.en;
 
@@ -222,7 +225,7 @@
   const BOT_AVATARS = ['', '', '', '🐱', '🦊', '🤖', '👽', '🐸', '🐼', '🔥', '⭐', '😎'];
 
   // ---------- Save (Bridge storage) ----------
-  let save = { coins: 0, bosses: 0, owned: { blocks: ['classic'], worlds: ['classic'], avatars: ['none'] },
+  let save = { muted: false, coins: 0, bosses: 0, owned: { blocks: ['classic'], worlds: ['classic'], avatars: ['none'] },
                eq: { blocks: 'classic', worlds: 'classic', avatars: 'none' }, up: { perfect: 0, slow: 0, start: 0, power: 0, shield: 0, time: 0, coins: 0 }, seen: 7 };
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
@@ -252,7 +255,9 @@
   const COS = Math.cos(Math.PI / 6), SIN = 0.5;
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
+    // Playgama: never wider than 2:1; very wide windows get side margins instead of a strip.
+    W = Math.min(window.innerWidth, window.innerHeight * 2); H = window.innerHeight;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.marginLeft = (window.innerWidth - W) / 2 + 'px';
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     S = Math.min(W * 0.42, H * 0.38) / (20 * COS); // no fixed cap: big screens get a big tower
   }
@@ -1112,8 +1117,9 @@
     $('rUnlock').textContent = '🔓 ' + T.unlocked + news.join(', ');
     $('result').classList.remove('lost');
     $('contBtn').textContent = T.cont;
-    $('contBtn').onclick = toMenu;
+    $('contBtn').onclick = () => { showInterstitial(); toMenu(); };
     $('menuBtn').classList.add('hidden');
+    offerDouble(reward);
     show('result');
     setTimeout(() => sfx.coins(), 250);
   }
@@ -1137,7 +1143,8 @@
     $('rCoins').textContent = '+' + reward;
     $('rUnlock').classList.add('hidden');
     $('contBtn').textContent = T.retry;
-    $('contBtn').onclick = startMatchmaking;
+    $('contBtn').onclick = () => { showInterstitial(); startMatchmaking(); };
+    offerDouble(reward);
     $('menuBtn').textContent = T.menu;
     $('menuBtn').classList.remove('hidden');
     show('result');
@@ -1169,10 +1176,10 @@
         const d = noiseBuf.getChannelData(0);
         for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       }
-      if (actx.state === 'suspended' && audioOn && !paused) actx.resume();
+      if (actx.state === 'suspended' && audioOn && !paused && !save.muted) actx.resume();
     } catch (e) {}
   }
-  const canPlay = () => actx && audioOn && !paused && actx.state === 'running';
+  const canPlay = () => actx && audioOn && !paused && !save.muted && actx.state === 'running';
   function out(node, pan, send) {
     let n = node;
     if (pan && actx.createStereoPanner) { const p = actx.createStereoPanner(); p.pan.value = pan; n.connect(p); n = p; }
@@ -1245,7 +1252,31 @@
     coins() { for (let i = 0; i < 6; i++) osc(PENTA[7 + (i % 3)], 0.03, 0.35, { delay: i * 0.06, send: 0.4 }); },
   };
   const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
-  function syncAudio() { if (!actx) return; if (audioOn && !paused) actx.resume(); else actx.suspend(); }
+  function syncAudio() { if (!actx) return; if (audioOn && !paused && !save.muted) actx.resume(); else actx.suspend(); }
+
+  // ---------- Ads (Bridge) ----------
+  // An interstitial at the end of a round, and an opt-in rewarded ad that doubles the round's coins.
+  let adReward = 0, adUsed = false;
+  const adsOk = (k) => { try { return !!(B && B.advertisement && B.advertisement[k]); } catch (e) { return false; } };
+  function showInterstitial() { if (adsOk('isInterstitialSupported')) try { B.advertisement.showInterstitial('round_end'); } catch (e) {} }
+  function offerDouble(reward) {
+    adReward = reward; adUsed = false;
+    const b = $('adBtn');
+    b.classList.toggle('hidden', !adsOk('isRewardedSupported') || reward <= 0);
+    b.disabled = false; b.textContent = '📺 ' + T.adX2;
+  }
+  function watchDouble() {
+    if (adUsed || !adsOk('isRewardedSupported')) return;
+    $('adBtn').disabled = true;
+    try { B.advertisement.showRewarded('double_coins'); } catch (e) { $('adBtn').disabled = false; }
+  }
+  function onRewarded(state) {
+    if (state === 'rewarded' && !adUsed && adReward > 0) { // grant only on 'rewarded', never on 'closed'
+      adUsed = true; save.coins += adReward; persist();
+      $('rCoins').textContent = '+' + adReward * 2; $('adBtn').textContent = '✅ ' + T.adDone; sfx.coins();
+    } else if ((state === 'failed' || state === 'closed') && !adUsed) $('adBtn').disabled = false;
+  }
+  function renderMute() { $('muteBtn').textContent = save.muted ? '🔇' : '🔊'; }
 
   // ---------- Boot ----------
   async function boot() {
@@ -1262,6 +1293,7 @@
       T = STRINGS[lang] || STRINGS.en;
       B.platform.on(B.EVENT_NAME.PAUSE_STATE_CHANGED, isPaused => { paused = isPaused; syncAudio(); });
       B.platform.on(B.EVENT_NAME.AUDIO_STATE_CHANGED, isEnabled => { audioOn = isEnabled; syncAudio(); });
+      try { B.advertisement.on(B.EVENT_NAME.REWARDED_STATE_CHANGED, onRewarded); } catch (e) {}
       await load();
     }
 
@@ -1271,6 +1303,10 @@
     $('shopBack').onclick = () => { show('menu'); renderMenu(); };
     $('contBtn').onclick = toMenu;
     $('menuBtn').onclick = toMenu;
+    $('adBtn').onclick = watchDouble;
+    $('muteBtn').onclick = () => { save.muted = !save.muted; persist(); renderMute(); unlockAudio(); syncAudio(); };
+    renderMute();
+    window.addEventListener('contextmenu', e => e.preventDefault());
 
     demo = makeTower(skinFn(), 12);
     toMenu();
