@@ -127,6 +127,15 @@
   #jump.cd { filter: grayscale(.6) brightness(.85); }
   #jump .pl { position: absolute; bottom: -18px; font-size: 11px; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
   body.pc #jump { bottom: 70px; }
+  /* Missions panel (menu and result) */
+  .missions { width: min(360px, 92%); background: rgba(15,20,40,.72); color: #fff; border-radius: 14px; padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 800; text-align: left; }
+  .missions .mh { display: flex; justify-content: space-between; color: var(--gold); font-size: 12px; letter-spacing: .5px; }
+  .mrow { display: flex; align-items: center; gap: 8px; }
+  .mrow .mt { flex: 1; }
+  .mrow .mb { width: 64px; height: 8px; background: rgba(255,255,255,.18); border-radius: 4px; overflow: hidden; flex: none; }
+  .mrow .mb b { display: block; height: 100%; background: var(--green); }
+  .mrow .mr { font-size: 11px; color: var(--gold); white-space: nowrap; min-width: 52px; text-align: right; }
+  .mrow.done .mt { color: #7cff8a; }
 </style>
 </head>
 <body>
@@ -150,6 +159,7 @@
     <div class="stage" id="mBoss"></div>
   </div>
   <div class="bottom">
+    <div class="missions" id="mMissions"></div>
     <button class="play" id="playBtn"></button>
     <button class="shopBtn" id="shopBtn"><span id="shopLbl"></span><span class="badge hidden" id="shopBadge">!</span></button>
     <a class="home hidden" id="homeLink" href="../">← All games</a>
@@ -169,6 +179,7 @@
   <h2 id="rTitle"></h2>
   <div class="sub" id="rSub"></div>
   <div class="board" id="rBoard"></div>
+  <div class="missions" id="rMissions"></div>
   <div class="reward"><span class="coin"></span><span id="rCoins">0</span></div>
   <div class="unlock hidden" id="rUnlock"></div>
   <button class="retry" id="retryBtn"></button>
@@ -191,7 +202,11 @@
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
           u_fwd: '4WD', u_fwd_d: 'Front wheels pull too', u_air: 'Air control', u_air_d: 'Spin faster in the air', u_tank: 'Fuel tank', u_tank_d: 'Drive further on one tank',
           u_turbo: 'Turbo', u_turbo_d: 'Faster acceleration', u_stab: 'Stability', u_stab_d: 'Harder to flip over',
-          isl_grass: 'Rolling green hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills in the dark', isl_sky: 'Low gravity!' },
+          isl_grass: 'Rolling green hills', isl_desert: 'Bumpy sand dunes', isl_snow: 'Slippery ice', isl_night: 'Huge hills in the dark', isl_sky: 'Low gravity!',
+          missions: 'MISSIONS', level: 'DRIVER LV', missionDone: 'MISSION COMPLETE!', wheelie: 'WHEELIE', perfect: 'PERFECT LANDING', comboLost: 'COMBO LOST',
+          chest: 'CHEST', wet: 'SPLASH!', gapClear: 'GAP JUMP', style: 'Style', nextChest: 'Next chest reward',
+          m_dist: 'Drive {n} m in one run', m_flips: 'Do {n} flips in one run', m_combo: 'Reach a x{n} trick combo', m_coins: 'Collect {n} coins in one run',
+          m_wheelie: 'Wheelie for {n} s in one run', m_air: 'Fly {n} s in one run', m_gaps: 'Jump {n} water gaps', m_chests: 'Open {n} chests', m_perfect: 'Do {n} perfect landings' },
     es: { play: 'EMPEZAR', stage: 'ESCENARIO', shop: 'TIENDA', back: 'VOLVER', hint: '', cars: 'Vehículos', hats: 'Sombreros', upgrades: 'Mejoras', islands: 'Escenarios',
           you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: '', crash: '¡CHOQUE!', outMeat: '¡SIN COMBUSTIBLE!',
           backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
@@ -202,7 +217,11 @@
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
           u_fwd: '4x4', u_fwd_d: 'Las ruedas delanteras también tiran', u_air: 'Control aéreo', u_air_d: 'Gira más rápido en el aire', u_tank: 'Tanque', u_tank_d: 'Llega más lejos con un tanque',
           u_turbo: 'Turbo', u_turbo_d: 'Acelera más rápido', u_stab: 'Estabilidad', u_stab_d: 'Cuesta más voltearse',
-          isl_grass: 'Colinas verdes', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!' },
+          isl_grass: 'Colinas verdes', isl_desert: 'Dunas con baches', isl_snow: 'Hielo resbaloso', isl_night: 'Colinas enormes de noche', isl_sky: '¡Gravedad baja!',
+          missions: 'MISIONES', level: 'PILOTO NV', missionDone: '¡MISIÓN CUMPLIDA!', wheelie: '¡CABALLITO!', perfect: '¡ATERRIZAJE PERFECTO!', comboLost: 'COMBO PERDIDO',
+          chest: 'COFRE', wet: '¡AL AGUA!', gapClear: '¡SALTO DE FOSO!', style: 'Estilo', nextChest: 'Premio del próximo cofre',
+          m_dist: 'Recorre {n} m en una carrera', m_flips: 'Haz {n} mortales en una carrera', m_combo: 'Logra un combo x{n}', m_coins: 'Junta {n} monedas en una carrera',
+          m_wheelie: 'Haz caballito {n} s en una carrera', m_air: 'Vuela {n} s en una carrera', m_gaps: 'Salta {n} fosos de agua', m_chests: 'Abre {n} cofres', m_perfect: 'Haz {n} aterrizajes perfectos' },
     pt: { play: 'COMEÇAR', stage: 'FASE', shop: 'LOJA', back: 'VOLTAR', hint: '', cars: 'Veículos', hats: 'Chapéus', upgrades: 'Melhorias', islands: 'Fases',
           you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: '', crash: 'BATEU!', outMeat: 'SEM COMBUSTÍVEL!',
           backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
@@ -213,7 +232,11 @@
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
           u_fwd: '4x4', u_fwd_d: 'As rodas da frente também puxam', u_air: 'Controle aéreo', u_air_d: 'Gira mais rápido no ar', u_tank: 'Tanque', u_tank_d: 'Vai mais longe com um tanque',
           u_turbo: 'Turbo', u_turbo_d: 'Acelera mais rápido', u_stab: 'Estabilidade', u_stab_d: 'Mais difícil capotar',
-          isl_grass: 'Colinas verdes', isl_desert: 'Dunas esburacadas', isl_snow: 'Gelo escorregadio', isl_night: 'Colinas enormes no escuro', isl_sky: 'Gravidade baixa!' },
+          isl_grass: 'Colinas verdes', isl_desert: 'Dunas esburacadas', isl_snow: 'Gelo escorregadio', isl_night: 'Colinas enormes no escuro', isl_sky: 'Gravidade baixa!',
+          missions: 'MISSÕES', level: 'PILOTO NV', missionDone: 'MISSÃO CUMPRIDA!', wheelie: 'EMPINADA!', perfect: 'POUSO PERFEITO!', comboLost: 'COMBO PERDIDO',
+          chest: 'BAÚ', wet: 'NA ÁGUA!', gapClear: 'SALTO DO FOSSO!', style: 'Estilo', nextChest: 'Prêmio do próximo baú',
+          m_dist: 'Percorra {n} m em uma corrida', m_flips: 'Faça {n} mortais em uma corrida', m_combo: 'Faça um combo x{n}', m_coins: 'Junte {n} moedas em uma corrida',
+          m_wheelie: 'Empine {n} s em uma corrida', m_air: 'Voe {n} s em uma corrida', m_gaps: 'Pule {n} fossos de água', m_chests: 'Abra {n} baús', m_perfect: 'Faça {n} pousos perfeitos' },
   };
   let T = STRINGS.en;
 
@@ -246,6 +269,39 @@
     { id: 'marine',  name: 'Marine Cap',  boss: 4, cost: 6000 },
     { id: 'crown',   name: 'Crown',       boss: 6, cost: 12000 },
   ];
+  // Cosmetics for the Style tab. Chests unlock them in a fixed, visible order (no random loot); they can also be bought.
+  const PAINTS = [
+    { id: 'stock',  name: 'Stock Paint', col: null,      cost: 0 },
+    { id: 'red',    name: 'Fire Red',    col: '#e8364f', cost: 3000 },
+    { id: 'lime',   name: 'Lime',        col: '#8ee03a', cost: 5000 },
+    { id: 'purple', name: 'Grape',       col: '#8b5cf6', cost: 8000 },
+    { id: 'black',  name: 'Midnight',    col: '#2b2b3a', cost: 12000 },
+    { id: 'pink',   name: 'Bubblegum',   col: '#ff7ac8', cost: 16000 },
+    { id: 'gold',   name: 'Gold',        col: '#f5c02a', cost: 30000 },
+  ];
+  const HELMETS = [
+    { id: 'red',    name: 'Red Helmet',    col: '#e8364f', cost: 0 },
+    { id: 'blue',   name: 'Blue Helmet',   col: '#2f7bd8', cost: 2500 },
+    { id: 'green',  name: 'Green Helmet',  col: '#36c46b', cost: 4000 },
+    { id: 'orange', name: 'Orange Helmet', col: '#ff8a2b', cost: 6000 },
+    { id: 'white',  name: 'White Helmet',  col: '#f4f6fa', cost: 9000 },
+    { id: 'black',  name: 'Black Helmet',  col: '#22222c', cost: 14000 },
+    { id: 'gold',   name: 'Gold Helmet',   col: '#ffc531', cost: 25000 },
+  ];
+  const STYLE_ORDER = ['paints:red', 'helmets:blue', 'paints:lime', 'helmets:green', 'paints:purple', 'helmets:orange',
+                       'paints:black', 'helmets:white', 'paints:pink', 'helmets:black', 'paints:gold', 'helmets:gold'];
+  // Missions: 3 active at a time. "run" ones must be done in a single run, the others add up across runs.
+  const MISSIONS = {
+    dist:    { run: true,  goal: l => 250 + l * 150 },
+    flips:   { run: true,  goal: l => 1 + Math.ceil(l / 2) },
+    combo:   { run: true,  goal: l => 2 + Math.ceil(l / 2) },
+    coins:   { run: true,  goal: l => 1500 + l * 1000 },
+    wheelie: { run: true,  goal: l => 2 + l },
+    air:     { run: true,  goal: l => 3 + l * 2 },
+    gaps:    { run: false, goal: l => 2 + l },
+    chests:  { run: false, goal: l => 2 + Math.floor(l / 3) },
+    perfect: { run: false, goal: l => 3 + l },
+  };
   const THEMES = [
     { sky: ['#3fa9f5', '#c9ecff'], sea: '#1e8fd6', cloud: '#cfe3f7', sand: '#f4e2b0', seaLite: '#7fd0f5', seaDeep: '#136fb0', far: '#4f9f8f', mid: '#3f8a4a', grass: '#5cc64c', grass2: '#3e9a36', dirt: '#b8743c', dirt2: '#8a5229', sun: '#fff6b0' },
     { sky: ['#ff7e5f', '#feb47b'], sea: '#c85c72', cloud: '#f6c9a8', sand: '#f7d9a8', seaLite: '#e89aa8', seaDeep: '#8a3e5a', far: '#7a3f62', mid: '#5b3a52', grass: '#78c04a', grass2: '#4c8f32', dirt: '#a8653a', dirt2: '#734225', sun: '#ffe08a' },
@@ -257,7 +313,7 @@
 
   // ---------- Save (Bridge storage) ----------
   const defUp = () => Object.fromEntries(CARS.map(c => [c.id, { engine: 0, susp: 0, tires: 0, sp: 0 }]));
-  let save = { v: 2, coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'], islands: ['grass'] }, eq: { cars: 'cart', hats: 'straw', islands: 'grass' }, up: defUp(), seen: 1, best: {} }; // best distance per stage
+  let save = { v: 2, coins: 0, bosses: 0, owned: { cars: ['cart'], hats: ['straw'], islands: ['grass'], paints: ['stock'], helmets: ['red'] }, eq: { cars: 'cart', hats: 'straw', islands: 'grass', paints: 'stock', helmets: 'red' }, up: defUp(), seen: 1, best: {}, ms: [], lvl: 1, mDone: 0 }; // best distance per stage
   let B = null;
   const send = (msg) => { try { B && B.platform.sendMessage(msg); } catch (e) {} };
   function persist() { if (B) B.storage.set(['pirate_hill_rush'], [JSON.stringify(save)]).catch(() => {}); }
@@ -277,17 +333,37 @@
       }
     } catch (e) {}
   }
-  const CATS = { cars: CARS, hats: HATS, islands: ISLANDS };
+  // The best run per stage is a ghost, kept under its own key so the main save stays small.
+  const GHOST_KEY = 'pirate_hill_rush_ghost', GHOST_DT = 0.1;
+  let ghosts = {};
+  async function loadGhosts() {
+    if (!B) return;
+    try { const d = await B.storage.get([GHOST_KEY]); if (d[0]) ghosts = typeof d[0] === 'string' ? JSON.parse(d[0]) : d[0]; } catch (e) {}
+  }
+  function saveGhosts() { if (B) B.storage.set([GHOST_KEY], [JSON.stringify(ghosts)]).catch(() => {}); }
+  const CATS = { cars: CARS, hats: HATS, islands: ISLANDS, paints: PAINTS, helmets: HELMETS };
   const byId = (cat, id) => CATS[cat].find(x => x.id === id) || CATS[cat][0];
   const island = () => byId('islands', save.eq.islands);
   const upCost = (car, u) => Math.round(car.upBase * UPG_MUL[u] * Math.pow(1.32, save.up[car.id][u]) / 50) * 50;
   const unlockedCount = () => HATS.filter(x => save.bosses >= x.boss).length;
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
+  const mReward = () => 400 + save.lvl * 300;
+  function newMission() {
+    const have = save.ms.map(m => m.id), ids = Object.keys(MISSIONS).filter(k => !have.includes(k));
+    const id = ids[Math.floor(Math.random() * ids.length)];
+    return { id, goal: MISSIONS[id].goal(save.lvl), p: 0 };
+  }
+  function fillMissions() { save.ms = (save.ms || []).filter(m => MISSIONS[m.id]); while (save.ms.length < 3) save.ms.push(newMission()); }
+  function nextStyle() {
+    for (const s of STYLE_ORDER) { const [cat, id] = s.split(':'); if (!save.owned[cat].includes(id)) return { cat, item: byId(cat, id) }; }
+    return null;
+  }
 
   // ---------- Helpers ----------
   const rnd = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, k) => a + (b - a) * k;
+  const angDiff = (a, b) => { const d = a - b; return Math.atan2(Math.sin(d), Math.cos(d)); };
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
   function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
@@ -362,7 +438,7 @@
   }
   function stepCar(c, dt, inp, st) {
     const cos = Math.cos(c.a), sin = Math.sin(c.a);
-    let fx = 0, fy = -st.g, tq = 0, ground = 0, body = 0;
+    let fx = 0, fy = -st.g, tq = 0, ground = 0, body = 0, gF = 0, gR = 0;
     const top = st.top * (inp.power || 1), acc = st.acc * (inp.power || 1);
     const maxW = top / WR;
     const fwd = c.vx * cos + c.vy * sin;
@@ -373,7 +449,7 @@
       const rx = ox * cos + AY * sin, ry = ox * sin - AY * cos;
       const k = contact(c.x + rx, c.y + ry), pen = WR - k.d;
       if (pen <= 0) continue;
-      ground++;
+      ground++; if (ox > 0) gF = 1; else gR = 1;
       const px = rx - k.nx * WR, py = ry - k.ny * WR;
       const vpx = c.vx - c.w * py, vpy = c.vy + c.w * px;
       const vn = vpx * k.nx + vpy * k.ny, vt = vpx * k.tx + vpy * k.ty;
@@ -412,7 +488,7 @@
     c.vx *= 1 - 0.015 * dt;
     c.x += c.vx * dt; c.y += c.vy * dt; c.a += c.w * dt;
     c.wr -= c.ws * dt;
-    c.ground = ground; c.body = body;
+    c.ground = ground; c.body = body; c.gF = gF; c.gR = gR;
     if (air) { c.air += dt; c.flip += c.w * dt; } else if (ground) { c.landed = c.air; c.air = 0; }
   }
 
@@ -432,23 +508,65 @@
 
   // HCR-style coin values: 5 -> 25 -> 100 the further you go; on pricier islands some groups jump a tier (up to 500).
   const coinTier = (x, up) => Math.min(3, (x < 400 ? 0 : x < 1200 ? 1 : 2) + up); // HCR: coins get richer the further you drive
+  // Obstacles are carved into the heightfield, so the physics handles them: rocks and logs to hop, kicker ramps,
+  // and water gaps (always behind a kicker) that end the run. Same layout every run on a stage, so the ghost and
+  // your record mean something; they come closer together the further you drive.
+  let OBS = [];
+  const gapAt = (x) => OBS.find(o => o.type === 'water' && x > o.x && x < o.x + o.w);
+  const inGap = (x, m) => OBS.some(o => o.type === 'water' && x > o.x - m && x < o.x + o.w + m);
+  function addObstacles() {
+    OBS = [];
+    const r = mulberry(4242 + island().cost), n = TER.length;
+    const at = (x) => clamp(Math.round(x / STEP), 0, n - 1);
+    const bump = (x0, w, h) => { for (let i = at(x0); i <= at(x0 + w); i++) { const t = (i * STEP - x0) / w; if (t >= 0 && t <= 1) TER[i] += h * (0.5 - 0.5 * Math.cos(t * Math.PI * 2)); } };
+    const ramp = (x0, w, h) => { for (let i = at(x0); i < at(x0 + w); i++) { const t = (i * STEP - x0) / w; if (t >= 0) TER[i] += h * t * Math.sqrt(t); } };
+    let x = 160;
+    while (x < TER_LEN - 80) {
+      const roll = r();
+      if (x > 400 && roll < 0.24) {
+        const w = Math.min(6.5, 4 + r() * 1.8 + x / 2500), rw = 7, rh = 1;
+        ramp(x - rw, rw, rh);
+        const top = TER[at(x) - 1], far = Math.min(TER[at(x + w)], top - rh - 0.2), floor = Math.min(top - rh, far) - 3.2;
+        for (let i = at(x); i < at(x + w); i++) TER[i] = floor;
+        for (let i = at(x + w); i <= at(x + w + 14); i++) { let t = (i * STEP - x - w) / 14; t = t * t * (3 - 2 * t); TER[i] = lerp(far, TER[i], t); }
+        OBS.push({ type: 'ramp', x: x - rw, w: rw, h: rh });
+        OBS.push({ type: 'water', x, w, lvl: far - 1.2, top });
+        x += w;
+      } else if (roll < 0.5) {
+        const w = 7 + r() * 3, h = 0.6 + r() * 0.6;
+        ramp(x, w, h); OBS.push({ type: 'ramp', x, w, h }); x += w;
+      } else {
+        const log = r() < 0.45, w = log ? 1.6 : 2.8 + r() * 0.6, h = log ? 0.32 : 0.32 + r() * 0.14;
+        bump(x, w, h); OBS.push({ type: log ? 'log' : 'rock', x, w, h }); x += w;
+      }
+      x += Math.max(35, 150 - x * 0.04) + r() * 40;
+    }
+  }
   function genPickups() {
     pickups = [];
     for (let x = 40; x < TER_LEN - 50; x += rnd(32, 52)) {
       const n = 5, up = Math.random() < island().rich ? 1 : 0;
-      for (let i = 0; i < n; i++) { const px = x + i * 1.7; pickups.push({ x: px, y: hAt(px) + 1.3, type: 'coin', tier: coinTier(px, up) }); }
+      for (let i = 0; i < n; i++) {
+        const px = x + i * 1.7, gp = gapAt(px); // over a gap the coins arc across it, showing the jump
+        pickups.push({ x: px, y: gp ? gp.top + 1.3 + 1.6 * Math.sin(Math.PI * (px - gp.x) / gp.w) : hAt(px) + 1.3, type: 'coin', tier: coinTier(px, up) });
+      }
     }
-    for (let x = 160; x < TER_LEN - 50; x += 170 + x * 0.06) pickups.push({ x, y: hAt(x) + 1.4, type: 'meat' }); // fuel cans, further apart as you go
+    const clear = (x) => { while (inGap(x, 3)) x += 4; return x; };
+    for (let x = 160; x < TER_LEN - 50; x += 170 + x * 0.06) { const px = clear(x); pickups.push({ x: px, y: hAt(px) + 1.4, type: 'meat' }); } // fuel cans, further apart as you go
+    for (let k = 1; k * 500 + 6 < TER_LEN - 50; k++) { const px = clear(k * 500 + 6); pickups.push({ x: px, y: hAt(px) + 1.1, type: 'chest', k }); } // a chest every 500 m
   }
 
   function newRace() {
     const stage = save.bosses + 1;
     FINISH = 1e9; // endless: drive as far as you can
     genTerrain(stage);
+    addObstacles();
     genPickups();
     const st = carStats();
     me = { name: T.you, isMe: true, car: newCar(6), meat: st.tank, coins: 0, flips: 0, crashT: 0, upT: 0, sideT: 0, progX: 6, noProgT: 0, best: 6, boost: 0,
-           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, punchTgt: null, cp: 6, hintShown: false };
+           carId: save.eq.cars, hatId: save.eq.hats, outShown: false, beepT: 0, mercy: 0, punchT: -1, punchCD: 0, punchTgt: null, cp: 6, hintShown: false,
+           st: { flips: 0, combo: 0, wheelie: 0, air: 0, gaps: 0, chests: 0, perfect: 0 }, bank: 0, wheelT: 0, wheelOff: 0, rec: [], recT: 0, mHit: new Set(), unlocks: [],
+           ghost: ghosts[island().id] || null };
     foes = []; shots = []; nextFoeX = 25; kos = 0; combo = 0; comboT = 0;
     elapsed = 0; feed = []; popups = []; parts = []; balls = []; ship = null; shake = 0; goSfx = false;
     camX = me.car.x; camY = me.car.y; camK = 0.38;
@@ -503,7 +621,6 @@
     const c = me.car;
     if (phase === 'play') {
     }
-    comboT -= dt;
     for (const f of foes) {
       f.t += dt; f.flash = Math.max(0, f.flash - dt);
       if (f.dead) { f.vy -= 18 * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.a += f.spin * dt; continue; }
@@ -569,7 +686,11 @@
   function gameOver(reason) {
     if (phase !== 'play') return;
     phase = 'over'; overT = 1.7; me.reason = reason;
-    if (reason === 'down') {
+    if (reason === 'fuel') payCombo(); else loseCombo();
+    if (reason === 'water') {
+      popup('🌊 ' + T.wet, '#7fd0ff'); ono('splash', me.car.x, me.car.y + 2, '#7fd0ff', 1.3, true);
+      puff('smoke', me.car.x, me.car.y + 0.5, 14, { c: '220,240,255', r: 1, spd: 5, spread: 2 }); sfx.boom(); buzz([30, 40]); shake = 8;
+    } else if (reason === 'down') {
       popup(T.driverDown, '#ff5d73'); ono('crash', me.car.x, me.car.y + 2.5, '#ff5d73', 1.3, true);
       shake = 14; sfx.crash(); buzz([40, 60, 40]); hitStop = 0.12; zoomKick = 0.12; impact(me.car.x, me.car.y + 1, 0.09);
       puff('dust', me.car.x, me.car.y, 10, { r: 0.8, spd: 3 }); puff('star', me.car.x, me.car.y + 1.4, 6, { spd: 5, r: 0.45 });
@@ -633,16 +754,36 @@
     // flips & landings
     if (c.air > 0) {
       if (me.crashT <= 0) {
-        while (c.flip > Math.PI * 2 - 0.4) { c.flip -= Math.PI * 2; trick(T.backflip); }
-        while (c.flip < -Math.PI * 2 + 0.4) { c.flip += Math.PI * 2; trick(T.frontflip); }
+        while (c.flip > Math.PI * 2 - 0.4) { c.flip -= Math.PI * 2; me.flips++; me.st.flips++; trick(T.backflip, 300); }
+        while (c.flip < -Math.PI * 2 + 0.4) { c.flip += Math.PI * 2; me.flips++; me.st.flips++; trick(T.frontflip, 300); }
       }
     } else {
-      if (prevAir > 0 && me.crashT <= 0) {
-        if (prevAir > 0.9) { const n = Math.round(prevAir * 2) * 50; me.coins += n; popup(`${T.air} +${fmt(n)}`, '#7cdcff'); sfx.land(true); if (ship && phase === 'boss') hitShip(5, true); }
-        else if (prevAir > 0.25) sfx.land(false);
+      if (prevAir > 0 && me.crashT <= 0 && phase === 'play') {
+        if (prevAir > 0.25) me.st.air += prevAir;
+        const rel = Math.abs(angDiff(c.a, Math.atan(slopeAt(c.x))));
+        if (prevAir > 0.35 && (c.body || rel > 0.75)) { loseCombo(); sfx.land(true); } // a sloppy landing drops the combo bank
+        else {
+          if (prevAir > 0.9) { trick(T.air, Math.round(prevAir * 2) * 40); sfx.land(true); }
+          else if (prevAir > 0.25) sfx.land(false);
+          if (prevAir > 0.6 && rel < 0.2) { me.st.perfect++; trick(T.perfect, 150); }
+        }
         if (prevAir > 0.25) for (let i = 0; i < 6; i++) parts.push({ x: c.x + rnd(-1, 1), y: hAt(c.x) + 0.1, vx: rnd(-2, 2), vy: rnd(1, 3), t: 0, life: 0.5, c: 'rgba(160,120,80,.8)', r: rnd(0.1, 0.2) });
       }
       c.flip = 0;
+    }
+    if (phase === 'play' && me.crashT <= 0) {
+      const lift = angDiff(c.a, Math.atan(slopeAt(c.x)));
+      if (c.gR && !c.gF && lift > 0.12 && lift < 1.3 && c.vx > 2) { // wheelie: a trick every 1.5 s on the back wheel
+        me.wheelT += dt; me.wheelOff = 0; me.st.wheelie += dt;
+        if (me.wheelT >= 1.5) { me.wheelT -= 1.5; trick(T.wheelie, 120); }
+      } else if ((me.wheelOff += dt) > 0.2) me.wheelT = 0;
+      if (combo > 0 && c.air === 0) { comboT -= dt; if (comboT <= 0) payCombo(); } // the combo timer only runs on the ground
+      const gp = gapAt(c.x);
+      if (gp && c.y < gp.lvl + 0.4) gameOver('water');
+      for (const o of OBS) if (o.type === 'water' && !o.cleared && c.x > o.x + o.w + 1) { o.cleared = true; me.st.gaps++; trick(T.gapClear, 250); }
+      me.recT += dt;
+      while (me.recT >= GHOST_DT && me.rec.length < 18000) { me.recT -= GHOST_DT; me.rec.push(+c.x.toFixed(2), +c.y.toFixed(2), +c.a.toFixed(2)); }
+      for (const m of save.ms) if (!me.mHit.has(m.id) && mCur(m) >= m.goal) { me.mHit.add(m.id); popup('🎯 ' + T.missionDone, '#7cff8a'); sfx.first(); buzz([15, 20, 15]); }
     }
     me.best = Math.max(me.best, c.x);
     me.jumpCD = Math.max(0, (me.jumpCD || 0) - dt); me.offT = c.ground ? 0 : (me.offT || 0) + dt;
@@ -658,6 +799,7 @@
       if (Math.hypot(p.x - c.x, p.y - (c.y + 0.4)) < 1.5) {
         p.taken = true;
         if (p.type === 'coin') { me.coins += COIN_VALUES[p.tier]; sfx.coin(); }
+        else if (p.type === 'chest') openChest(p);
         else if (p.type === 'meat') { me.meat = st.tank; me.lowShown = false; me.emptyT = 0; popup('⛽ ' + T.fuelUp, '#7cff8a'); sfx.fruit(); puff('star', p.x, p.y, 5, { c: '#7cff8a', spd: 4, r: 0.4 }); }
         else { me.boost = 3; popup('🍇 ' + T.fruit, '#d18bff'); sfx.fruit(); puff('star', p.x, p.y, 6, { c: '#d18bff', spd: 5, r: 0.45 }); }
       }
@@ -673,11 +815,37 @@
       if (me.punchT > 0.34) me.punchT = -1;
     }
   }
-  function trick(name) {
-    me.flips++; me.coins += 500;
-    popup(`${name} +500`, '#ffd23f'); sfx.flip(me.flips);
-    ono('flip', me.car.x, me.car.y + 2.8, '#7cdcff', 1.1);
-    if (ship && phase === 'boss') hitShip(10, true);
+  // Trick combos: every trick goes into a bank with a growing multiplier (up to x5) and tops up fuel from x2.
+  // The bank pays out once you stay on the ground for COMBO_T seconds; a sloppy landing or a crash loses it.
+  const COMBO_T = 3;
+  function trick(name, base) {
+    combo++; comboT = COMBO_T; comboPop = 1;
+    const mul = Math.min(combo, 5), v = base * mul, st = carStats();
+    me.bank += v; me.st.combo = Math.max(me.st.combo, combo);
+    if (combo >= 2) me.meat = Math.min(st.tank, me.meat + st.tank * 0.04);
+    popup(`${name} +${fmt(v)}`, combo > 2 ? '#ff8a2b' : '#ffd23f'); sfx.flip(Math.min(combo, 6));
+    ono('flip', me.car.x, me.car.y + 2.8, '#7cdcff', 1 + Math.min(combo, 5) * 0.06, combo > 2);
+    if (combo > 2) zoomKick = Math.max(zoomKick, 0.04);
+  }
+  function payCombo() {
+    if (me.bank > 0) { me.coins += me.bank; if (combo >= 2) { popup(`COMBO x${Math.min(combo, 5)} +${fmt(me.bank)}`, '#7cff8a'); sfx.coins(); } }
+    me.bank = 0; combo = 0; comboT = 0;
+  }
+  function loseCombo() {
+    if (me.bank > 0 && phase === 'play') popup('💔 ' + T.comboLost, '#ff5d73');
+    me.bank = 0; combo = 0; comboT = 0;
+  }
+  function openChest(p) {
+    const coins = 400 * p.k;
+    me.coins += coins; me.st.chests++;
+    popup(`📦 ${T.chest} +${fmt(coins)}`, '#ffd23f'); sfx.bossDown(); buzz([20, 30, 20]);
+    puff('star', p.x, p.y, 10, { c: '#ffd23f', spd: 6, r: 0.5 }); ono('flip', p.x, p.y + 2, '#ffd23f', 1.2, true);
+    const next = nextStyle();
+    if (next) { save.owned[next.cat].push(next.item.id); me.unlocks.push(next.item.name); persist(); popup('🎁 ' + T.unlocked + next.item.name, '#7cdcff'); }
+  }
+  function mCur(m) {
+    const v = m.id === 'dist' ? Math.max(0, me.best - 6) : m.id === 'coins' ? me.coins : me.st[m.id] || 0;
+    return MISSIONS[m.id].run ? Math.max(m.p, v) : m.p + v;
   }
 
   // ---------- Boss: the Admiral's warship chases you ----------
@@ -1049,7 +1217,7 @@
   function drawTerrain() {
     const th = theme(), ink = '#2a1a10';
     const x0 = camX - (W * camK) / ppm - 2, x1 = camX + (W * (1 - camK)) / ppm + 2;
-    for (let k = Math.floor(x0 / 37); k <= Math.ceil(x1 / 37); k++) { const x = k * 37 + hash(k) * 20; if (hash(k + 7) < 0.55 && x > 3) drawTree(x); }
+    for (let k = Math.floor(x0 / 37); k <= Math.ceil(x1 / 37); k++) { const x = k * 37 + hash(k) * 20; if (hash(k + 7) < 0.55 && x > 3 && !inGap(x, 3)) drawTree(x); }
     const step = Math.max(STEP, 3 / ppm);
     ctx.beginPath(); ctx.moveTo(sxOf(x0), H + 10);
     for (let x = x0; x <= x1; x += step) ctx.lineTo(sxOf(x), syOf(hAt(x)));
@@ -1077,6 +1245,40 @@
       if (hash(k + 17) < 0.45) continue;
       const x = k * 1.6 + hash(k) * 0.8, sx = sxOf(x), sy = syOf(hAt(x) + 0.14), z = ppm * (0.16 + hash(k + 2) * 0.14);
       ctx.beginPath(); ctx.moveTo(sx - z, sy); ctx.lineTo(sx - z * 0.5, sy - z * 1.3); ctx.lineTo(sx, sy - z * 0.3); ctx.lineTo(sx + z * 0.35, sy - z * 1.6); ctx.lineTo(sx + z * 0.8, sy); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    for (const o of OBS) {
+      if (o.x + o.w < x0 - 2 || o.x > x1 + 2) continue;
+      ctx.lineWidth = Math.max(2, ppm * 0.07); ctx.strokeStyle = ink; ctx.lineJoin = 'round';
+      if (o.type === 'water') {
+        const sx0 = sxOf(o.x), sx1 = sxOf(o.x + o.w), sy = syOf(o.lvl), sb = syOf(o.lvl - 2.6);
+        const wg = ctx.createLinearGradient(0, sy, 0, sb); wg.addColorStop(0, '#5fd3f5'); wg.addColorStop(1, '#155f9e');
+        ctx.fillStyle = wg; ctx.fillRect(sx0 - 1, sy, sx1 - sx0 + 2, sb - sy + 2);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, ppm * 0.09); ctx.beginPath();
+        for (let x = o.x; x <= o.x + o.w + 0.01; x += 0.25) { const yy = syOf(o.lvl + Math.sin(x * 3 + time * 4) * 0.07); x === o.x ? ctx.moveTo(sxOf(x), yy) : ctx.lineTo(sxOf(x), yy); }
+        ctx.stroke();
+      } else if (o.type === 'ramp') { // wooden kicker: top follows the surface, bottom is the ground under it
+        const top = [], bot = [];
+        for (let x = o.x; x < o.x + o.w - 0.05; x += 0.25) { const t = (x - o.x) / o.w; top.push([x, hAt(x) + 0.1]); bot.push([x, hAt(x) - o.h * t * Math.sqrt(t)]); }
+        const xe = o.x + o.w - 0.05; top.push([xe, hAt(xe) + 0.1]); bot.push([xe, hAt(xe) - o.h]);
+        ctx.beginPath(); top.forEach(([x, y], i) => i ? ctx.lineTo(sxOf(x), syOf(y)) : ctx.moveTo(sxOf(x), syOf(y)));
+        for (let i = bot.length - 1; i >= 0; i--) ctx.lineTo(sxOf(bot[i][0]), syOf(bot[i][1]));
+        ctx.closePath(); ctx.fillStyle = '#c98a4a'; ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(80,40,10,.45)'; ctx.lineWidth = Math.max(1.5, ppm * 0.05);
+        for (let k = 1; k < 4; k++) { const x = o.x + o.w * (0.35 + k * 0.16), t = (x - o.x) / o.w; ctx.beginPath(); ctx.moveTo(sxOf(x), syOf(hAt(x) + 0.05)); ctx.lineTo(sxOf(x), syOf(hAt(x) - o.h * t * Math.sqrt(t))); ctx.stroke(); }
+        ctx.fillStyle = '#ffd23f'; ctx.fillRect(sxOf(xe) - ppm * 0.18, syOf(hAt(xe) + 0.1), ppm * 0.18, ppm * 0.18);
+      } else if (o.type === 'rock') { // a cluster of rounded boulders sitting on the bump
+        const cx = o.x + o.w / 2, base = hAt(cx) - o.h;
+        for (const [dx, k] of [[-0.28, 0.62], [0.26, 0.7], [0, 1]]) {
+          const bx = sxOf(cx + dx * o.w), by = syOf(base + o.h * 0.6 * k), rx = o.w * 0.21 * k * ppm, ry = o.h * 1.15 * k * ppm;
+          ctx.fillStyle = '#8d93a3'; ctx.strokeStyle = ink; ctx.beginPath(); ctx.ellipse(bx, by, rx, ry, 0, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(bx - rx * 0.3, by - ry * 0.4, rx * 0.35, ry * 0.22, -0.3, 0, 7); ctx.fill();
+        }
+      } else if (o.type === 'log') {
+        const cx = o.x + o.w / 2, cy = hAt(cx) - o.h * 0.42, rad = o.h * 0.55 * ppm;
+        ctx.fillStyle = '#8a5229'; ctx.beginPath(); ctx.ellipse(sxOf(cx), syOf(cy), o.w * 0.48 * ppm, rad, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#e0b07a'; ctx.beginPath(); ctx.ellipse(sxOf(cx + o.w * 0.3), syOf(cy), rad * 0.55, rad * 0.9, 0, 0, 7); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(120,70,30,.7)'; ctx.lineWidth = Math.max(1, ppm * 0.03); ctx.beginPath(); ctx.ellipse(sxOf(cx + o.w * 0.3), syOf(cy), rad * 0.28, rad * 0.45, 0, 0, 7); ctx.stroke();
+      }
     }
     if (!me) return;
     // distance signs every 100 m and a flag where your record is
@@ -1110,6 +1312,16 @@
         const gl = (time * 1.3 + p.x * 0.17) % 2.5;
         if (gl < 0.3) star4(sx + cw * 0.45, sy - r * 0.55, Math.sin(gl / 0.3 * Math.PI) * r * 0.9);
         if (sq > 0.55) { ctx.textBaseline = 'middle'; txt(String(COIN_VALUES[p.tier]), sx, sy + 1, r * (p.tier > 1 ? 0.75 : 0.95), 'rgba(60,30,0,.85)', 'center'); }
+      } else if (p.type === 'chest') { // wooden treasure chest with a pulsing glow
+        ctx.save(); ctx.translate(sx, sy); ctx.scale(r / 6.5, r / 6.5);
+        blob('255,210,80', 0, 0, 30, 0.45 + Math.sin(time * 4) * 0.15);
+        ctx.lineWidth = 2.2; ctx.strokeStyle = '#2a1a10'; ctx.lineJoin = 'round';
+        ctx.fillStyle = '#a8622a'; rr(-14, -5, 28, 17, 3); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#c47a36'; ctx.beginPath(); ctx.moveTo(-14, -5); ctx.quadraticCurveTo(0, -20, 14, -5); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffd23f'; ctx.fillRect(-14, -6, 28, 3); ctx.fillRect(-9, -13, 3, 25); ctx.fillRect(6, -13, 3, 25);
+        rr(-3.5, -4, 7, 8, 1.5); ctx.fill(); ctx.stroke();
+        ctx.restore();
+        star4(sx + r * 1.4, sy - r * 1.8, r * (0.5 + 0.4 * Math.abs(Math.sin(time * 3))));
       } else if (p.type === 'meat') {
         ctx.save(); ctx.translate(sx, sy); ctx.scale(r / 10, r / 10);
         blob('255,80,80', 0, 0, 26, 0.35); // jerry can with a soft glow
@@ -1143,6 +1355,7 @@
     if (carId === 'ship') { g.strokeStyle = out; g.lineWidth = 0.16; g.beginPath(); g.moveTo(-1.05, 0.05); g.lineTo(-0.8, 1.55); g.lineTo(0.45, 1.55); g.lineTo(0.85, 0.05); g.stroke(); g.strokeStyle = '#9aa4b2'; g.lineWidth = 0.1; g.stroke(); }
     // driver: chibi pirate with a big expressive head (o.mood: grin | wow | shout | dizzy)
     const mood = o.mood || 'grin', HD = [-0.12, 1.16], HR = 0.44, skin = '#f3c18c', hair = '#8a5a2b';
+    const paint = o.paint !== undefined ? o.paint : byId('paints', save.eq.paints).col, helmet = o.helmet || byId('helmets', save.eq.helmets).col;
     g.lineWidth = lw; g.strokeStyle = out;
     g.fillStyle = '#2f7bd8'; rr(-0.38, 0.18, 0.5, 0.62, 0.14, g); g.fill(); g.stroke(); // racing suit
     g.fillStyle = '#ffffff'; g.fillRect(-0.36, 0.42, 0.46, 0.08); g.fillStyle = '#ffd23f'; g.fillRect(-0.36, 0.5, 0.46, 0.05);
@@ -1182,11 +1395,11 @@
       } else { g.beginPath(); g.moveTo(mx - 0.12, my); for (let i = 1; i <= 6; i++) g.lineTo(mx - 0.12 + i * 0.04, my + (i % 2 ? 0.03 : -0.03)); g.stroke(); }
     }
     g.save(); g.translate(HD[0], HD[1] + 0.06); g.scale(1.4, 1.4); g.translate(-HEAD[0], -HEAD[1]);
-    drawHelmet(g);
+    drawHelmet(g, helmet);
     g.restore();
     // vehicle body
     if (carId === 'cart') { // jeep
-      shape([[-1.45, -0.28], [1.4, -0.28], [1.52, 0.22], [0.75, 0.3], [-1.45, 0.34]], '#3f9a46');
+      shape([[-1.45, -0.28], [1.4, -0.28], [1.52, 0.22], [0.75, 0.3], [-1.45, 0.34]], paint || '#3f9a46');
       g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(-1.4, -0.28, 2.8, 0.18);
       g.strokeStyle = out; g.lineWidth = 0.08; g.beginPath(); g.moveTo(0.6, 0.3); g.lineTo(0.8, 0.95); g.stroke(); // windshield frame
       ell(-1.6, 0.12, 0.3, 0.3, '#2b2233'); ell(-1.6, 0.12, 0.13, 0.13, '#9aa4b2', false); // spare tire
@@ -1194,22 +1407,22 @@
     } else if (carId === 'barrel') { // dirt bike
       g.strokeStyle = out; g.lineWidth = 0.13; g.beginPath(); g.moveTo(-AX, -AY); g.lineTo(-0.1, 0.12); g.lineTo(0.75, 0.3); g.lineTo(AX, -AY); g.stroke();
       g.strokeStyle = '#9aa4b2'; g.lineWidth = 0.08; g.stroke();
-      shape([[-0.35, 0.12], [0.55, 0.12], [0.75, 0.42], [-0.15, 0.48]], '#ff8a2b'); // tank
+      shape([[-0.35, 0.12], [0.55, 0.12], [0.75, 0.42], [-0.15, 0.48]], paint || '#ff8a2b'); // tank
       shape([[-0.95, 0.3], [-0.2, 0.3], [-0.2, 0.42], [-1.0, 0.45]], '#1b1820'); // seat
       g.strokeStyle = out; g.lineWidth = 0.09; g.beginPath(); g.moveTo(0.75, 0.3); g.lineTo(0.85, 0.75); g.lineTo(0.62, 0.8); g.stroke(); // handlebar
-      shape([[0.85, -0.1], [1.4, -0.05], [1.3, 0.12], [0.9, 0.08]], '#ff8a2b'); // front fender
+      shape([[0.85, -0.1], [1.4, -0.05], [1.3, 0.12], [0.9, 0.08]], paint || '#ff8a2b'); // front fender
     } else if (carId === 'ship') { // buggy
-      shape([[-1.4, -0.3], [1.35, -0.3], [1.55, 0.05], [-1.5, 0.12]], '#ff8a2b');
+      shape([[-1.4, -0.3], [1.35, -0.3], [1.55, 0.05], [-1.5, 0.12]], paint || '#ff8a2b');
       g.fillStyle = '#1b1820'; g.fillRect(-0.5, -0.12, 0.9, 0.1);
       ell(1.45, -0.05, 0.08, 0.1, '#ffd23f');
     } else if (carId === 'shark') { // rally car (open top)
-      shape([[-1.5, -0.3], [1.45, -0.3], [1.6, 0.12], [0.55, 0.32], [-1.5, 0.36]], '#2f7bd8');
+      shape([[-1.5, -0.3], [1.45, -0.3], [1.6, 0.12], [0.55, 0.32], [-1.5, 0.36]], paint || '#2f7bd8');
       g.fillStyle = '#ffffff'; g.fillRect(-1.45, 0.02, 2.95, 0.1); g.fillRect(-1.45, 0.16, 2.95, 0.05);
       ell(-0.55, -0.05, 0.2, 0.2, '#ffffff'); g.fillStyle = out; g.fillRect(-0.58, -0.15, 0.06, 0.2); // race number
       shape([[-1.5, 0.36], [-1.6, 0.75], [-1.05, 0.75], [-1.15, 0.36]], '#1b1820'); // spoiler
       ell(1.52, 0.02, 0.1, 0.12, '#ffd23f');
     } else if (carId === 'lion') { // monster truck
-      shape([[-1.55, -0.05], [1.45, -0.05], [1.58, 0.45], [0.8, 0.5], [-1.55, 0.52]], '#c4161c');
+      shape([[-1.55, -0.05], [1.45, -0.05], [1.58, 0.45], [0.8, 0.5], [-1.55, 0.52]], paint || '#c4161c');
       g.fillStyle = '#ffd23f'; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(-1.2 + i * 0.7, 0.05); g.quadraticCurveTo(-0.95 + i * 0.7, 0.45, -0.7 + i * 0.7, 0.05); g.fill(); } // flame decals
       shape([[1.45, -0.05], [1.75, -0.02], [1.75, 0.18], [1.5, 0.2]], '#5b5b66'); // bumper
       g.fillStyle = '#9aa4b2'; g.fillRect(-1.25, 0.52, 0.12, 0.45); g.fillRect(-1.05, 0.52, 0.12, 0.38); // exhaust stacks
@@ -1244,11 +1457,11 @@
       g.restore();
     }
   }
-  function drawHelmet(g) { // a racing helmet instead of a pirate hat
+  function drawHelmet(g, col) { // a racing helmet instead of a pirate hat
     const hx = HEAD[0], hy = HEAD[1], out = '#2a1a10';
     g.lineWidth = 0.05; g.strokeStyle = out;
-    g.beginPath(); g.arc(hx, hy + 0.02, 0.35, -0.12, Math.PI + 0.12); g.closePath(); g.fillStyle = '#e8364f'; g.fill(); g.stroke();
-    g.fillStyle = '#fff'; g.fillRect(hx - 0.05, hy + 0.12, 0.1, 0.25);
+    g.beginPath(); g.arc(hx, hy + 0.02, 0.35, -0.12, Math.PI + 0.12); g.closePath(); g.fillStyle = col || '#e8364f'; g.fill(); g.stroke();
+    g.fillStyle = col === '#f4f6fa' ? '#e8364f' : '#fff'; g.fillRect(hx - 0.05, hy + 0.12, 0.1, 0.25);
     g.beginPath(); g.ellipse(hx + 0.27, hy + 0.1, 0.12, 0.06, -0.3, 0, 7); g.fillStyle = '#1b1820'; g.fill(); g.stroke(); // visor tip
   }
   function drawHat(g, id) {
@@ -1493,6 +1706,14 @@
           for (let i = 0; i < 4; i++) { const a = time * 3 + i * Math.PI / 2; ctx.beginPath(); ctx.arc(rx, ry, r, a, a + 1.0); ctx.stroke(); }
         }
       }
+      if (me.ghost && phase === 'play') { // your best run on this stage, replayed as a see-through ghost
+        const gs = me.ghost.s, i = Math.max(0, elapsed / GHOST_DT - 1), j = Math.floor(i) * 3;
+        if (j + 5 < gs.length) {
+          const k = i - Math.floor(i), gx = lerp(gs[j], gs[j + 3], k), gy = lerp(gs[j + 1], gs[j + 4], k), ga = lerp(gs[j + 2], gs[j + 5], k);
+          drawWorldCar(gx, gy, ga, me.ghost.car || me.carId, me.hatId, -gx / WR, 0.35, { mood: 'grin' });
+          if (Math.abs(gx - c.x) > 3) nameTag(sxOf(gx), syOf(gy + 2.6), '👻 ' + T.best, false);
+        }
+      }
       const o = { mood: me.crashT > 0 ? 'dizzy' : me.punchT >= 0 ? 'shout' : c.air > 0.35 ? 'wow' : 'grin', squash: me.squash };
       if (me.punchT >= 0) {
         const q = punchPoint(me.punchTgt);
@@ -1549,17 +1770,17 @@
     ctx.fillStyle = 'rgba(15,20,40,.75)'; rr(W - 12 - cw, y, cw, 30 * sc, 15 * sc); ctx.fill();
     ctx.fillStyle = '#ffc531'; ctx.beginPath(); ctx.arc(W - 12 - cw + 16 * sc, y + 15 * sc, 9 * sc, 0, 7); ctx.fill();
     txt(ct, W - 22, y + 16 * sc, 15 * sc, '#fff', 'right');
-    if (combo > 1 && comboT > 0 && (phase === 'play' || phase === 'boss')) { // pulsing combo meter that drains
-      const cx = W - 16, cy = y + 38 * sc, pop = 1 + comboPop * 0.5, ctext = `x${combo}`;
+    if (combo > 0 && me.bank > 0 && phase === 'play') { // trick combo: multiplier, bank, and the timer that pays it out
+      const cx = W - 16, cy = y + 38 * sc, pop = 1 + comboPop * 0.5, ctext = `x${Math.min(combo, 5)}`;
       ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.08); ctx.scale(pop, pop);
       ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
       ctx.font = `${34 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 7 * sc; ctx.strokeStyle = '#1b1530';
       ctx.strokeText(ctext, 0, 0); ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; ctx.fillText(ctext, 0, 0);
       ctx.font = `${13 * sc}px Impact, "Arial Black", sans-serif`; ctx.lineWidth = 4 * sc;
-      ctx.strokeText('COMBO', 0, 36 * sc); ctx.fillStyle = '#fff'; ctx.fillText('COMBO', 0, 36 * sc);
+      const bt = '+' + fmt(me.bank); ctx.strokeText(bt, 0, 36 * sc); ctx.fillStyle = '#fff'; ctx.fillText(bt, 0, 36 * sc);
       ctx.restore();
       ctx.fillStyle = 'rgba(15,20,40,.6)'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc, 7 * sc, 4); ctx.fill();
-      ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc * clamp(comboT / 2.2, 0, 1), 7 * sc, 4); ctx.fill();
+      ctx.fillStyle = combo > 4 ? '#ff5d73' : '#ffd23f'; rr(cx - 76 * sc, cy + 56 * sc, 76 * sc * clamp(comboT / COMBO_T, 0, 1), 7 * sc, 4); ctx.fill();
     }
     // meat gauge
     const my = y + 40 * sc, st = carStats(), k = me.meat / st.tank;
@@ -1584,11 +1805,11 @@
     }
     if (phase === 'bossIntro') { const t = 1 - introT / 2.6; banner(t < 0.45 ? T.bossIn : T.bossIn2, t < 0.45 ? '#ffc531' : '#e8364f', H * 0.3); }
     if (phase === 'win') banner(T.won, '#ffc531', H * 0.33);
-    for (const p of popups) {
+    popups.forEach((p, i) => { // newest at the bottom, older ones pushed up so quick tricks don't overlap
       ctx.globalAlpha = Math.min(1, 1.7 - p.t * 1.4);
-      const foe = p.where === 'boss';
-      banner(p.text, p.color, H * (foe ? 0.36 : 0.44) - p.t * 40, Math.min(W * 0.06, 28), foe ? W * 0.3 : W / 2);
-    }
+      const foe = p.where === 'boss', size = Math.min(W * 0.06, 28), lift = (popups.length - 1 - i) * size * 1.25;
+      banner(p.text, p.color, H * (foe ? 0.36 : 0.44) - p.t * 40 - lift, size, foe ? W * 0.3 : W / 2);
+    });
     ctx.globalAlpha = 1;
     ctx.textBaseline = 'alphabetic';
   }
@@ -1643,6 +1864,21 @@
     const affordable = CARS.some(x => can(x, 'cars')) || ISLANDS.some(x => can(x, 'islands')) || HATS.some(x => save.bosses >= x.boss && can(x, 'hats'))
       || UPG.some(u => save.up[car.id][u] < UPG_MAX && save.coins >= upCost(car, u));
     $('shopBadge').classList.toggle('hidden', !(affordable || unlockedCount() > save.seen));
+    missionRows($('mMissions'));
+  }
+  function missionRows(el) {
+    el.innerHTML = '';
+    const h = document.createElement('div'); h.className = 'mh';
+    h.innerHTML = '<span></span><span></span>'; h.firstChild.textContent = '🎯 ' + T.missions; h.lastChild.textContent = `${T.level} ${save.lvl}`;
+    el.appendChild(h);
+    for (const m of save.ms) {
+      const p = Math.min(m.p, m.goal), done = m.p >= m.goal;
+      const row = document.createElement('div'); row.className = 'mrow' + (done ? ' done' : '');
+      row.innerHTML = `<span class="mt"></span><i class="mb"><b style="width:${Math.round(p / m.goal * 100)}%"></b></i><span class="mr"></span>`;
+      row.querySelector('.mt').textContent = (done ? '✅ ' : '') + T['m_' + m.id].replace('{n}', fmt(m.goal));
+      row.querySelector('.mr').textContent = done ? '+' + fmt(mReward()) : `${fmt(p)}/${fmt(m.goal)}`;
+      el.appendChild(row);
+    }
   }
 
   let shopTab = 'upgrades';
@@ -1663,7 +1899,7 @@
     $('shopBack').textContent = T.back;
     $('shopHint').textContent = shopTab === 'hats' ? T.hint : '';
     const tabs = $('tabs'); tabs.innerHTML = '';
-    for (const id of ['upgrades', 'cars', 'islands']) {
+    for (const id of ['upgrades', 'cars', 'islands', 'style']) {
       const b = document.createElement('button'); b.className = 'tab' + (id === shopTab ? ' on' : ''); b.textContent = T[id];
       b.onclick = () => { shopTab = id; sfx.ui(); renderShop(); };
       tabs.appendChild(b);
@@ -1689,17 +1925,20 @@
       }
       return;
     }
-    const cat = shopTab;
-    for (const item of CATS[cat]) {
+    const list = shopTab === 'style' ? [...PAINTS.map(i => ['paints', i]), ...HELMETS.map(i => ['helmets', i])] : CATS[shopTab].map(i => [shopTab, i]);
+    const nx = nextStyle();
+    for (const [cat, item] of list) {
       const owned = save.owned[cat].includes(item.id), eq = save.eq[cat] === item.id, locked = cat === 'hats' && save.bosses < item.boss;
       const card = document.createElement('div'); card.className = 'card' + (eq ? ' eq' : '');
       const pv = document.createElement('canvas'); pv.width = 240; pv.height = 168; card.appendChild(pv);
       if (cat === 'islands') drawIslandPreview(pv, item);
+      else if (cat === 'paints' || cat === 'helmets') drawPreview(pv, save.eq.cars, save.eq.hats, false, cat === 'paints' ? { paint: item.col } : { helmet: item.col });
       else drawPreview(pv, cat === 'cars' ? item.id : save.eq.cars, cat === 'hats' ? item.id : save.eq.hats, cat === 'hats');
       if (locked) { const x = pv.getContext('2d'); x.fillStyle = 'rgba(243,230,204,.75)'; x.fillRect(0, 0, pv.width, pv.height); }
       addDiv(card, 'nm', item.name);
       if (cat === 'cars') { addDiv(card, 'ds', `${UPG_ICON[item.sp]} ${T['u_' + item.sp]}`); card.insertAdjacentHTML('beforeend', statBars(item)); }
       if (cat === 'islands') addDiv(card, 'ds', T['isl_' + item.id] + (item.rich ? ' · ' + T.richer : ''));
+      if ((cat === 'paints' || cat === 'helmets') && !owned) addDiv(card, 'ds', nx && nx.item === item ? '📦 ' + T.nextChest : '');
       const b = document.createElement('button');
       if (eq) { b.className = 'b-on'; b.textContent = T.equipped; }
       else if (owned) { b.className = 'b-eq'; b.textContent = T.equip; b.onclick = () => { save.eq[cat] = item.id; persist(); sfx.ui(); renderShop(); }; }
@@ -1709,7 +1948,7 @@
     }
   }
 
-  function drawPreview(canvas, carId, hatId, zoomHat) {
+  function drawPreview(canvas, carId, hatId, zoomHat, o) {
     const g = canvas.getContext('2d');
     const gr = g.createLinearGradient(0, 0, 0, canvas.height);
     gr.addColorStop(0, '#9fdcff'); gr.addColorStop(1, '#e8f7ff');
@@ -1718,7 +1957,7 @@
     g.save();
     if (zoomHat) { g.translate(canvas.width * 0.6, canvas.height * 1.25); g.scale(95, -95); }
     else { g.translate(canvas.width / 2, canvas.height * 0.62); g.scale(canvas.width / 4.6, -canvas.width / 4.6); }
-    drawCar(g, carId, hatId, 0.3);
+    drawCar(g, carId, hatId, 0.3, o);
     g.restore();
   }
   function drawIslandPreview(canvas, isl) {
@@ -1747,11 +1986,23 @@
     phase = 'result';
     const d = Math.round(Math.max(0, me.best - 6)), key = island().id, prev = save.best[key] || 0, rec = d > prev;
     if (rec) save.best[key] = d;
-    const reward = me.coins + Math.round(d * 0.5); // what you picked up, plus a little per meter
+    if (rec && me.rec.length > 30) { ghosts[key] = { d, car: me.carId, s: me.rec }; saveGhosts(); }
+    // missions: show this run's progress, pay the finished ones, then swap them for new ones
+    let mPaid = 0;
+    for (const m of save.ms) m.p = mCur(m);
+    missionRows($('rMissions'));
+    save.ms.forEach((m, i) => {
+      if (m.p < m.goal) return;
+      mPaid += mReward(); save.mDone++;
+      if (save.mDone % 3 === 0) save.lvl++;
+      save.ms[i] = null;
+    });
+    save.ms = save.ms.filter(Boolean); fillMissions();
+    const reward = me.coins + Math.round(d * 0.5) + mPaid; // what you picked up, a little per meter, and missions
     save.coins += reward;
     persist();
     send('level_completed');
-    $('rTitle').textContent = me.reason === 'fuel' ? T.outFuel : T.driverDown;
+    $('rTitle').textContent = me.reason === 'fuel' ? T.outFuel : me.reason === 'water' ? T.wet : T.driverDown;
     $('rSub').textContent = rec && prev > 0 ? '🏆 ' + T.newRecord : `${island().name} · ${T.best} ${Math.max(prev, d)} m`;
     const board = $('rBoard'); board.innerHTML = '';
     for (const [k, v] of [['📏 ' + T.dist, `${d} m`], ['🏆 ' + T.best, `${Math.max(prev, d)} m`], ['🤸 ' + T.flipsL, me.flips]]) {
@@ -1760,7 +2011,8 @@
       board.appendChild(row);
     }
     $('rCoins').textContent = '+' + fmt(reward);
-    $('rUnlock').classList.add('hidden');
+    $('rUnlock').classList.toggle('hidden', !me.unlocks.length);
+    $('rUnlock').textContent = '🎁 ' + T.unlocked + me.unlocks.join(', ');
     $('retryBtn').textContent = T.retry;
     $('contBtn').textContent = T.cont;
     show('result');
@@ -1768,7 +2020,7 @@
   }
 
   function toMenu() {
-    phase = 'menu'; me = null; ship = null; foes = []; shots = []; parts = []; popups = []; balls = [];
+    phase = 'menu'; me = null; ship = null; foes = []; shots = []; parts = []; popups = []; balls = []; OBS = []; combo = 0; comboT = 0;
     FINISH = 900; genTerrain(save.bosses + 1);
     demo = newCar(8); camX = demo.x; camY = demo.y;
     show('menu'); renderMenu();
@@ -1899,7 +2151,9 @@
       B.platform.on(B.EVENT_NAME.PAUSE_STATE_CHANGED, isPaused => { paused = isPaused; if (paused) releaseAll(); syncAudio(); });
       B.platform.on(B.EVENT_NAME.AUDIO_STATE_CHANGED, isEnabled => { audioOn = isEnabled; syncAudio(); });
       await load();
+      await loadGhosts();
     }
+    fillMissions();
     $('gas').textContent = T.gas; $('brake').textContent = T.brake; $('punchLbl').textContent = T.punch; $('jumpLbl').textContent = T.jump;
     $('jump').addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); $('jump').classList.add('on'); doJump(); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('jump').addEventListener(ev, () => $('jump').classList.remove('on'));
