@@ -3248,27 +3248,27 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
 
   function spawnChunk() {
-    const d = nextX * MPU, L = clamp(d / 1300, 0, 1);
+    const d = nextX * MPU, L = clamp(d / 1300, 0, 1), L2 = clamp((d - 1300) / 3500, 0, 1); // L2 keeps ramping late in the run
     const r = Math.random();
-    if (d < 120 || r < 0.34) { // blood drops
+    if (d < 120 || r < 0.34 - L2 * 0.14) { // blood drops
       const kinds = ['line', 'wave', 'arc', 'diag', 'block'], kind = kinds[(Math.random() * kinds.length) | 0];
       const n = kind === 'block' ? 7 : 10 + ((Math.random() * 7) | 0);
       const y0 = kind === 'arc' ? rnd(40, 95) : kind === 'diag' ? rnd(65, 95) : rnd(18, 92);
       addCoins(coinShape(kind, nextX, y0, n), false);
       if (Math.random() < 0.22 && d > 150) addPickup({ x: nextX + n * COIN_SP * 0.5, y: clamp(y0 - 14, 15, 85), kind: Math.random() < 0.5 ? 'shield' : 'magnet', ph: 0 });
-      nextX += n * COIN_SP + rnd(10, 18) - L * 5;
-    } else if (d > 450 && r > 0.86 && !events.length) { // sunlight volley
+      nextX += n * COIN_SP + rnd(10, 18) - L * 5 - L2 * 3;
+    } else if (d > 450 && r > 0.86 - L2 * 0.08 && !events.length) { // sunlight volley
       const sets = [[30], [70], [92], [20, 60], [45, 92], [15, 50, 92], [30, 70]];
       const set = sets[(Math.random() * Math.min(sets.length, 3 + L * 5)) | 0];
       events.push({ x: nextX, fire: () => { for (const y of set) addBeam({ y, h: 11, t: 0, warn: 1.25, on: 0.95 }); sfx.warn(); } });
       nextX += Math.max(speed, 26) * 3.4;
     } else { // garlic zappers; the first stretch is gentle: single, short ones
-      const count = 1 + (d > 300 && Math.random() < L + 0.25 ? 1 : 0) + (d > 700 && Math.random() < L * 0.7 ? 1 : 0);
-      const gap = rnd(27, 35) - L * 4;
+      const count = 1 + (d > 300 && Math.random() < L + 0.25 ? 1 : 0) + (d > 700 && Math.random() < L * 0.7 ? 1 : 0) + (Math.random() < L2 * 0.6 ? 1 : 0);
+      const gap = rnd(27, 35) - L * 4 - L2 * 3;
       for (let i = 0; i < count; i++) {
         const angs = [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4];
         const z = { x: nextX + i * gap + 8, ang: angs[(Math.random() * angs.length) | 0], len: rnd(11, 15 + L * 16), rot: 0, y: 0 };
-        if (d > 300 && Math.random() < 0.18 + L * 0.25) { z.rot = rnd(0.9, 1.6) * (Math.random() < 0.5 ? -1 : 1); z.len = Math.min(z.len, 24); }
+        if (d > 300 && Math.random() < 0.18 + L * 0.25 + L2 * 0.2) { z.rot = rnd(0.9, 1.6) * (Math.random() < 0.5 ? -1 : 1); z.len = Math.min(z.len, 24); }
         const ext = z.rot ? z.len / 2 : Math.abs(Math.sin(z.ang)) * z.len / 2;
         z.y = rnd(10 + ext, 97 - ext);
         if (d > 150 && i === 0 && Math.random() < 0.3) { z.ang = 0; z.rot = 0; z.y = 95.5; } // a garlic fence on the floor: jump it
@@ -3276,7 +3276,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       }
       const w = count * gap + 10;
       addCoins(coinShape('wave', nextX, rnd(20, 90), Math.floor(w / COIN_SP)), true);
-      nextX += w + rnd(10, 18) - L * 5;
+      nextX += w + rnd(10, 18) - L * 5 - L2 * 4;
     }
   }
 
@@ -3393,7 +3393,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
   function endBoss() {
     kill(boss); boss = null; bossPending = false;
-    bossNext = (Math.floor(dist() / 1000) + 1) * 1000;
+    bossNext = Math.ceil((dist() + 1000) / 100) * 100; // always a full 1000 m run between hunters
     nextX = camX + VW() + 20; stakeT = 4;
     setWorld((world + 1) % WORLDS.length, true);
   }
@@ -3426,7 +3426,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
             if (a.kind === 'volley') { for (const ang of a.aims) addStake({ x: gx, y: gy, vx: Math.cos(ang) * 62, vy: Math.sin(ang) * 62, state: 'fly', t: 0 }); sfx.shoot(); }
             else { addBeam({ y: clamp(me.y - 5.5, 12, 94), h: 10, t: 0, warn: 1.3, on: 0.8 }); sfx.warn(); }
           }
-          if (a.t > a.wind + 0.4) { b.att = null; b.attackT = Math.max(1.7, 2.9 - b.stage * 0.08); }
+          if (a.t > a.wind + 0.4) { b.att = null; b.attackT = Math.max(1.3, 2.6 - b.stage * 0.12); }
         } else { b.attackT -= dt; if (b.attackT <= 0) bossAttack(); }
       }
       if (b.timeLeft <= 0) { b.state = 'escape'; b.st = 0; b.att = null; showBanner(T.escaped, '', 2, '#b99bff'); sfx.laugh(); }
@@ -3453,7 +3453,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (phase === 'intro') return updateIntro(dt);
     if (!me) return;
 
-    const target = 34 + 17 * (1 - Math.exp(-dist() / 1300));
+    const target = 34 + 17 * (1 - Math.exp(-dist() / 1300)) + Math.min(9, Math.max(0, dist() - 3000) / 450);
     if (phase === 'run') speed = lerp(speed, target, Math.min(1, dt * 2));
     else speed *= Math.exp(-dt * 1.4);
     camX += speed * dt;
@@ -3500,7 +3500,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       stakeT -= dt;
       if (stakeT <= 0) {
         const L = clamp(dist() / 2000, 0, 1);
-        stakeT = rnd(3.6, 6) - L * 2.2;
+        stakeT = Math.max(1.3, rnd(3.6, 6) - L * 2.2 - clamp((dist() - 2000) / 3000, 0, 1) * 1.2);
         const n = Math.random() < L * 0.5 ? 2 : 1;
         for (let i = 0; i < n; i++) addStake({ x: VW() + 6, y: pc() + (i ? rnd(-18, 18) : 0), vx: -(speed + 70), vy: 0, state: 'warn', t: -i * 0.35 });
         sfx.warn();
