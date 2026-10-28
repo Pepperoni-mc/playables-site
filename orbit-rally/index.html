@@ -2504,7 +2504,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         { name: 'Pebble', look: { body: '#9aa3b5', stripe: '#ff7a2b', helmet: '#5ad1ff', shape: 1 }, up: { engine: 0, tires: 0, body: 0, nitro: 0 }, car: { maxSpeed: 1.1, accel: 1.1 }, ai: { aim: 0.5, nitro: 0.45 }, prize: 40 },
         { name: 'Comet Kim', look: { body: '#ff4fa3', stripe: '#ffffff', helmet: '#7a5cff', shape: 2 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 1.1, accel: 1.1 }, ai: { aim: 0.6, nitro: 0.55 }, prize: 50 },
         { name: 'Nova', look: { body: '#2fd18a', stripe: '#1a2a5a', helmet: '#ffd23a', shape: 0 }, up: { engine: 1, tires: 1, body: 1, nitro: 1 }, car: { maxSpeed: 1.15, accel: 1.15 }, ai: { aim: 0.6, nitro: 0.55 }, prize: 65 },
-        { name: 'Baron Crater', boss: true, look: { body: '#5a3cff', stripe: '#ffc531', helmet: '#2b2340', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.8, accel: 0.8 }, ai: { aim: 0.88, nitro: 0.83 }, prize: 120 },
+        { name: 'Baron Crater', boss: true, look: { body: '#5a3cff', stripe: '#ffc531', helmet: '#2b2340', shape: 1 }, up: { engine: 3, tires: 3, body: 3, nitro: 3 }, car: { maxSpeed: 0.95, accel: 0.95 }, ai: { aim: 0.88, nitro: 1, always: true }, prize: 120 },
       ] },
     { id: 'jungle', name: { en: 'Red Jungle', es: 'Selva Roja', pt: 'Selva Vermelha' }, seed: 23, radius: 1400, gravity: 850, coin: 1.5, decor: 'plant',
       craters: 12, craterW: [150, 250], craterD: [14, 26], rim: [10, 20], hills: [[4, 12], [9, 7], [15, 4]],
@@ -2790,7 +2790,9 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     } else {
       m.air = false;
       const flat = Math.abs(groundR(c.th + c.dir * 0.1) - groundR(c.th)) < 8;
-      if (m.nitroT <= 0 && m.windT <= 0 && c.contacts === 2 && flat && c.nitro > 1 - ai.nitro * 0.7) {
+      // ai.always: burn nitro whenever there is some and a wheel is down, instead of waiting for a full tank on flat ground.
+      const ready = ai.always ? c.nitro > 0.15 : c.contacts === 2 && flat && c.nitro > 1 - ai.nitro * 0.7;
+      if (m.nitroT <= 0 && m.windT <= 0 && ready) {
         if (c.boss) { m.windT = 0.55; if (Math.hypot(c.x - car.x, c.y - car.y) < 900) sfx.rev(); } else m.nitroT = 0.3 + ai.nitro * 1.2;
       }
     }
