@@ -2754,6 +2754,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, w / 2, a, a + wd); g.closePath(); g.fill();
       }
     });
+    paintRaw('shadeDown', 2, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(8,2,16,.55)'); gr.addColorStop(1, 'rgba(8,2,16,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
     paintRaw('fog', 1024, 256, (g, w, h) => {
       sd = 9;
       for (let i = 0; i < 60; i++) { const x = srnd(0, w), y = srnd(h * 0.35, h * 0.85), r = srnd(40, 110); for (const dx of [-w, 0, w]) softDot(g, x + dx, y, r, '#ffffff', srnd(0.12, 0.3)); }
@@ -2838,6 +2839,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     { id: 'cathedral', sky: ['#081c28', '#1a4a5a', '#5e9e9a'], moon: '#e8fff4', fog: '#bfeee6', light: true,  ground: '#cfc6b8', grass: '#ece4d6' },
   ];
   const TW = 1024; // design width of a parallax tile
+  const CEIL_LINE = ['#8a7ad0', '#ff9a7a', '#ffd0a0', '#c8fff0']; // lit edges of the ceiling and floor
   let BGQ = 1;
   const bgCache = {};
   function bgTile(name, h, fn) {
@@ -2980,6 +2982,17 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         }); }
       });
     }
+    // The ceiling: a stone band whose lit bottom molding is the top limit of the flight area.
+    const CEIL = { graveyard: ['#3b3360', '#8a7ad0'], castle: ['#4d2a32', '#ff9a7a'], village: ['#6e4436', '#ffd0a0'], cathedral: ['#4d6e70', '#c8fff0'] }[w.id];
+    out.ceil = bgTile('ceil', 200, (g, wrap, h) => {
+      const base = CEIL[0], gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, tone(base, -0.55)); gr.addColorStop(1, tone(base, -0.15));
+      g.fillStyle = gr; g.fillRect(0, 0, TW, h);
+      for (let r = 0; r < 5; r++) for (let x = -64; x < TW + 64; x += 64) { const y = h - 30 - (r + 1) * 30, xx = x + (r % 2) * 32; shade(g, g => g.roundRect(xx + 2, y + 2, 60, 26, 5), tone(base, -0.1 - r * 0.08 + hash(x, r) * 0.08), { box: [xx, y, xx + 64, y + 30], lw: 2, rimD: 2, hi: 0.15 }); }
+      shade(g, g => g.rect(-4, h - 30, TW + 8, 24), tone(base, 0.1), { box: [0, h - 30, 0, h - 6], lw: 2.5, rim: false, hi: 0.3 }); // vertical gradient only, so tiles join seamlessly
+      shade(g, g => g.rect(-4, h - 10, TW + 8, 10), tone(base, 0.25), { box: [0, h - 10, 0, h], lw: 2.5, rim: false });
+      g.fillStyle = CEIL[1]; g.globalAlpha = 0.85; g.fillRect(0, h - 3, TW, 3); g.globalAlpha = 1;
+      for (let x = 32; x < TW; x += 128) shade(g, g => { g.moveTo(x - 12, h - 30); g.lineTo(x + 12, h - 30); g.lineTo(x + 6, h - 12); g.lineTo(x - 6, h - 12); g.closePath(); }, tone(base, 0.2), { box: [x - 12, h - 30, x + 12, h - 12], lw: 2 });
+    });
     out.ground = bgTile('ground', 220, (g, wrap, h) => {
       const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, w.ground); gr.addColorStop(1, tone(w.ground, -0.45));
       g.fillStyle = gr; g.fillRect(0, 0, TW, h);
@@ -3033,6 +3046,10 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     const haze = new PIXI.Sprite(TEX['sky' + wi]); haze.alpha = w.light ? 0.32 : 0.4; root.addChild(haze); // pushes the far layers back
     const fogMid = tile(TEX.fog, 0.45, w.light ? 0.3 : 0.2, w.fog);
     const near = tile(t.near.tex, 1), ground = tile(t.ground.tex, 1);
+    const ceil = tile(t.ceil.tex, 1);
+    const ceilShade = new PIXI.Sprite(TEX.shadeDown); root.addChild(ceilShade);
+    const floorShade = new PIXI.Sprite(TEX.shadeDown); floorShade.scale.y = -1; floorShade.alpha = 0.5; root.addChild(floorShade);
+    const floorLine = new PIXI.Sprite(PIXI.Texture.WHITE); floorLine.tint = CEIL_LINE[wi]; floorLine.alpha = 0.7; root.addChild(floorLine);
     const layers = [[far, t.far.h, 1], [mid, t.mid.h, 0.78], [near, t.near.h, 0.82]];
     return {
       root, wi,
@@ -3048,6 +3065,10 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         for (const [s, th, f] of layers) { s.width = W; s.height = th * sc * f; s.y = FB - th * sc * f + 2; s.tileScale.set(q * f); s.tilePosition.x = -cam * U * s._k; }
         for (const [s, y0, hh] of [[fogFar, FB - 330 * sc, 260 * sc], [fogMid, FB - 200 * sc, 220 * sc]]) { s.width = W; s.height = hh; s.y = y0; s.tileScale.set(hh / 256); s.tilePosition.x = -cam * U * s._k - time * 8; }
         ground.width = W; ground.height = H - FB; ground.y = FB; ground.tileScale.set(q); ground.tilePosition.x = -cam * U;
+        ceil.width = W; ceil.height = 200 * sc; ceil.y = FT - 200 * sc + 1; ceil.tileScale.set(q); ceil.tilePosition.x = -cam * U;
+        ceilShade.width = W; ceilShade.height = 26 * sc; ceilShade.y = FT;
+        floorShade.width = W; floorShade.height = 18 * sc; floorShade.y = FB;
+        floorLine.width = W; floorLine.height = Math.max(2, 2 * sc); floorLine.y = FB - 1;
       },
     };
   }
@@ -3135,7 +3156,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
 
   // ---------- State ----------
-  const G = 190, THRUST = 410, MPU = 0.8, BS = 1.3;
+  const G = 235, THRUST = 500, MPU = 0.8, BS = 1.3;
   let phase = 'menu'; // menu | intro | run | dead | result
   let me = null, camX = 0, speed = 0, holding = false, time = 0, paused = false, audioOn = true, shake = 0, flash = 0, flashCol = '#ff2840';
   let zaps = [], drops = [], pickups = [], stakes = [], beams = [], events = [], orbs = [], bats = [], parts = [];
@@ -3243,7 +3264,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       nextX += Math.max(speed, 26) * 3.4;
     } else { // garlic zappers; the first stretch is gentle: single, short ones
       const count = 1 + (d > 400 && Math.random() < L + 0.2 ? 1 : 0) + (d > 900 && Math.random() < L * 0.6 ? 1 : 0);
-      const gap = rnd(24, 32) - L * 4;
+      const gap = rnd(27, 35) - L * 4;
       for (let i = 0; i < count; i++) {
         const angs = [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4];
         const z = { x: nextX + i * gap + 8, ang: angs[(Math.random() * angs.length) | 0], len: rnd(11, 15 + L * 16), rot: 0, y: 0 };
@@ -3254,7 +3275,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       }
       const w = count * gap + 10;
       addCoins(coinShape('wave', nextX, rnd(20, 90), Math.floor(w / COIN_SP)), true);
-      nextX += w + rnd(8, 16) - L * 5;
+      nextX += w + rnd(10, 18) - L * 5;
     }
   }
 
@@ -3431,18 +3452,19 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (phase === 'intro') return updateIntro(dt);
     if (!me) return;
 
-    const target = 27 + 15 * (1 - Math.exp(-dist() / 1100));
-    if (phase === 'run') speed = lerp(speed, target, Math.min(1, dt * 1.5));
+    const target = 34 + 17 * (1 - Math.exp(-dist() / 1300));
+    if (phase === 'run') speed = lerp(speed, target, Math.min(1, dt * 2));
     else speed *= Math.exp(-dt * 1.4);
     camX += speed * dt;
     const px = PXu(), pc = () => me.y - 5.5;
 
     if (me.alive) {
       if (holding) me.vy -= THRUST * dt; else me.vy += G * dt;
-      me.vy = clamp(me.vy, -62, 80);
+      me.vy = clamp(me.vy, -74, 94);
       me.y += me.vy * dt;
       if (me.y >= 100) { if (me.vy > 40) { mist(px * U, FB, '#8a7a9a', -40, -20, 0.5, 6, 20, 0.4); mist(px * U, FB, '#8a7a9a', 40, -20, 0.5, 6, 20, 0.4); } me.y = 100; me.vy = 0; }
-      if (me.y < 12) { me.y = 12; me.vy = Math.max(me.vy, 0); }
+      const top = 0.6 + 10.6 * (W > H ? 1.3 : 1.12); // the head stops right under the ceiling molding
+      if (me.y < top) { me.y = top; me.vy = Math.max(me.vy, 0); }
       const onGround = me.y >= 99.9;
       me.flyK = lerp(me.flyK, onGround ? 0 : 1, Math.min(1, dt * 10));
       me.run += dt * speed * 0.42;
@@ -3556,7 +3578,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (t >= 2.35 && !me.revealed) { me.revealed = true; me.k = 1; burstBats(px * U, sy(94), 16); ring(px * U, sy(94), '#ff3552', 1); shake = 8; popup(T.vampire, '#ffc531', px * U + 30, sy(70)); sfx.reveal(); }
     if (t > 2.75) { me.vy = -40; me.y = Math.min(me.y, 100) + me.vy * dt * (t - 2.75) * 3; me.flyK = Math.min(1, me.flyK + dt * 4); emitTrail(dt, true, px * U, sy(me.y - 1.5)); }
     me.blink -= dt; if (me.blink < -3) me.blink = 0.12;
-    if (t >= INTRO) { phase = 'run'; me.vy = -30; speed = 14; nextX = camX + VW() + 20; }
+    if (t >= INTRO) { phase = 'run'; me.vy = -30; speed = 20; nextX = camX + VW() + 20; }
   }
 
   // ---------- Sync display objects with the game state ----------
