@@ -196,7 +196,7 @@
           you: 'You', go: 'GO!', gas: 'GAS', brake: 'BRAKE', tilt: 'TILT', punch: '', crash: 'CRASH!', outMeat: 'OUT OF FUEL!',
           backflip: 'BACKFLIP!', frontflip: 'FRONTFLIP!', air: 'AIR TIME', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Unlocked: ', beat: '#',
           cont: 'MENU', retry: 'RETRY', equip: 'SELECT', equipped: 'SELECTED', free: 'FREE', max: 'MAX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
-          jump: 'JUMP', ctlHint: 'Hold GAS · JUMP over bumps and flip!', ctlHintPc: 'Hold D to drive · SPACE to jump · W / S to tilt', checkpoint: '',
+          jump: 'JUMP', ctlHint: 'Hold GAS · JUMP over bumps and flip!', ctlHintPc: 'Hold W to drive · SPACE to jump · A / D to tilt', checkpoint: '',
           driverDown: 'DRIVER DOWN!', outFuel: 'OUT OF FUEL!', lowFuel: 'LOW FUEL!', fuelUp: 'FUEL!', best: 'BEST', newRecord: 'NEW RECORD!', dist: 'Distance', flipsL: 'Flips',
           speed: 'Speed', grip: 'Grip', airS: 'Air', fuel: 'Fuel', richer: 'richer coins',
           u_engine: 'Engine', u_engine_d: 'Top speed and power', u_susp: 'Suspension', u_susp_d: 'Softer, steadier landings', u_tires: 'Tires', u_tires_d: 'More grip on steep hills',
@@ -211,7 +211,7 @@
           you: 'Tú', go: '¡YA!', gas: 'GAS', brake: 'FRENO', tilt: 'INCLINAR', punch: '', crash: '¡CHOQUE!', outMeat: '¡SIN COMBUSTIBLE!',
           backflip: '¡MORTAL ATRÁS!', frontflip: '¡MORTAL ADELANTE!', air: 'EN EL AIRE', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
           cont: 'MENÚ', retry: 'OTRA VEZ', equip: 'ELEGIR', equipped: 'ELEGIDO', free: 'GRATIS', max: 'MÁX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
-          jump: 'SALTAR', ctlHint: 'Mantén GAS · ¡SALTA los baches y haz mortales!', ctlHintPc: 'Mantén D para avanzar · ESPACIO para saltar · W / S para inclinar', checkpoint: '',
+          jump: 'SALTAR', ctlHint: 'Mantén GAS · ¡SALTA los baches y haz mortales!', ctlHintPc: 'Mantén W para avanzar · ESPACIO para saltar · A / D para inclinar', checkpoint: '',
           driverDown: '¡CONDUCTOR K.O.!', outFuel: '¡SIN COMBUSTIBLE!', lowFuel: '¡POCO COMBUSTIBLE!', fuelUp: '¡COMBUSTIBLE!', best: 'RÉCORD', newRecord: '¡NUEVO RÉCORD!', dist: 'Distancia', flipsL: 'Mortales',
           speed: 'Velocidad', grip: 'Agarre', airS: 'Aire', fuel: 'Combustible', richer: 'monedas más valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidad y potencia', u_susp: 'Suspensión', u_susp_d: 'Aterrizajes más suaves', u_tires: 'Llantas', u_tires_d: 'Más agarre en subidas',
@@ -226,7 +226,7 @@
           you: 'Você', go: 'JÁ!', gas: 'GÁS', brake: 'FREIO', tilt: 'INCLINAR', punch: '', crash: 'BATEU!', outMeat: 'SEM COMBUSTÍVEL!',
           backflip: 'MORTAL PRA TRÁS!', frontflip: 'MORTAL PRA FRENTE!', air: 'NO AR', finish: '', bossIn: '', bossIn2: '', boss: '', won: '', unlocked: 'Desbloqueado: ', beat: '#',
           cont: 'MENU', retry: 'DE NOVO', equip: 'ESCOLHER', equipped: 'ESCOLHIDO', free: 'GRÁTIS', max: 'MÁX', rammed: '', cannon: '', fruit: '', punchHint: '', foesHint: '', toGo: 'm', kos: '',
-          jump: 'PULAR', ctlHint: 'Segure GÁS · PULE os buracos e dê mortais!', ctlHintPc: 'Segure D para andar · ESPAÇO para pular · W / S para inclinar', checkpoint: '',
+          jump: 'PULAR', ctlHint: 'Segure GÁS · PULE os buracos e dê mortais!', ctlHintPc: 'Segure W para andar · ESPAÇO para pular · A / D para inclinar', checkpoint: '',
           driverDown: 'PILOTO NOCAUTE!', outFuel: 'SEM COMBUSTÍVEL!', lowFuel: 'POUCO COMBUSTÍVEL!', fuelUp: 'COMBUSTÍVEL!', best: 'RECORDE', newRecord: 'NOVO RECORDE!', dist: 'Distância', flipsL: 'Mortais',
           speed: 'Velocidade', grip: 'Aderência', airS: 'Ar', fuel: 'Combustível', richer: 'moedas mais valiosas',
           u_engine: 'Motor', u_engine_d: 'Velocidade e potência', u_susp: 'Suspensão', u_susp_d: 'Pousos mais suaves', u_tires: 'Pneus', u_tires_d: 'Mais aderência nas subidas',
@@ -2134,7 +2134,7 @@
     holdButton($('brake'), 'brake');
     $('punch').addEventListener('pointerdown', (e) => { e.preventDefault(); unlockAudio(); $('punch').classList.add('on'); doPunch(); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('punch').addEventListener(ev, () => $('punch').classList.remove('on'));
-    const KEYS = { ArrowRight: 'kGas', KeyD: 'kGas', ArrowLeft: 'kBrake', KeyA: 'kBrake', ArrowUp: 'kBack', KeyW: 'kBack', ArrowDown: 'kFwd', KeyS: 'kFwd' };
+    const KEYS = { ArrowUp: 'kGas', KeyW: 'kGas', ArrowDown: 'kBrake', KeyS: 'kBrake', ArrowLeft: 'kBack', KeyA: 'kBack', ArrowRight: 'kFwd', KeyD: 'kFwd' }; // W/S drive, A/D tilt
     window.addEventListener('keydown', e => {
       if (KEYS[e.code]) { e.preventDefault(); unlockAudio(); input[KEYS[e.code]] = true; }
       if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); unlockAudio(); doJump(); }
@@ -2162,7 +2162,7 @@
     document.body.classList.toggle('pc', isPc);
     if (isPc) $('punchLbl').textContent = 'SPACE';
     window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && isPc) { isPc = false; document.body.classList.remove('pc'); $('punchLbl').textContent = T.punch; } }, true);
-    $('keys').innerHTML = `<span class="key"><b>A</b>${T.brake}</span><span class="key"><b>D</b>${T.gas}</span><span class="key"><b>W</b><b>S</b>${T.tilt}</span><span class="key"><b>SPACE</b>${T.jump}</span>`;
+    $('keys').innerHTML = `<span class="key"><b>S</b>${T.brake}</span><span class="key"><b>W</b>${T.gas}</span><span class="key"><b>A</b><b>D</b>${T.tilt}</span><span class="key"><b>SPACE</b>${T.jump}</span>`;
 
     if (/github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) $('homeLink').classList.remove('hidden');
     $('playBtn').onclick = startRace;
