@@ -49,6 +49,8 @@
 <script>
   // Add a new game here when it lands in the repo (newest first).
   const GAMES = [
+    { dir: 'fang-flight', name: 'Fang Flight', status: 'wip', label: 'In progress',
+      desc: 'Jetpack-style runner with vampires: get bitten, turn into a vampire and fly through garlic zappers, stakes and sunbeams. Every 1000 m a hunter attacks from his airship. Vampires, capes and upgrades.' },
     { dir: 'grand-wave-pirates', name: 'Grand Wave Pirates', status: 'wip', label: 'In progress',
       desc: 'Sail a pirate ship over giant waves: punch and cannon endless marine boats and sea monsters, then beat the Admiral or a Sea King at each island. Ships, devil fruits and upgrades.' },
     { dir: 'exotic-pet-spa', name: 'Exotic Pet Spa', status: 'wip', label: 'In progress',
@@ -61,7 +63,7 @@
       desc: 'Stack blocks 1v1 against simulated players in a 30-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
   // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
-  const BUILD = '33e3855';
+  const BUILD = '93289b4';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');
