@@ -3202,24 +3202,42 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
   }
 
   // ---------- Spawner ----------
-  const COIN_SP = 3.4;
+  // Blood comes in designed shapes: X marks a drop, rows run top to bottom.
+  const COIN_SP = 4.3;
+  const COIN_ART = {
+    heart:   ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
+    bat:     ['X.......X', 'XX.X.X.XX', 'XXXXXXXXX', '.XXXXXXX.', '..X.X.X..'],
+    arrow:   ['....X..', '....XX.', 'XXXXXXX', '....XX.', '....X..'],
+    diamond: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
+    block:   ['XXXXXXXXX', 'XXXXXXXXX', 'XXXXXXXXX'],
+    ring:    ['..XXX..', '.X...X.', 'X.....X', 'X.....X', '.X...X.', '..XXX..'],
+    fangs:   ['XXXXXXXXXX', 'XXXXXXXXXX', '.XX....XX.', '..X....X..'],
+    stairs:  ['.......XX', '.....XX..', '...XX....', '.XX......', 'X........'],
+    zigzag:  ['X...X...X...X', '.X.X.X.X.X.X.', '..X...X...X..'],
+  };
   function coinShape(kind, x0, y0, n) {
     const pts = [];
+    if (COIN_ART[kind]) {
+      const art = COIN_ART[kind], rows = art.length;
+      art.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') pts.push([x0 + c * COIN_SP, y0 + (r - (rows - 1) / 2) * COIN_SP]); }));
+      return pts;
+    }
     for (let i = 0; i < n; i++) {
       const x = x0 + i * COIN_SP;
       if (kind === 'line') pts.push([x, y0]);
       else if (kind === 'wave') pts.push([x, y0 + Math.sin(i * 0.55) * 9]);
-      else if (kind === 'arc') pts.push([x, y0 - Math.sin(i / (n - 1) * Math.PI) * 16]);
-      else if (kind === 'diag') pts.push([x, y0 - i * 2.2]);
-      else if (kind === 'block') { for (let r = 0; r < 3; r++) pts.push([x, y0 + (r - 1) * 3.6]); }
+      else if (kind === 'wave2') { pts.push([x, y0 + Math.sin(i * 0.5) * 8 - 3]); pts.push([x, y0 + Math.sin(i * 0.5) * 8 + 3]); }
+      else if (kind === 'arc') pts.push([x, y0 - Math.sin(i / (n - 1) * Math.PI) * 18]);
     }
     return pts;
   }
+  const artWidth = (kind) => COIN_ART[kind] ? COIN_ART[kind][0].length : 0;
+  const artHalfH = (kind) => COIN_ART[kind] ? (COIN_ART[kind].length - 1) / 2 * COIN_SP : 10;
   function zEnds(z) { const c = Math.cos(z.ang) * z.len / 2, s = Math.sin(z.ang) * z.len / 2; return [z.x - c, z.y - s, z.x + c, z.y + s]; }
   function addCoins(pts, avoid) {
     for (const [x, y] of pts) {
       if (y < 8 || y > 97) continue;
-      if (avoid && zaps.some(z => z.x > x - 40 && z.x < x + 40 && (z.rot ? Math.hypot(x - z.x, y - z.y) < z.len / 2 + 6 : segDist(x, y, ...zEnds(z)) < 6.5))) continue;
+      if (avoid && zaps.some(z => z.x > x - 40 && z.x < x + 40 && (z.rot ? Math.hypot(x - z.x, y - z.y) < z.len / 2 + 7 : segDist(x, y, ...zEnds(z)) < 7.5))) continue;
       const d = { x, y, ph: Math.random() * 6 };
       own(d, spr('drop', LY.items));
       drops.push(d);
@@ -3251,9 +3269,10 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     const d = nextX * MPU, L = clamp(d / 1300, 0, 1), L2 = clamp((d - 1300) / 3500, 0, 1); // L2 keeps ramping late in the run
     const r = Math.random();
     if (d < 120 || r < 0.34 - L2 * 0.14) { // blood drops
-      const kinds = ['line', 'wave', 'arc', 'diag', 'block'], kind = kinds[(Math.random() * kinds.length) | 0];
-      const n = kind === 'block' ? 7 : 10 + ((Math.random() * 7) | 0);
-      const y0 = kind === 'arc' ? rnd(40, 95) : kind === 'diag' ? rnd(65, 95) : rnd(18, 92);
+      const kinds = ['heart', 'bat', 'arrow', 'diamond', 'block', 'ring', 'fangs', 'stairs', 'zigzag', 'wave2', 'arc', 'line'];
+      const kind = kinds[(Math.random() * kinds.length) | 0];
+      const n = artWidth(kind) || 10 + ((Math.random() * 5) | 0), hh = artHalfH(kind);
+      const y0 = kind === 'arc' ? rnd(50, 92) : rnd(12 + hh, 94 - hh);
       addCoins(coinShape(kind, nextX, y0, n), false);
       if (Math.random() < 0.22 && d > 150) addPickup({ x: nextX + n * COIN_SP * 0.5, y: clamp(y0 - 14, 15, 85), kind: Math.random() < 0.5 ? 'shield' : 'magnet', ph: 0 });
       nextX += n * COIN_SP + rnd(10, 18) - L * 5 - L2 * 3;
@@ -3271,7 +3290,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         if (d > 300 && Math.random() < 0.18 + L * 0.25 + L2 * 0.2) { z.rot = rnd(0.9, 1.6) * (Math.random() < 0.5 ? -1 : 1); z.len = Math.min(z.len, 24); }
         const ext = z.rot ? z.len / 2 : Math.abs(Math.sin(z.ang)) * z.len / 2;
         z.y = rnd(10 + ext, 97 - ext);
-        if (d > 150 && i === 0 && Math.random() < 0.3) { z.ang = 0; z.rot = 0; z.y = 95.5; } // a garlic fence on the floor: jump it
+        if (d > 150 && i === 0 && Math.random() < 0.22) { z.ang = 0; z.rot = 0; z.y = 95.5; } // a garlic fence on the floor: jump it
         addZap(z);
       }
       const w = count * gap + 10;
@@ -3423,7 +3442,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
           if (a.t >= a.wind && !a.done) {
             a.done = true;
             const [gx, gy] = gondola();
-            if (a.kind === 'volley') { for (const ang of a.aims) addStake({ x: gx, y: gy, vx: Math.cos(ang) * 62, vy: Math.sin(ang) * 62, state: 'fly', t: 0 }); sfx.shoot(); }
+            if (a.kind === 'volley') { for (const ang of a.aims) addStake({ x: gx, y: gy, vx: Math.cos(ang) * 92, vy: Math.sin(ang) * 92, state: 'fly', t: 0 }); sfx.shoot(); }
             else { addBeam({ y: clamp(me.y - 5.5, 12, 94), h: 10, t: 0, warn: 1.3, on: 0.8 }); sfx.warn(); }
           }
           if (a.t > a.wind + 0.4) { b.att = null; b.attackT = Math.max(1.3, 2.6 - b.stage * 0.12); }
@@ -3457,7 +3476,10 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (phase === 'run') speed = lerp(speed, target, Math.min(1, dt * 2));
     else speed *= Math.exp(-dt * 1.4);
     camX += speed * dt;
-    const px = PXu(), pc = () => me.y - 5.5;
+    const px = PXu(), pc = () => me.y - 5.5, sf = W > H ? 1.3 : 1.12, bodyR = 1.15 * sf;
+    // The body is a capsule from the eyes to the shins, a little inside the drawn character so grazes feel fair
+    // (a single centre point used to let beams pass through the head and legs).
+    const bodyDist = (x, ax, ay, bx, by) => { let m = 1e9; for (let i = 0; i <= 8; i++) m = Math.min(m, segDist(x, lerp(me.y - 9.0 * sf, me.y - 2.2 * sf, i / 8), ax, ay, bx, by)); return m; };
 
     if (me.alive) {
       if (holding) me.vy -= THRUST * dt; else me.vy += G * dt;
@@ -3502,7 +3524,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
         const L = clamp(dist() / 2000, 0, 1);
         stakeT = Math.max(1.3, rnd(3.6, 6) - L * 2.2 - clamp((dist() - 2000) / 3000, 0, 1) * 1.2);
         const n = Math.random() < L * 0.5 ? 2 : 1;
-        for (let i = 0; i < n; i++) addStake({ x: VW() + 6, y: pc() + (i ? rnd(-18, 18) : 0), vx: -(speed + 70), vy: 0, state: 'warn', t: -i * 0.35 });
+        for (let i = 0; i < n; i++) addStake({ x: VW() + 6, y: pc() + (i ? rnd(-18, 18) : 0), vx: -(speed + 105), vy: 0, state: 'warn', t: -i * 0.35 });
         sfx.warn();
       }
     }
@@ -3512,19 +3534,20 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     if (me.alive) for (const z of zaps) {
       const [ax, ay, bx, by] = zEnds(z), wx = camX + px;
       if (Math.abs(z.x - wx) > z.len) continue;
-      if (segDist(wx, pc(), ax, ay, bx, by) < 3.1) { hurt('zap'); break; }
+      if (bodyDist(wx, ax, ay, bx, by) < bodyR + 0.3 || bodyDist(wx, ax, ay, ax, ay) < bodyR + 1.2 || bodyDist(wx, bx, by, bx, by) < bodyR + 1.2) { hurt('zap'); break; }
     }
 
     const wx = camX + px;
     for (const d of drops) {
       if (me.alive && me.magnet > 0 && Math.hypot(d.x - wx, d.y - pc()) < 32) { const a = Math.atan2(pc() - d.y, wx - d.x); d.x += Math.cos(a) * 110 * dt; d.y += Math.sin(a) * 110 * dt; }
-      if (me.alive && Math.hypot(d.x - wx, d.y - pc()) < 4.6) { d.got = true; collectDrop(d); }
+      if (me.alive && bodyDist(wx, d.x, d.y, d.x, d.y) < bodyR + 1.9) { d.got = true; collectDrop(d); }
     }
     prune(drops, d => !d.got && d.x - camX > -10);
     chainT -= dt; if (chainT <= 0) chain = 0;
     for (const p of pickups) {
       p.ph += dt;
-      if (me.alive && Math.hypot(p.x - wx, p.y + Math.sin(p.ph * 3) * 1.5 - pc()) < 6) {
+      const py = p.y + Math.sin(p.ph * 3) * 1.5;
+      if (me.alive && bodyDist(wx, p.x, py, p.x, py) < bodyR + 3) {
         p.got = true;
         if (p.kind === 'shield') { me.shield = Math.min(me.shield + 1, 3); popup(T.shieldUp, '#b99bff'); }
         else { me.magnet = magnetDur(); popup(T.magnet, '#ff5d73'); }
@@ -3537,21 +3560,25 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
       s.t += dt;
       if (s.state === 'warn') { if (s.t > 0) s.y = lerp(s.y, pc(), Math.min(1, dt * 3)); if (s.t > 1.25) { s.state = 'lock'; s.t = 0; sfx.lock(); } }
       else if (s.state === 'lock') { if (s.t > 0.4) { s.state = 'fly'; s.x = VW() + 6; s.t = 0; setTex(s.spr, 'stake'); sfx.whoosh(); } }
-      else { s.x += s.vx * dt; s.y += s.vy * dt; if (me.alive && Math.hypot(s.x - px, s.y - pc()) < 3.4) { s.dead = true; hurt('stake'); } }
+      else {
+        s.x += s.vx * dt; s.y += s.vy * dt;
+        const v = Math.hypot(s.vx, s.vy) || 1, dx = s.vx / v, dy = s.vy / v; // the stake runs from its tip (ahead) to its tail
+        if (me.alive && bodyDist(px, s.x + dx * 3.3, s.y + dy * 3.3, s.x - dx * 4.5, s.y - dy * 4.5) < bodyR + 0.3) { s.dead = true; hurt('stake'); }
+      }
     }
     prune(stakes, s => !s.dead && s.x > -12 && s.y > -20 && s.y < 130);
 
     for (const b of beams) {
       const was = b.t < b.warn; b.t += dt;
       if (was && b.t >= b.warn) { sfx.beam(); shake = Math.max(shake, 4); }
-      if (b.t >= b.warn && me.alive && Math.abs(pc() - b.y) < b.h / 2 + 2) hurt('sun');
+      if (b.t >= b.warn && me.alive && b.y + b.h / 2 - 1.2 > me.y - 9.4 * sf && b.y - b.h / 2 + 1.2 < me.y - 1.5) hurt('sun');
     }
     prune(beams, b => b.t < b.warn + b.on);
 
     if (boss) updateBoss(dt);
     for (const o of orbs) {
       o.x -= (22 + speed * 0.25) * dt; o.y = clamp(o.y + o.vy * dt + Math.sin(time * 2 + o.ph) * 0.2, 12, 94); o.ph += dt;
-      if (me.alive && Math.hypot(o.x - px, o.y - pc()) < 6.2) {
+      if (me.alive && bodyDist(px, o.x, o.y, o.x, o.y) < bodyR + 3.4) {
         o.got = true;
         const dmg = batMul(), sx = px * U, s0 = sy(pc());
         for (let i = 0; i < 7; i++) { const b = { x0: sx, y0: s0, t: -i * 0.04, dur: 0.55, bend: rnd(-120, 120), hit: i === 0 ? dmg : 0 }; b.halo = addGlow(b, LY.fxAdd, '#ff2a4a', 0.4); b.spr = own(b, spr('bat1', LY.fx)); bats.push(b); }
@@ -3698,7 +3725,7 @@ Deprecated since v${r}`),console.warn(i))),ty[t]=!0}async function mR(r,t,e=200)
     for (const d of drops) {
       const x = (d.x - camX) * U, s = d._d[0];
       s.visible = x > -30 && x < W + 30; if (!s.visible) continue;
-      s.position.set(x, sy(d.y) + Math.sin(time * 4 + d.ph) * U * 0.3); fit(s, 1.15); s.rotation = Math.sin(time * 3 + d.ph) * 0.12;
+      s.position.set(x, sy(d.y) + Math.sin(time * 4 + d.ph) * U * 0.3); fit(s, 1.55); s.rotation = Math.sin(time * 3 + d.ph) * 0.12;
     }
     for (const p of pickups) {
       const x = (p.x - camX) * U, y = sy(p.y + Math.sin(p.ph * 3) * 1.5);
