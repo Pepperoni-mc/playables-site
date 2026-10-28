@@ -49,6 +49,8 @@
 <script>
   // Add a new game here when it lands in the repo (newest first).
   const GAMES = [
+    { dir: 'orbit-rally', name: 'Orbit Rally', status: 'wip', label: 'In progress',
+      desc: 'Race 1v1 around tiny planets with real radial gravity: jump craters, tilt to land flat and burn nitro. Beat 5 rivals and a boss on each of 3 planets, and upgrade engine, tires, body and nitro.' },
     { dir: 'fang-flight', name: 'Fang Flight', status: 'wip', label: 'In progress',
       desc: 'Jetpack-style runner with vampires: get bitten, turn into a vampire and fly through garlic zappers, stakes and sunbeams. Every 1000 m a hunter attacks from his airship. Vampires, capes and upgrades.' },
     { dir: 'grand-wave-pirates', name: 'Grand Wave Pirates', status: 'wip', label: 'In progress',
@@ -63,7 +65,7 @@
       desc: 'Stack blocks 1v1 against simulated players in a 30-second race, then take down the boss tower. Shop with blocks, worlds, avatars and upgrades.' },
   ];
   // tools/publish-site.sh stamps the build id here so covers aren't served stale from cache.
-  const BUILD = '75ce67c';
+  const BUILD = '906fac6';
   const grid = document.getElementById('grid');
   for (const g of GAMES) {
     const a = document.createElement('article');
